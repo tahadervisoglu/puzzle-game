@@ -227,6 +227,9 @@ PP.Table = function (bus, config, board, clusters) {
     const slot = state.slots[state.slotCursor % Math.max(1, state.slots.length)];
     state.slotCursor++;
     p.arrived = true;
+    p.pop = 0.7;                    // masaya düşerken küçük bir sıçrama
+    p.rx = 0;
+    p.ry = 0;
     const c = clusters.create(slot ? slot.x : 0, slot ? slot.y : 0);
     clusters.add(c, p, 0, 0);
     clampCluster(c);
@@ -304,6 +307,8 @@ PP.Table = function (bus, config, board, clusters) {
   }
 
   function seat(plan) {
+    let cx = 0;
+    let cy = 0;
     for (let i = 0; i < plan.length; i++) {
       const p = plan[i].piece;
       const cell = plan[i].cell;
@@ -313,8 +318,17 @@ PP.Table = function (bus, config, board, clusters) {
       p.cell = cell;
       p.x = board.cellX(cell);
       p.y = board.cellY(cell);
+      p.rx = 0;
+      p.ry = 0;
+      p.pop = 1;                       // yerine otururken kısa bir sıçrama
+      cx += p.x + state.pieceSize / 2;
+      cy += p.y + state.pieceSize / 2;
     }
-    bus.emit('parca:oturdu', { count: plan.length });
+    bus.emit('parca:oturdu', {
+      count: plan.length,
+      x: cx / plan.length,
+      y: cy / plan.length
+    });
   }
 
   // Izgara dışında iki kümeyi kenar kenara yapıştırır. Başarılıysa birleşmiş
@@ -437,6 +451,9 @@ PP.Table = function (bus, config, board, clusters) {
         p.netBonded = false;
         p.held = false;
         p.lift = 0;
+        p.rx = 0;
+        p.ry = 0;
+        p.pop = 0;
       }
       state.order = [];
 
@@ -569,15 +586,28 @@ PP.Table = function (bus, config, board, clusters) {
 
     clusterOf: function (p) { return clusters.get(p.cluster); },
 
-    // Kümeyi kenardaki saçılma konumlarından birine taşır (bot bir parçayı
-    // ızgaradan çıkardığında masaya geri koymak için).
+    // Kümeyi kenardaki saçılma konumlarından birine taşır. Parçalar yeni
+    // yerlerine ışınlanmasın diye eski konumları çizim kayması olarak
+    // saklanır; oyun mantığı anında taşınmış sayar, göz uçuşu görür.
     park: function (c, rng) {
       if (!state.slots.length) return;
+      const before = {};
+      for (let i = 0; i < c.members.length; i++) {
+        const p = byId(c.members[i]);
+        if (p) before[p.id] = { x: p.x, y: p.y };
+      }
       const s = state.slots[Math.floor(rng.next() * state.slots.length)];
       c.x = s.x;
       c.y = s.y;
       clampCluster(c);
       syncCluster(c);
+      for (let i = 0; i < c.members.length; i++) {
+        const p = byId(c.members[i]);
+        const old = p && before[p.id];
+        if (!old) continue;
+        p.rx = old.x - p.x;
+        p.ry = old.y - p.y;
+      }
     },
 
     // Bırakma: önce ızgaraya oturmayı dener, olmazsa komşu kümeye yapışır.
@@ -603,11 +633,23 @@ PP.Table = function (bus, config, board, clusters) {
 
     update: function (dt) {
       const speed = config.feel.liftSpeed;
+      const fly = Math.pow(config.fx.flyDecay, dt * 60);
+      const pop = Math.pow(config.fx.popDecay, dt * 60);
       for (let i = 0; i < state.pieces.length; i++) {
         const p = state.pieces[i];
         const target = p.held ? 1 : 0;
         p.lift += (target - p.lift) * Math.min(1, speed * dt * 60);
         if (Math.abs(p.lift - target) < 0.001) p.lift = target;
+
+        if (p.rx || p.ry) {
+          p.rx *= fly;
+          p.ry *= fly;
+          if (Math.abs(p.rx) < 0.4 && Math.abs(p.ry) < 0.4) { p.rx = 0; p.ry = 0; }
+        }
+        if (p.pop) {
+          p.pop *= pop;
+          if (p.pop < 0.01) p.pop = 0;
+        }
       }
     }
   };

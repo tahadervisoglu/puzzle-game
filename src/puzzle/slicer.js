@@ -26,6 +26,9 @@ PP.slicer = {
           gy: 0,
           arrived: false, // masaya geldi mi
           netBonded: false, // ağdan gelen tahtada bu parça bir kümenin üyesi
+          rx: 0,          // savrulma sonrası çizim kayması (oyun mantığını etkilemez)
+          ry: 0,
+          pop: 0,         // yerleşme sıçraması
           lift: 0,
           held: false
         });

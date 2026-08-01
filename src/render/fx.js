@@ -99,6 +99,18 @@ PP.Fx = function (config) {
       }
     },
 
+    // Yerleşme darbesi: hücreden dışa yayılan halka
+    ring: function (x, y, size) {
+      spawn({
+        kind: 'ring',
+        x: x, y: y,
+        r0: size * 0.35,
+        r1: size * 1.15,
+        life: 0.32,
+        max: 0.32
+      });
+    },
+
     // Deprem / oturma: toz bulutu
     dust: function (x, y, count, power) {
       for (let i = 0; i < count; i++) {
@@ -126,6 +138,7 @@ PP.Fx = function (config) {
         const p = state.particles[i];
         p.life -= dt;
         if (p.life <= 0) { state.particles.splice(i, 1); continue; }
+        if (p.kind === 'ring') continue;
         p.x += p.vx * dt;
         p.y += p.vy * dt;
         if (p.kind === 'dust') p.vy += 420 * dt;   // yerçekimi
@@ -141,7 +154,14 @@ PP.Fx = function (config) {
       for (let i = 0; i < state.particles.length; i++) {
         const p = state.particles[i];
         const t = p.life / p.max;
-        if (p.kind === 'wind') {
+        if (p.kind === 'ring') {
+          const k = 1 - t;
+          ctx.strokeStyle = 'rgba(190,205,255,' + (0.5 * t).toFixed(3) + ')';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r0 + (p.r1 - p.r0) * k, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (p.kind === 'wind') {
           ctx.strokeStyle = 'rgba(200,220,255,' + (0.5 * t).toFixed(3) + ')';
           ctx.lineWidth = 1.5;
           ctx.beginPath();

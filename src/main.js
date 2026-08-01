@@ -28,6 +28,8 @@
   let frame = 0;
 
   // Ağ oyunu. Tek kişilik oyunda net null kalır ve hiçbir ağ kodu çalışmaz.
+  const audio = PP.Audio(cfg);
+
   let net = null;
   let lobby = null;
   let online = false;
@@ -47,6 +49,8 @@
   const stageEl = document.getElementById('stage');
   const startEl = document.getElementById('start');
   const announceEl = document.getElementById('announce');
+
+  const SKILL_SOUND = { deprem: 'deprem', ruzgar: 'ruzgar', karartma: 'darbe', sis: 'darbe' };
 
   // Kim kime ne attı — büyüler görünür olmazsa oyun rastgele hissettirir
   function announce(caster, skill, target) {
@@ -87,11 +91,14 @@
         isHuman: !!def.isHuman,
         canvas: document.getElementById('canvas-' + i),
         config: cfg,
+        audio: audio,
         overlayIds: i === 0 ? ['head-0', 'hint', 'reference'] : ['head-' + i, 'reference']
       });
       players.push(p);
       if (def.isHuman) {
         human = PP.Human(p, cfg);
+        p.bus.on('niyet:tut', function () { audio.play('tut'); });
+        p.bus.on('niyet:birak', function () { audio.play('birak'); });
       } else {
         const nameEl = document.getElementById('name-' + i);
         if (nameEl) nameEl.textContent = def.name;
@@ -487,6 +494,7 @@
     document.getElementById('win-again').hidden = !canRestart;
     document.getElementById('win-mode').hidden = online;
     winEl.hidden = false;
+    audio.play(winner.state.isHuman ? 'kazandi' : 'kaybettin');
     if (human) human.release();
   }
 
@@ -566,6 +574,17 @@
     winEl.hidden = true;
   }
 
+  // Tarayıcılar sesi ancak kullanıcı hareketinden sonra açıyor
+  window.addEventListener('pointerdown', function once() {
+    audio.unlock();
+    window.removeEventListener('pointerdown', once);
+  });
+
+  const muteBtn = document.getElementById('mute');
+  muteBtn.addEventListener('click', function () {
+    muteBtn.textContent = audio.toggle() ? 'ses açık' : 'ses kapalı';
+  });
+
   window.addEventListener('resize', resizeAll);
   document.getElementById('win-again').addEventListener('click', function () {
     // Ağ oyununda oda sahibi yeni turu herkese duyurur
@@ -633,7 +652,9 @@
 
   skills = PP.SkillSystem(players, cfg, PP.Rng(cfg.seed ^ 0x5f3a), pool, {
     onOffer: function (player, offer) {
-      if (player.state.isHuman) showCards(offer);
+      if (!player.state.isHuman) return;
+      showCards(offer);
+      audio.play('kart');
     },
     onPocketChange: function (player) {
       if (player.state.isHuman) {
@@ -641,7 +662,15 @@
         showCards(player.state.pendingOffer);
       }
     },
-    onCast: announce,
+    onWarn: function (player) {
+      if (player.state.isHuman) audio.play('uyari');
+    },
+    onCast: function (caster, skill, target) {
+      announce(caster, skill, target);
+      // Sadece beni ilgilendiren büyüler duyulur; yoksa gürültü olur
+      if (caster.state.isHuman) audio.play('buyu');
+      else if (!target || target.state.isHuman) audio.play(SKILL_SOUND[skill.id] || 'darbe');
+    },
     // Yerel bir büyü atıldığında hedefiyle birlikte ağa duyurulur
     onLocalCast: function (skillId, casterSeat, targetSeat) {
       if (!online || !net) return;

@@ -70,6 +70,8 @@ Deprem, Takas ve Yapıştır rakibin **kazandığı ilerlemeyi geri alan** büy�
 
 Saldırılar hedefin ekranında **1 saniye önceden uyarı verir** — Tricky Towers'ı adil hissettiren şey saldırıların okunabilir olması. Aynı hedefe 20 saniye içinde aynı büyü ikinci kez gelirse etkisi yarıya iner. Son sıradaki oyuncunun kart sayacı daha hızlı dolar ve ona daha sert karanlık kartlar çıkar.
 
+Ses varsayılan olarak açık; başlıktaki **ses açık / ses kapalı** düğmesiyle kapatabilirsin. Tüm sesler kodda üretiliyor, indirilen dosya yok.
+
 ## Neyi test etmelisin
 
 - **Büyüler eğlenceli mi?** Hangisi tatmin edici, hangisi sönük kalıyor?
@@ -100,7 +102,7 @@ src/
   players/  oyuncu birimi, girdi, insan denetleyicisi, bot
   skills/   büyü tanımları, kart dağıtımı ve efekt sistemi
   net/      bağlantı katmanı ve lobi (sadece multiplayer'da yüklenir)
-  render/   canvas çizimi
+  render/   canvas çizimi, efekt katmanı, prosedürel ses
   ui/       stil, ayar paneli
 ```
 

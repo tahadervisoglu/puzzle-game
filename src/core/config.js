@@ -62,9 +62,17 @@ PP.config = {
     maxShake: 16,
     shakeDecay: 0.9,
     flashDecay: 0.88,
-    maxParticles: 260,
+    maxParticles: 300,
     windParticles: 46,
-    announceMs: 2000
+    announceMs: 2000,
+    flyDecay: 0.82,      // savrulan parçanın yerine oturma hızı
+    popDecay: 0.86,      // yerleşme sıçramasının sönümü
+    popScale: 0.13       // yerleşince parçanın ne kadar şişeceği
+  },
+
+  audio: {
+    enabled: true,
+    volume: 0.32
   },
 
   // Düşünme süresi parça gelme aralığının biraz üstünde tutuluyor: aksi halde

@@ -56,9 +56,10 @@ PP.Renderer = function (canvas, table, config, owner) {
   }
 
   function drawPiece(p, size) {
-    const scale = 1 + p.lift * config.feel.liftScale;
-    const cx = p.x + size / 2;
-    const cy = p.y + size / 2;
+    // pop: yerleşirken şişip sönme · rx/ry: savrulduktan sonra yerine uçma
+    const scale = 1 + p.lift * config.feel.liftScale + p.pop * config.fx.popScale;
+    const cx = p.x + p.rx + size / 2;
+    const cy = p.y + p.ry + size / 2;
 
     ctx.save();
     if (p.lift > 0.01) {
@@ -102,8 +103,8 @@ PP.Renderer = function (canvas, table, config, owner) {
     for (let i = 0; i < pieces.length; i++) {
       const p = pieces[i];
       if (p.cell < 0 || p.cell === p.row * cols + p.col) continue;
-      ctx.fillRect(p.x, p.y, size, size);
-      ctx.strokeRect(p.x + 1, p.y + 1, size - 2, size - 2);
+      ctx.fillRect(p.x + p.rx, p.y + p.ry, size, size);
+      ctx.strokeRect(p.x + p.rx + 1, p.y + p.ry + 1, size - 2, size - 2);
     }
     ctx.restore();
   }

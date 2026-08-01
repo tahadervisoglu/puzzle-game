@@ -68,8 +68,16 @@ Panel başına efekt katmanı (`src/render/fx.js`): sarsıntı, partikül, renk 
 - Rüzgar → paneli boydan boya geçen savrulma çizgileri
 - Takas → mor parlama (nerede bozulduğu belli olmaz)
 - Yapıştır / Hırsız / Kilit / Sis / Karartma → kendi renginde parlama
-- Parça ızgaraya oturunca küçük toz bulutu
+- Parça ızgaraya oturunca kendi konumunda halka + toz + kısa sıçrama
 - Ekranın üstünde **büyü duyuruları**: "Bot 1 → sana · Deprem". Büyüler görünmezse oyun rastgele hissettirir.
+
+### Tokluk katmanı (F7)
+
+**Ses — prosedürel.** Dış dosya yok; her ses WebAudio ile anında üretilir (`src/render/audio.js`). Yeni ses eklemek tarif tablosuna bir satır yazmak demek. Tarayıcılar sesi kullanıcı hareketinden sonra açtığı için ilk tıklamada başlatılır. Sadece **beni ilgilendiren** olaylar duyulur — kendi hamlelerim ve bana gelen saldırılar; yoksa dört panelin sesi gürültüye döner.
+
+**Parça uçuşu.** Rüzgar ve Deprem'de parçalar yeni yerlerine ışınlanmıyor. Oyun mantığı parçayı anında taşınmış sayar, ama parçada `rx/ry` çizim kayması tutulur ve sönerek sıfırlanır — göz uçuşu görür, mantık bozulmaz. Aynı ayrım sayesinde ağ senkronu ve çarpışma hesapları etkilenmez.
+
+**Yerleşme tokluğu.** Parça hücreye otururken `pop` ile şişip sönüyor, hücrede halka yayılıyor, parçanın kendi konumunda toz çıkıyor ve panel hafifçe sarsılıyor. Önceden toz sabit bir noktadan çıkıyordu, düzeltildi.
 
 ## Ekran düzeni
 

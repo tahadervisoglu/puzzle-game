@@ -38,11 +38,22 @@ PP.Player = function (opts) {
     fx: PP.Fx(config)
   };
 
-  // Parça ızgaraya oturunca küçük bir toz bulutu — yerleştirmenin hissi
-  bus.on('parca:oturdu', function () {
-    state.fx.dust(
-      table.state.width / 2, board.state.y + board.state.h, 3, 0.4
-    );
+  // Parça ızgaraya oturunca parçanın kendi konumunda halka + toz
+  bus.on('parca:oturdu', function (info) {
+    const x = info && info.x !== undefined ? info.x : table.state.width / 2;
+    const y = info && info.y !== undefined ? info.y : board.state.y + board.state.h;
+    state.fx.ring(x, y, table.state.pieceSize);
+    state.fx.dust(x, y + table.state.pieceSize * 0.4, 5, 0.55);
+    state.fx.shake(2.5);
+    if (opts.audio && state.isHuman) opts.audio.play('otur');
+  });
+
+  bus.on('parca:birlesti', function () {
+    if (opts.audio && state.isHuman) opts.audio.play('birles');
+  });
+
+  bus.on('parca:geldi', function () {
+    if (opts.audio && state.isHuman) opts.audio.play('parca');
   });
 
   const renderer = PP.Renderer(canvas, table, config, state);
