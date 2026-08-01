@@ -67,7 +67,8 @@ PP.config = {
     announceMs: 2000,
     flyDecay: 0.82,      // savrulan parçanın yerine oturma hızı
     popDecay: 0.86,      // yerleşme sıçramasının sönümü
-    popScale: 0.13       // yerleşince parçanın ne kadar şişeceği
+    popScale: 0.13,      // yerleşince parçanın ne kadar şişeceği
+    ghostAlpha: 0.3      // Poster büyüsünde tam resmin saydamlığı
   },
 
   audio: {

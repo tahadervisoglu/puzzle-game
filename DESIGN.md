@@ -41,6 +41,7 @@ Havuz modunun iki kuralı var:
 | Çifte teslimat | Işık | Anında 2 ekstra parça | Temel ekonomi büyüsü |
 | Kontrol | Işık | 3 sn boyunca yanlış oturan parçalar kırmızı yanar | Yanlışı bulmak stratejinin parçası |
 | İpucu | Işık | Elindeki bir parçanın gitmesi gereken bölge parlar | Yeni oyuncu dostu |
+| **Poster** | Işık | Tam resim 3 sn ızgaranın üstünde %30 saydamlıkla belirir | Ortadaki madalyon küçük kaldığı için eklendi |
 | Mıknatıs | Işık | 12 sn yerleştirme toleransı 2 katı | Hız oyuncusuna |
 | Kalkan | Işık | Sıradaki saldırıyı yutar | Saldırı spam'ine fren |
 | Turbo | Işık | 15 sn parça gelişi 2 kat hızlı | Çifte teslimatın süreli hali |

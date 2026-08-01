@@ -71,7 +71,7 @@
     const h = cfg.puzzle.rows * cfg.puzzle.sourcePieceSize;
     source = PP.artwork.create(w, h, PP.Rng(artSeed));
 
-    const refW = 300;
+    const refW = 640;   // büyütülen madalyon bulanıklaşmasın diye yüksek çözünürlük
     refCanvas.width = refW;
     refCanvas.height = Math.round(refW * (h / w));
     refCanvas.getContext('2d').drawImage(source, 0, 0, refCanvas.width, refCanvas.height);

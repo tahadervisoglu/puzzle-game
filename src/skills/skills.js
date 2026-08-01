@@ -42,6 +42,20 @@ PP.skills = {
     }
   },
 
+  // Ortadaki madalyon küçük kalıyor; bu büyü tam resmi ızgaranın üstüne
+  // soluk olarak bindirir, böylece hangi parçanın nereye gittiği net görünür.
+  poster: {
+    id: 'poster',
+    name: 'Poster',
+    type: 'light',
+    desc: 'Tam resim 3 sn ızgaranın üstünde soluk belirir',
+    visual: true,
+    apply: function (ctx) {
+      ctx.self.addEffect('poster', 3 * ctx.scale);
+      ctx.fx(ctx.self, 'isik');
+    }
+  },
+
   sis: {
     id: 'sis',
     name: 'Sis',
@@ -189,7 +203,7 @@ PP.skills = {
 // Kart havuzları. Geride kalan oyuncuya daha sert karanlık büyüler çıkar —
 // tasarımdaki yetişme mekaniği.
 PP.skillPools = {
-  light: ['cifte', 'kontrol'],
+  light: ['cifte', 'kontrol', 'poster'],
   darkMild: ['sis', 'karartma', 'kilit', 'yapistir', 'takas'],
   darkStrong: ['deprem', 'takas', 'ruzgar', 'hirsiz', 'yapistir', 'kilit']
 };

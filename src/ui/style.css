@@ -332,18 +332,20 @@ html, body {
   z-index: 3;
 }
 
+/* Ekranla birlikte büyür: küçük ekranda yer kaplamaz, büyük ekranda
+   gerçekten okunabilir olur. */
 #ref-canvas {
   display: block;
-  width: 150px;
+  width: clamp(190px, min(21vw, 30vh), 380px);
   height: auto;
-  border-radius: 5px;
+  border-radius: 6px;
 }
 
 .ref-label {
   display: block;
-  margin-top: 3px;
-  font-size: 10px;
-  color: rgba(232, 230, 225, 0.5);
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(232, 230, 225, 0.55);
 }
 
 .hint {

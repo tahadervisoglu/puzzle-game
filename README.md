@@ -57,6 +57,7 @@ Her %10 doğru parçada önüne **iki kart** çıkar: biri ışık (kendine fayd
 |---|---|---|
 | Çifte teslimat | ışık | Anında 2 parça alırsın (havuzda kaparsın, klasikte düşer) |
 | Kontrol | ışık | Yanlış oturan parçaların 3 sn kırmızı yanar |
+| Poster | ışık | Tam resim 3 sn ızgaranın üstünde soluk belirir |
 | Sis | karanlık | Ortak referans 5 sn gizlenir — atan hariç herkese |
 | Rüzgar | karanlık | Hedefin tek duran parçaları savrulur (birleşmiş kümeler korunur) |
 | Karartma | karanlık | Hedefin paneli 6 sn kararır, imleç çevresi fener gibi kalır |

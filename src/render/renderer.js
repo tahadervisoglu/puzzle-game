@@ -91,6 +91,16 @@ PP.Renderer = function (canvas, table, config, owner) {
     ctx.restore();
   }
 
+  // Poster büyüsü: tam resim ızgaranın tam üstüne soluk bindirilir. Parçalar
+  // üstüne çizildiği için eksikler hayalet gibi görünür.
+  function drawGhost() {
+    const b = table.board.state;
+    ctx.save();
+    ctx.globalAlpha = config.fx.ghostAlpha;
+    ctx.drawImage(source, 0, 0, source.width, source.height, b.x, b.y, b.w, b.h);
+    ctx.restore();
+  }
+
   // Kontrol büyüsü: yanlış hücreye oturmuş parçaları yakar. Sadece bu büyü
   // aktifken görünür — normalde oyun yanlışı hiç belli etmez.
   function drawWrongMarks(size) {
@@ -153,6 +163,7 @@ PP.Renderer = function (canvas, table, config, owner) {
         ctx.translate(o.x, o.y);
       }
       drawBoard();
+      if (source && owner && owner.effects.poster > 0) drawGhost();
 
       if (source) {
         for (let i = 0; i < s.order.length; i++) {
