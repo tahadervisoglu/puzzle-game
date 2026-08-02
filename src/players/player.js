@@ -57,6 +57,14 @@ PP.Player = function (opts) {
     if (opts.audio && state.isHuman) opts.audio.play('parca');
   });
 
+  bus.on('el:tokat', function () {
+    if (opts.audio && state.isHuman) opts.audio.play('tokat');
+  });
+
+  bus.on('el:caldi', function () {
+    if (opts.audio && state.isHuman) opts.audio.play('calindi');
+  });
+
   const renderer = PP.Renderer(canvas, table, config, state);
 
   function collectReserved() {
@@ -87,7 +95,7 @@ PP.Player = function (opts) {
     return state.correct === pieces.length && pieces.length > 0;
   }
 
-  return {
+  const api = {
     state: state,
     bus: bus,
     table: table,
@@ -114,6 +122,7 @@ PP.Player = function (opts) {
       state.finishedAt = 0;
       state.rank = 0;
       state.fx.clear();
+      if (api.hand) api.hand.reset();
       collectReserved();
       table.prepare(scatterRng, arrivalRng);
       if (config.mode === 'klasik') {
@@ -182,6 +191,7 @@ PP.Player = function (opts) {
 
       // Uzaktaki oyuncunun tahtası ağdan gelir, burada simüle edilmez
       if (state.remote) return false;
+      api.hand.update(dt);
 
       // Havuz dışındaki modlarda parçalar kendiliğinden düşer; Kilit durdurur
       if (config.mode !== 'havuz' && state.blockedUntil <= 0 && !table.allArrived()) {
@@ -203,4 +213,11 @@ PP.Player = function (opts) {
       return Math.max(0, config.drip.intervalMs - state.dripAcc) / 1000;
     }
   };
+
+  // El, oyuncunun kendi API'sine ihtiyaç duyduğu için nesne kurulduktan
+  // sonra bağlanır
+  api.hand = PP.Hand(api, config, PP.Rng(config.seed + 7919 * (opts.id + 1)));
+  state.hand_ = api.hand.state;    // çizim katmanı buradan okur
+
+  return api;
 };

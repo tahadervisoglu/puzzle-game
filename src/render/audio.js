@@ -111,7 +111,15 @@ PP.Audio = function (config) {
       });
     },
 
-    kaybettin: function () { tone({ freq: 300, to: 150, type: 'triangle', dur: 0.5, gain: 0.25 }); }
+    kaybettin: function () { tone({ freq: 300, to: 150, type: 'triangle', dur: 0.5, gain: 0.25 }); },
+
+    // El mekaniği
+    eluzaniyor: function () { tone({ freq: 240, to: 420, type: 'sawtooth', dur: 0.22, gain: 0.1 }); },
+    tokat: function () {
+      noise({ freq: 2600, to: 500, dur: 0.13, gain: 0.42 });
+      tone({ freq: 170, to: 80, type: 'square', dur: 0.1, gain: 0.24 });
+    },
+    calindi: function () { tone({ freq: 420, to: 120, type: 'sawtooth', dur: 0.34, gain: 0.3 }); }
   };
 
   return {

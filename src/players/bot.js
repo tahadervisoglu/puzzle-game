@@ -117,6 +117,21 @@ PP.Bot = function (player, rng, cfg, skills, pool, gamble) {
 
   function rand(range) { return range[0] + rng.next() * (range[1] - range[0]); }
 
+  // Bot da ele tepki verir; bazen ıskalar, zorluk tepki süresinden gelir
+  let handTimer = -1;
+  let handMissed = false;
+  function handleHand(dt) {
+    const h = player.hand;
+    if (!h.active()) { handTimer = -1; handMissed = false; return; }
+    if (handMissed) return;
+    if (handTimer < 0) {
+      if (rng.next() < PP.config.hand.botMiss) { handMissed = true; return; }
+      handTimer = rand(PP.config.hand.botReaction) * penalty().slow;
+    }
+    handTimer -= dt;
+    if (handTimer <= 0) { h.swat(); handTimer = -1; }
+  }
+
   // Kumar kartları: bot da elinde biriktirir, arada bir rastgele oynar
   let gambleDelay = -1;
   function handleGamble(dt) {
@@ -163,6 +178,7 @@ PP.Bot = function (player, rng, cfg, skills, pool, gamble) {
     update: function (dt, skillCfg) {
       if (player.state.finished || player.hasEffect('donuk')) return;
       if (gamble) handleGamble(dt);
+      handleHand(dt);
       if (pool && PP.config.mode === 'havuz') handleClaim(dt);
       if (skills && skillCfg) handleSkills(dt, skillCfg);
 

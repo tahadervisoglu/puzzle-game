@@ -562,6 +562,13 @@
     cardsEl.hidden = true;
     announceEl.innerHTML = '';
     if (human) human.release();
+
+    // Resim tur tohumundan üretilir: her yeni turda/odada başka bir manzara
+    // çıkar, ağ oyununda ise herkes aynısını görür.
+    if (artSeed !== roundSeed) {
+      artSeed = roundSeed;
+      buildArtwork();
+    }
     for (let i = 0; i < players.length; i++) {
       const p = players[i];
       document.getElementById('panel-' + i).classList.remove('done');
@@ -710,8 +717,8 @@
       updateHud();
     },
     newArtwork: function () {
-      artSeed = (artSeed * 1664525 + 1013904223) >>> 0;
-      rebuild();
+      newSeed();
+      restart();
     },
     setBotSpeed: function (percent) {
       for (let i = 0; i < cfg.bots.length; i++) {
@@ -734,8 +741,15 @@
   });
 
   // Havuz modunda karanlık büyü havuzuna Kilit de girer
+  // Her yeni tur rastgele bir tohum alır; resim de ondan üretildiği için
+  // her oyunda başka bir manzara çıkar
+  function newSeed() {
+    roundSeed = Math.floor(Math.random() * 0x7fffffff) >>> 0;
+  }
+
   function setMode(mode) {
     goOffline();
+    newSeed();
     cfg.mode = mode;
     applyStageMode();
     startEl.hidden = true;
@@ -779,6 +793,7 @@
       });
       return;
     }
+    newSeed();       // tek kişilik yeni tur: yeni resim, yeni saçılma
     restart();
   });
   document.getElementById('win-mode').addEventListener('click', showModeSelect);

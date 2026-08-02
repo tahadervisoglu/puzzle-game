@@ -139,6 +139,17 @@ PP.config = {
     botUseDelay: [0.8, 3]
   },
 
+  // Izgaradan parça çalmaya çalışan el. Üstüne tıklarsan tokadı yiyip çekilir.
+  hand: {
+    enabled: true,
+    intervalMs: 5000,
+    reachSec: 1.9,        // uzanma süresi = tepki verme sürenin tamamı
+    retreatSec: 0.45,
+    radiusRatio: 0.42,    // tıklama yarıçapı (parça kenarına oranla)
+    botReaction: [0.45, 1.5],
+    botMiss: 0.22         // botun eli ıskalama ihtimali
+  },
+
   // Kumar destesi: beceriye değil zamana bağlı, kör gelir, elde biriktirilir.
   gamble: {
     drawMs: 10000,      // kaç ms'de bir el'e kart gelir

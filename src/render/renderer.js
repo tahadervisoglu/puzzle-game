@@ -133,6 +133,61 @@ PP.Renderer = function (canvas, table, config, owner) {
     ctx.restore();
   }
 
+  // Izgaradan parça çalmaya çalışan el. Kenardan uzanan bir kol ve ucunda
+  // pençe; tokat yiyince titreyerek geri çekilir.
+  function drawHand(h, size) {
+    if (h.phase === 'idle') return;
+    const r = Math.max(16, size * config.hand.radiusRatio);
+    const jitter = h.recoil * 7;
+    const hx = h.x + (h.recoil ? (Math.random() - 0.5) * jitter : 0);
+    const hy = h.y + (h.recoil ? (Math.random() - 0.5) * jitter : 0);
+
+    ctx.save();
+
+    // Kol: girdiği kenardan pençeye kadar
+    ctx.strokeStyle = h.recoil ? 'rgba(226,75,74,0.85)' : 'rgba(58,44,70,0.9)';
+    ctx.lineWidth = r * 0.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(h.fromX, h.fromY);
+    ctx.lineTo(hx, hy);
+    ctx.stroke();
+
+    // Avuç
+    ctx.fillStyle = h.recoil ? '#e24b4a' : '#4a3a5e';
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(hx, hy, r * 0.62, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Parmaklar: hedefe doğru açılmış
+    const ang = Math.atan2(h.toY - h.fromY, h.toX - h.fromX);
+    ctx.strokeStyle = h.recoil ? '#ff8a89' : '#6b5580';
+    ctx.lineWidth = r * 0.2;
+    for (let i = -1; i <= 1; i++) {
+      const a = ang + i * 0.55;
+      ctx.beginPath();
+      ctx.moveTo(hx + Math.cos(a) * r * 0.5, hy + Math.sin(a) * r * 0.5);
+      ctx.lineTo(hx + Math.cos(a) * r * 1.15, hy + Math.sin(a) * r * 1.15);
+      ctx.stroke();
+    }
+
+    // Tıklanabilir alanı belli et
+    if (h.phase === 'uzaniyor') {
+      ctx.strokeStyle = 'rgba(255,210,120,0.8)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(hx, hy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.restore();
+  }
+
   // Dondur kartı: mavi buz katmanı, kenarlarda kırağı ve "dondun" yazısı.
   // Hareket edemediğin bakar bakmaz anlaşılsın diye.
   function drawFrost(s, remaining) {
@@ -214,6 +269,7 @@ PP.Renderer = function (canvas, table, config, owner) {
           if (p && p.arrived) drawPiece(p, size);
         }
         if (owner && owner.effects.kontrol > 0) drawWrongMarks(size);
+        if (owner && owner.hand_) drawHand(owner.hand_, size);
       }
       ctx.restore();
 

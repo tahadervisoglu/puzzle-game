@@ -31,6 +31,14 @@ Havuz modunun iki kuralı var:
 - **Döndürme yok** — parçalar hep doğru yönde gelir (ileride "zor mod" seçeneği olabilir).
 - **Zafer: Yarış modu** — yapbozu ilk doğru tamamlayan kazanır. (Süreli mod ileride eklenebilir.)
 
+## Uzanan el
+
+Belirli aralıklarla panelin bir kenarından bir el uzanır ve ızgaraya oturmuş rastgele bir parçayı hedefler. Uzanma süresi boyunca üstüne tıklanırsa tokadı yiyip titreyerek geri çekilir; tıklanmazsa parçayı söküp masaya fırlatır.
+
+Amaç oyuna **sürekli bir dikkat baskısı** koymak: yapbozla uğraşırken bir gözünüz hep elde olmak zorunda, yani rakip hiçbir şey yapmasa bile oyun sizi rahat bırakmıyor. Tıklanabilir alan kesikli bir halkayla belli edilir, yoksa nereye basacağınız tahmin işi olurdu.
+
+Donmuşken el gelmez — tepki veremeyeceğiniz bir şeyle cezalandırmak haksız olurdu. Botlar da ele tepki verir; zorlukları tepki süresine ve ıskalama ihtimaline yansır.
+
 ## Büyü ekonomisi
 
 - İlerleme = doğru birleştirilmiş parça yüzdesi. Her **%10 eşiğinde** 2 kart belirir: biri ışık (kendine fayda), biri karanlık (rakibe sabotaj). **Seçilen büyü anında uygulanır** — cep/bekletme yoktur. Bu bilinçli bir sadeleştirme: "doğru anı bekleme" katmanı kalktı, oyun hızlandı ve kart geldiğinde anında karar verme baskısı arttı.
@@ -147,6 +155,7 @@ Altın kural: simülasyon ile çizim tamamen ayrı.
 - **Niyet (intent) soyutlaması:** insan da bot da aynı komutları üretir (`tut`, `taşı`, `bırak`, `büyüAt`). Botlar bedavaya gelir; ileride netcode bu niyetleri ağa yazmakla açılır.
 - **PuzzleFactory:** resmi offscreen canvas'ta kare dilimler. Kümeleşme mantığı: birleşen parçalar tek "küme" (cluster) olarak taşınır; snap komşuluk ilişkisine göre çalışır, doğruluk kontrolü kümenin iç tutarlılığından bağımsızdır.
 - Seeded RNG her yerde (parça sırası, saçılma konumları, bot kararları).
+- **Resim tur tohumundan üretilir.** Her yeni tur rastgele bir tohum alır, dolayısıyla her oyunda başka bir manzara çıkar. Ağ oyununda tohum `basla` mesajıyla geldiği için herkes aynı resmi görür — ayrıca bir görsel senkronu gerekmez.
 - Tüm denge sayıları (damlama aralığı, eşikler, büyü süreleri) tek `config` dosyasında.
 
 Klasörler: `core/` (döngü, rng, eventbus, config) · `puzzle/` (dilimleme, küme, snap) · `players/` (durum, girdi, botlar) · `skills/` · `render/` · `ui/`

@@ -43,6 +43,13 @@ PP.Human = function (player, config) {
 
   bus.on('niyet:tut', function (pt) {
     if (player.state.finished || player.hasEffect('donuk')) return;
+
+    // El parçanın önünde: önce ona tıklanır, parça alınmaz
+    if (player.hand.hitTest(pt.x, pt.y)) {
+      player.hand.swat();
+      return;
+    }
+
     const p = table.pick(pt.x, pt.y);
     if (!p) return;
 
