@@ -47,14 +47,14 @@ Havuz modunun iki kuralı var:
 | Kalkan | Işık | Sıradaki saldırıyı yutar | Saldırı spam'ine fren |
 | Turbo | Işık | 15 sn parça gelişi 2 kat hızlı | Çifte teslimatın süreli hali |
 | Sis | Karanlık | Ortadaki referans 5 sn gizlenir — atan hariç herkese | 3 rakibi birden vurur; nadir çıkmalı |
-| Rüzgar | Karanlık | Hedefin birleşmemiş (tekil) parçaları masada savrulur | Birleşmiş kümelere işlemez |
+| Rüzgar | Karanlık | Atan hariç herkesin tekil parçaları masada savrulur | Ortam olayı; birleşmiş kümelere işlemez |
 | Karartma | Karanlık | Hedefin paneli kararır, imleç çevresi fener, 6 sn | Görsel şov |
 | Ayna | Karanlık | Hedefin gördüğü referans 8 sn yatay ters | Sinsi — fark etmeyebilir |
 | Hırsız | Karanlık | Hedefin sıradaki parçasını çalar, sana gelir | Zarar değil transfer |
 | Yapışkan | Karanlık | Hedefin sürükleme hızı %50, 6 sn | Hafif ama sinir bozucu |
 | Sahte parça | Karanlık | Hedefe hiçbir yere oturmayan 2 parça | Masayı kirletir |
 | **Kilit** | Karanlık | Hedefin parça akışı 5 sn durur | Her iki modda çalışır |
-| **Deprem** | Karanlık | Hedefin ızgarasından 3 parça sökülüp masaya savrulur | Gürültülü, anında görünen hasar |
+| **Deprem** | Karanlık | Atan hariç herkesin ızgarasından 2 parça sökülür | Ortam olayı; üç kişiyi birden vurduğu için 3 yerine 2 parça |
 | **Takas** | Karanlık | Hedefin ızgarasında iki parçanın yeri değişir | **Görünmez hasar** — tahta dolu görünür, ilerleme düşer |
 | **Yapıştır** | Karanlık | Hedefin masadaki parçaları tek yığına yapışır | Sevilen mekaniği cezaya çevirir |
 

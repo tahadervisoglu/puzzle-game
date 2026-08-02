@@ -73,23 +73,29 @@ PP.skills = {
     }
   },
 
+  // Rüzgar masanın üstünden eser — tek kişiyi seçmez, atan hariç herkesi vurur
   ruzgar: {
     id: 'ruzgar',
     name: 'Rüzgar',
     type: 'dark',
-    desc: 'Hedefin tek duran parçaları masaya savrulur',
+    desc: 'Atan hariç herkesin tek duran parçaları savrulur',
+    hitsEveryone: true,
     apply: function (ctx) {
-      const t = ctx.target;
-      const list = t.clusters.all();
-      for (let i = 0; i < list.length; i++) {
-        const c = list[i];
-        const first = t.table.byId(c.members[0]);
-        if (first && first.held) continue;          // elde tutulan parça savrulmaz
-        if (c.members.length > 1) continue;         // birleşmiş parçalar korunur
-        if (ctx.scale < 1 && ctx.rng.next() < 0.5) continue;
-        t.table.park(c, ctx.rng);
+      for (let i = 0; i < ctx.players.length; i++) {
+        const t = ctx.players[i];
+        if (t === ctx.self || t.state.finished || t.state.dropped) continue;
+        ctx.fx(t, 'ruzgar');
+        if (!ctx.owns(t)) continue;      // uzaktaki tahtayı sahibi savurur
+        const list = t.clusters.all();
+        for (let j = 0; j < list.length; j++) {
+          const c = list[j];
+          const first = t.table.byId(c.members[0]);
+          if (first && first.held) continue;        // elde tutulan parça savrulmaz
+          if (c.members.length > 1) continue;       // birleşmiş parçalar korunur
+          if (ctx.scale < 1 && ctx.rng.next() < 0.5) continue;
+          t.table.park(c, ctx.rng);
+        }
       }
-      ctx.fx(t, 'ruzgar');
     }
   },
 
@@ -145,26 +151,33 @@ PP.skills = {
 
   // --- Izgarayı bozan büyüler: kazanılmış ilerlemeyi geri alırlar ---
 
+  // Deprem odayı sarsar — atan hariç herkesin ızgarası bozulur. Üç kişiyi
+  // birden vurduğu için parça sayısı 3'ten 2'ye düşürüldü.
   deprem: {
     id: 'deprem',
     name: 'Deprem',
     type: 'dark',
-    desc: 'Hedefin ızgarasından 3 parça sökülüp masaya savrulur',
+    desc: 'Atan hariç herkesin ızgarasından 2 parça sökülür',
+    hitsEveryone: true,
     apply: function (ctx) {
-      const t = ctx.target;
-      const seated = t.table.seatedPieces();
-      if (!seated.length) return;
-      const n = Math.min(seated.length, ctx.scale < 1 ? 2 : 3);
-      for (let i = 0; i < n; i++) {
-        const id = seated.splice(Math.floor(ctx.rng.next() * seated.length), 1)[0];
-        const p = t.table.byId(id);
-        const px = p.x;
-        const py = p.y;
-        const c = t.table.liftFromBoard(p);
-        t.table.park(c, ctx.rng);
-        ctx.fx(t, 'deprem', { x: px, y: py });
+      for (let i = 0; i < ctx.players.length; i++) {
+        const t = ctx.players[i];
+        if (t === ctx.self || t.state.finished || t.state.dropped) continue;
+        if (!ctx.owns(t)) { ctx.fx(t, 'deprem'); continue; }
+
+        const seated = t.table.seatedPieces();
+        if (!seated.length) { ctx.fx(t, 'deprem'); continue; }
+        const n = Math.min(seated.length, ctx.scale < 1 ? 1 : 2);
+        for (let j = 0; j < n; j++) {
+          const id = seated.splice(Math.floor(ctx.rng.next() * seated.length), 1)[0];
+          const p = t.table.byId(id);
+          const px = p.x;
+          const py = p.y;
+          t.table.park(t.table.liftFromBoard(p), ctx.rng);
+          ctx.fx(t, 'deprem', { x: px, y: py });
+        }
+        t.refreshProgress();
       }
-      t.refreshProgress();
     }
   },
 
@@ -204,6 +217,8 @@ PP.skills = {
 // tasarımdaki yetişme mekaniği.
 PP.skillPools = {
   light: ['cifte', 'kontrol', 'poster'],
+  // Ortam olayları (sis, deprem, rüzgar) herkesi vurduğu için güçlüdür;
+  // cerrahi olanlar lidere gider ve yetişme mekaniğini korur.
   darkMild: ['sis', 'karartma', 'kilit', 'yapistir', 'takas'],
   darkStrong: ['deprem', 'takas', 'ruzgar', 'hirsiz', 'yapistir', 'kilit']
 };

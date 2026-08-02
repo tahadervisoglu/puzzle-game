@@ -72,11 +72,11 @@ Her %10 doğru parçada önüne **iki kart** çıkar: biri ışık (kendine fayd
 | Kontrol | ışık | Yanlış oturan parçaların 3 sn kırmızı yanar |
 | Poster | ışık | Tam resim 5 sn ızgaranın üstünde belirir, sonra sönerek kaybolur |
 | Sis | karanlık | Ortak referans 5 sn gizlenir — atan hariç herkese |
-| Rüzgar | karanlık | Hedefin tek duran parçaları savrulur (birleşmiş kümeler korunur) |
+| Rüzgar | karanlık | **Atan hariç herkesin** tek duran parçaları savrulur (birleşmiş kümeler korunur) |
 | Karartma | karanlık | Hedefin paneli 6 sn kararır, imleç çevresi fener gibi kalır |
 | Hırsız | karanlık | Hedefin masasından 2 parça çalarsın (klasikte parça hedefe sonra geri gelir) |
 | Kilit | karanlık | Hedefin parça akışı 5 sn durur |
-| Deprem | karanlık | Hedefin ızgarasından 3 parça sökülüp masaya savrulur |
+| Deprem | karanlık | **Atan hariç herkesin** ızgarasından 2 parça sökülüp masaya savrulur |
 | Takas | karanlık | Hedefin ızgarasında iki parçanın yeri değişir — nerede olduğunu bilmez |
 | Yapıştır | karanlık | Hedefin masadaki parçaları tek yığına yapışır, sağ tıkla ayırması gerekir |
 

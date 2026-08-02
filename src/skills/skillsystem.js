@@ -87,7 +87,11 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
     // Ağ oyununda her istemci sadece kendi simüle ettiği oyuncuların durumunu
     // değiştirir; başkasının tahtası zaten karşı taraftan gelir. Görsel etkiler
     // (sis, karartma, kontrol) herkeste oynatılabilir, oyunu bozmazlar.
-    if (!skill.visual && affected && !affected.state.owned) {
+    //
+    // Herkesi vuran büyüler bu kapıdan geçmez: atan uzakta olsa bile benim
+    // tahtamı vurmaları gerekir, o yüzden sahiplik kontrolünü kendi içlerinde
+    // ctx.owns ile oyuncu bazında yaparlar.
+    if (!skill.visual && !skill.hitsEveryone && affected && !affected.state.owned) {
       PP.fxFor(affected, skill.id);
       if (hooks.onCast) hooks.onCast(entry.caster, skill, entry.target);
       return;
