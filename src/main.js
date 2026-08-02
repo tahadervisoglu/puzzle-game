@@ -29,6 +29,8 @@
 
   // Ağ oyunu. Tek kişilik oyunda net null kalır ve hiçbir ağ kodu çalışmaz.
   const audio = PP.Audio(cfg);
+  const handEl = document.getElementById('hand');
+  let gamble = null;
 
   let net = null;
   let lobby = null;
@@ -51,6 +53,22 @@
   const announceEl = document.getElementById('announce');
 
   const SKILL_SOUND = { deprem: 'deprem', ruzgar: 'ruzgar', karartma: 'darbe', sis: 'darbe' };
+
+  function announceText(text, hit) {
+    const el = document.createElement('div');
+    el.className = 'ann' + (hit ? ' hit' : '');
+    el.innerHTML = text;
+    announceEl.appendChild(el);
+    while (announceEl.children.length > 3) announceEl.removeChild(announceEl.firstChild);
+    setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, cfg.fx.announceMs);
+  }
+
+  function announceCard(player, card) {
+    const who = player.state.isHuman ? 'Sen' : player.state.name;
+    announceText(who + ' kumar oynadı · <strong>' + card.name + '</strong>');
+  }
 
   // Kim kime ne attı — büyüler görünür olmazsa oyun rastgele hissettirir
   function announce(caster, skill, target) {
@@ -110,7 +128,7 @@
   function makeBots() {
     for (let i = 0; i < bots.length; i++) {
       bots[i].ctrl = PP.Bot(
-        bots[i].player, PP.Rng(roundSeed + 977 * (i + 1)), bots[i].def, skills, pool
+        bots[i].player, PP.Rng(roundSeed + 977 * (i + 1)), bots[i].def, skills, pool, gamble
       );
     }
   }
@@ -236,7 +254,11 @@
     for (let panel = 0; panel < 4; panel++) {
       const st = players[panel].state;
       if (!st.owned) continue;
-      net.send({ t: 'tahta', seat: st.seat, p: players[panel].table.snapshot() });
+      net.send({
+        t: 'tahta', seat: st.seat,
+        p: players[panel].table.snapshot(),
+        h: (st.hand || []).length          // rakip kart sayısını görür, kartları göremez
+      });
     }
   }
 
@@ -261,6 +283,17 @@
       if (panel < 0 || !players[panel].state.remote) return;
       players[panel].table.applySnapshot(msg.p || []);
       players[panel].refreshProgress();
+      // Kartların ne olduğu değil, kaç tane olduğu paylaşılır
+      const n = msg.h || 0;
+      const hand = players[panel].state.hand;
+      if (hand.length !== n) {
+        players[panel].state.hand = new Array(n).fill('?');
+        renderHands();
+      }
+    });
+
+    net.on('kumar', function (msg) {
+      if (gamble) gamble.remotePlay(msg.card, msg.seat);
     });
 
     net.on('buyu', function (msg) {
@@ -331,6 +364,50 @@
 
   // --- Büyü arayüzü ---
 
+  // Kendi elini kartlarıyla, rakiplerin elini sadece sayıyla göster.
+  // Kimin ne kartı olduğunu bilmemek baskıyı yaratan şey.
+  function renderHands() {
+    const hand = players[0].state.hand || [];
+    handEl.innerHTML = '';
+    for (let i = 0; i < hand.length; i++) {
+      const card = PP.gambleCards[hand[i]];
+      if (!card) continue;
+      const btn = document.createElement('button');
+      btn.className = 'gcard' + (card.risk === 'high' ? ' high' : '');
+      btn.type = 'button';
+      const top = document.createElement('span');
+      top.className = 'gcard-top';
+      const key = document.createElement('span');
+      key.className = 'gcard-key';
+      key.textContent = String(i + 1);
+      const name = document.createElement('span');
+      name.className = 'gcard-name';
+      name.textContent = card.name;
+      top.appendChild(key);
+      top.appendChild(name);
+      const desc = document.createElement('span');
+      desc.className = 'gcard-desc';
+      desc.textContent = card.desc;
+      btn.appendChild(top);
+      btn.appendChild(desc);
+      btn.addEventListener('click', function () { playCard(i); });
+      handEl.appendChild(btn);
+    }
+
+    for (let panel = 1; panel < 4; panel++) {
+      const badge = document.getElementById('cards-' + panel);
+      if (!badge) continue;
+      const n = (players[panel].state.hand || []).length;
+      badge.textContent = n + ' kart';
+      badge.hidden = n === 0;
+    }
+  }
+
+  function playCard(index) {
+    if (over || !gamble) return;
+    if (gamble.play(players[0], index)) audio.play('buyu');
+  }
+
   function showCards(offer) {
     if (!offer) { cardsEl.hidden = true; return; }
     const light = PP.skills[offer.light];
@@ -388,7 +465,9 @@
     }
     pool.reset(cfg.puzzle.cols * cfg.puzzle.rows);
     skills.reset();
+    gamble.reset();
     makeBots();
+    renderHands();
     renderWarnings();
     updateHud();
   }
@@ -488,6 +567,7 @@
     if (over || !started) return;
     if (cfg.mode === 'havuz') pool.update(dt);
     skills.update(dt);
+    gamble.update(dt);
     for (let i = 0; i < bots.length; i++) {
       if (bots[i].active && bots[i].ctrl) bots[i].ctrl.update(dt, cfg.skills);
     }
@@ -644,11 +724,17 @@
     skills.choose(players[0], 'dark');
   });
 
-  // Kart seçimi klavyeden de yapılabilir
+  // Rakamlar: ışık/karanlık kartı ekrandaysa onu seçer, yoksa kumar kartı oynar
   window.addEventListener('keydown', function (e) {
-    if (over || !players[0].state.pendingOffer) return;
-    if (e.key === '1') skills.choose(players[0], 'light');
-    else if (e.key === '2') skills.choose(players[0], 'dark');
+    if (over) return;
+    const n = Number(e.key);
+    if (!n || n < 1 || n > 9) return;
+    if (players[0].state.pendingOffer) {
+      if (n === 1) skills.choose(players[0], 'light');
+      else if (n === 2) skills.choose(players[0], 'dark');
+      return;
+    }
+    playCard(n - 1);
   });
 
   setInterval(function () {
@@ -691,6 +777,25 @@
   });
 
   stageEl.classList.toggle('klasik', cfg.mode === 'klasik');
+  gamble = PP.Gamble(players, cfg, PP.Rng(cfg.seed ^ 0x77c1), {
+    pool: function () { return pool; },
+    onHandChange: function (player) {
+      if (player.state.isHuman || !player.state.remote) renderHands();
+    },
+    onPlayed: function (player, card) {
+      announceCard(player, card);
+      if (player.state.isHuman) audio.play('buyu');
+      else audio.play('darbe');
+    },
+    onDuelEnd: function (winner) {
+      if (winner) announceText((winner.state.isHuman ? 'Sen' : winner.state.name) + ' düelloyu kazandı');
+      else announceText('Düello berabere');
+    },
+    onLocalPlay: function (cardId, seat) {
+      if (online && net) net.send({ t: 'kumar', card: cardId, seat: seat });
+    }
+  });
+
   rebuild();
   PP.Tuner(game, cfg);
   PP.Loop(cfg.sim.stepMs, update, render).start();
@@ -698,6 +803,7 @@
   PP.game = game;
   PP.players = players;
   PP.skills_ = skills;
+  PP.gamble_ = gamble;
   // Hata ayıklama: çizim döngüsü durduğunda simülasyonu elle adımlamak için
   PP.step = update;
   PP.netState = function () {

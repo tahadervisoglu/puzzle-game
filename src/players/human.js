@@ -33,7 +33,7 @@ PP.Human = function (player, config) {
   }
 
   bus.on('niyet:tut', function (pt) {
-    if (player.state.finished) return;
+    if (player.state.finished || player.hasEffect('donuk')) return;
     const p = table.pick(pt.x, pt.y);
     if (!p) return;
 

@@ -81,6 +81,23 @@ Panel başına efekt katmanı (`src/render/fx.js`): sarsıntı, partikül, renk 
 
 **Yerleşme tokluğu.** Parça hücreye otururken `pop` ile şişip sönüyor, hücrede halka yayılıyor, parçanın kendi konumunda toz çıkıyor ve panel hafifçe sarsılıyor. Önceden toz sabit bir noktadan çıkıyordu, düzeltildi.
 
+## Kumar destesi
+
+Büyü sisteminden **bilinçli olarak ayrı** ikinci bir katman:
+
+| | Büyüler | Kumar |
+|---|---|---|
+| Tetikleyici | ilerleme (%10 eşikleri) | zaman (10 sn) |
+| Seçim | iki karttan sen seçersin | kör gelir |
+| Kullanım | anında çalışır | elde birikir, istediğin an oynarsın |
+| Karakter | beceri | şans |
+
+**Gizli bilgi.** Rakip kaç kartın olduğunu görür (panel başlığındaki rozet), hangileri olduğunu göremez. Ağ oyununda da sadece kart *sayısı* paylaşılır — tahta özetine tek bir sayı olarak eklenir.
+
+**Kumarı kumar yapan şey:** kartı seçemezsin. Bir kartı elinde tutup "doğru anı" beklemek serbesttir, ama hangi kartın geleceğine karar veremezsin. Ayrıca destede seni de vuran kartlar vardır (Rulet, Ateş çemberi, Çifte ya da hiç'in kötü yüzü) — bu olmadan sistem sadece "bedava güç" olurdu.
+
+**Tasarım sırasında elenen fikir:** "Kör takas" (kendi ızgarandaki iki parçanın yeri habersiz değişir) kullanıcı tarafından reddedildi — cezası eğlenceli değil, sadece sinir bozucuydu. "Çifte ya da hiç" de parça kazanmak/kaybetmek yerine **kendi parçalarının kaderini** riske atacak şekilde yeniden yazıldı: ya iki parçan sökülür ya iki parçan doğru yerine oturur. Bu hâli tematik olarak çok daha yerinde.
+
 ## Ekran düzeni
 
 - CSS grid: sol üst panel %62 × %58 (oyuncunun kendisi), diğer 3 panel küçük **seyirci görünümleri** — ayrı oyun değil, aynı simülasyonun küçültülmüş render'ı. Panel boyutu farklı olduğu için parça boyutu her panelde otomatik küçülür.

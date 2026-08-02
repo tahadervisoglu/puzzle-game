@@ -84,6 +84,15 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
     const skill = PP.skills[entry.skillId];
     const affected = entry.target || entry.caster;
 
+    // Sigorta kartı: gelen ilk saldırıyı yutar
+    if (skill.type === 'dark' && affected && affected !== entry.caster &&
+        affected.hasEffect('kalkan')) {
+      delete affected.state.effects.kalkan;
+      PP.fxFor(affected, 'isik');
+      if (hooks.onBlocked) hooks.onBlocked(affected, skill);
+      return;
+    }
+
     // Ağ oyununda her istemci sadece kendi simüle ettiği oyuncuların durumunu
     // değiştirir; başkasının tahtası zaten karşı taraftan gelir. Görsel etkiler
     // (sis, karartma, kontrol) herkeste oynatılabilir, oyunu bozmazlar.

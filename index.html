@@ -38,7 +38,9 @@
         </button>
       </div>
 
-      <div class="hint" id="hint">sol tık sürükler · sağ tık koparır · kart seçince büyü hemen çalışır</div>
+      <div class="hand" id="hand"></div>
+
+      <div class="hint" id="hint">sol tık sürükler · sağ tık koparır · kumar kartını tıkla ya da rakamına bas</div>
     </section>
 
     <section class="panel" id="panel-1">
@@ -47,6 +49,7 @@
         <span class="head-name" id="name-1">Bot 1</span>
         <div class="bar"><i id="bar-1"></i></div>
         <span class="head-num" id="prog-1">0/15</span>
+        <span class="cards-badge" id="cards-1" hidden></span>
       </div>
       <div class="warn" id="warn-1" hidden></div>
     </section>
@@ -57,6 +60,7 @@
         <span class="head-name" id="name-2">Bot 2</span>
         <div class="bar"><i id="bar-2"></i></div>
         <span class="head-num" id="prog-2">0/15</span>
+        <span class="cards-badge" id="cards-2" hidden></span>
       </div>
       <div class="warn" id="warn-2" hidden></div>
     </section>
@@ -67,6 +71,7 @@
         <span class="head-name" id="name-3">Bot 3</span>
         <div class="bar"><i id="bar-3"></i></div>
         <span class="head-num" id="prog-3">0/15</span>
+        <span class="cards-badge" id="cards-3" hidden></span>
       </div>
       <div class="warn" id="warn-3" hidden></div>
     </section>
@@ -213,6 +218,7 @@
 <script src="src/players/bot.js"></script>
 <script src="src/skills/skills.js"></script>
 <script src="src/skills/skillsystem.js"></script>
+<script src="src/skills/gamble.js"></script>
 <script src="src/render/audio.js"></script>
 <script src="src/render/fx.js"></script>
 <script src="src/render/renderer.js"></script>

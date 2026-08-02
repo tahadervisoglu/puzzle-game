@@ -568,6 +568,31 @@ PP.Table = function (bus, config, board, clusters) {
       }
     },
 
+    // Parçayı doğrudan bir hücreye oturtur (kumar kartları için).
+    // Hücre doluysa başarısız olur.
+    seatPieceAt: function (pieceId, cell) {
+      const p = byId(pieceId);
+      if (!p || !p.arrived || !board.isFree(cell, p.id)) return false;
+      if (p.cell >= 0) board.release(p.id);
+      const c = clusters.get(p.cluster);
+      if (c) clusters.remove(c, p);
+      const ox = p.x;
+      const oy = p.y;
+      board.occupy(cell, p.id);
+      p.cell = cell;
+      p.x = board.cellX(cell);
+      p.y = board.cellY(cell);
+      p.rx = ox - p.x;              // yerine uçarak gitsin
+      p.ry = oy - p.y;
+      p.pop = 1;
+      bus.emit('parca:oturdu', {
+        count: 1,
+        x: p.x + state.pieceSize / 2,
+        y: p.y + state.pieceSize / 2
+      });
+      return true;
+    },
+
     // Izgaraya oturmuş parçaların id'leri (Deprem ve Takas için)
     seatedPieces: function () {
       const out = [];

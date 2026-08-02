@@ -30,6 +30,7 @@ PP.Player = function (opts) {
     // Büyü sistemi (F3)
     effects: {},          // buyuId -> kalan saniye
     pendingOffer: null,   // seçim bekleyen kart çifti (seçilince hemen uygulanır)
+    hand: [],             // kumar kartları — elde birikir, sahibi kullanır
     owed: 0,              // hak edilmiş ama henüz sunulmamış kart
     nextThreshold: 0,
     warning: null,        // { text, remaining }

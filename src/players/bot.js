@@ -2,7 +2,7 @@ window.PP = window.PP || {};
 
 // Bot, insanla aynı Player üzerinde çalışır: parçayı tutar, sürükler, bırakır.
 // Zorluk iki sayıyla ayarlanır — düşünme süresi ve hata oranı.
-PP.Bot = function (player, rng, cfg, skills, pool) {
+PP.Bot = function (player, rng, cfg, skills, pool, gamble) {
   const table = player.table;
   const board = player.board;
   const clusters = player.clusters;
@@ -117,6 +117,18 @@ PP.Bot = function (player, rng, cfg, skills, pool) {
 
   function rand(range) { return range[0] + rng.next() * (range[1] - range[0]); }
 
+  // Kumar kartları: bot da elinde biriktirir, arada bir rastgele oynar
+  let gambleDelay = -1;
+  function handleGamble(dt) {
+    const hand = player.state.hand;
+    if (!hand || !hand.length) { gambleDelay = -1; return; }
+    if (gambleDelay < 0) gambleDelay = rand(PP.config.gamble.botPlayDelay);
+    gambleDelay -= dt;
+    if (gambleDelay > 0) return;
+    gamble.play(player, Math.floor(rng.next() * hand.length));
+    gambleDelay = -1;
+  }
+
   // Ortak havuzdan parça kapma. Tepki süresi zorluğun bir parçası — yavaş bot
   // istediği parçayı hızlı olana kaptırır.
   function handleClaim(dt) {
@@ -149,7 +161,8 @@ PP.Bot = function (player, rng, cfg, skills, pool) {
 
   return {
     update: function (dt, skillCfg) {
-      if (player.state.finished) return;
+      if (player.state.finished || player.hasEffect('donuk')) return;
+      if (gamble) handleGamble(dt);
       if (pool && PP.config.mode === 'havuz') handleClaim(dt);
       if (skills && skillCfg) handleSkills(dt, skillCfg);
 

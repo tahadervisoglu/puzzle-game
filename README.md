@@ -82,6 +82,25 @@ Her %10 doğru parçada önüne **iki kart** çıkar: biri ışık (kendine fayd
 
 Deprem, Takas ve Yapıştır rakibin **kazandığı ilerlemeyi geri alan** büyüler. Takas en sinsisi: tahtası dolu görünmeye devam eder ama doğru sayısı düşer — nerede bozulduğunu bulmak için Kontrol büyüsüne ihtiyacı olur.
 
+### Kumar destesi
+
+Büyülerden ayrı, ikinci bir sistem. **10 saniyede bir elinize kör bir kart gelir** — ne geleceğini seçemezsiniz. Kartlar elinizde birikir (en fazla 5), ekranın altında **1, 2, 3...** diye numaralanır. Tıklayarak ya da rakamına basarak oynarsınız. İstediğiniz an kullanabilirsiniz, hemen oynamak zorunda değilsiniz.
+
+Rakipler **kaç kartınız olduğunu görür ama hangileri olduğunu göremez** — baskı buradan doğar.
+
+| Kart | Etki |
+|---|---|
+| **El değiştir** | Tahtanı rastgele bir rakiple değiştirirsin — kim olduğunu bilmezsin |
+| **Çifte ya da hiç** | Yazı tura: ya 2 parçan ızgaradan sökülür ya da 2 parçan doğru yerine oturur |
+| **Rulet** | Rastgele birine deprem düşer — sen de dahilsin |
+| **Ateş çemberi** | Herkesin ızgarasından 1 parça sökülür, sen dahil |
+| **Düello** | Liderle 10 sn yarışırsın; daha çok parça koyan diğerinden 3 parça alır |
+| **Yağma** | Liderin ızgarasından 3 parça sökülür, sen 2 parça alırsın |
+| **Dondur** | Herkes 4 sn donar, sen oynamaya devam edersin |
+| **Sigorta** | Sana gelecek ilk saldırıyı yutar |
+
+İki sistem bilerek farklı: **büyüler beceriye** bağlıdır (ilerledikçe kazanırsın, iki karttan seçersin, anında çalışır), **kumar şansa** bağlıdır (zamanla birikir, kör gelir, istediğin an oynarsın).
+
 Saldırılar hedefin ekranında **1 saniye önceden uyarı verir** — Tricky Towers'ı adil hissettiren şey saldırıların okunabilir olması. Aynı hedefe 20 saniye içinde aynı büyü ikinci kez gelirse etkisi yarıya iner. Son sıradaki oyuncunun kart sayacı daha hızlı dolar ve ona daha sert karanlık kartlar çıkar.
 
 Ses varsayılan olarak açık; başlıktaki **ses açık / ses kapalı** düğmesiyle kapatabilirsin. Tüm sesler kodda üretiliyor, indirilen dosya yok.

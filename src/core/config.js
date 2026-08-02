@@ -121,5 +121,13 @@ PP.config = {
     botUseDelay: [0.8, 3]
   },
 
+  // Kumar destesi: beceriye değil zamana bağlı, kör gelir, elde biriktirilir.
+  gamble: {
+    drawMs: 10000,      // kaç ms'de bir el'e kart gelir
+    handSize: 5,        // elde en fazla kaç kart durur
+    duelSec: 10,        // Düello kartının süresi
+    botPlayDelay: [1.5, 5]
+  },
+
   sim: { stepMs: 1000 / 60 }
 };
