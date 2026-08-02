@@ -58,25 +58,32 @@ PP.config = {
   // özetlerini nabız sayıp bu süre kadar sessizlik olursa kopmuş sayıyoruz.
   net: {
     snapshotMs: 180,
+    heartbeatMs: 1200,   // tahta değişmese de bu aralıkta bir nabız gönderilir
     timeoutMs: 4000,
     connectTimeoutMs: 15000,   // bu sürede bağlanamazsa anlamlı hata ver
 
     // Ev bağlantılarının çoğu (CGNAT) doğrudan bağlantıya izin vermiyor.
     // STUN sadece "dış IP'm ne" sorusunu cevaplar; bağlantı yine kurulamazsa
     // trafiği TURN aktarıcısı üzerinden taşımak gerekir.
-    // Aktarıcılar çalışmazsa buraya kendi TURN bilgilerini yazabilirsin.
+    //
+    // TURN kimlik bilgileri sağlayıcıdan çalışma anında çekiliyor (kısa ömürlü
+    // bilgiler geliyor). Anahtar bu depoda açıkta duruyor; depo public olduğu
+    // için başkası da kotayı kullanabilir. Kotayı korumak gerekirse anahtarı
+    // sağlayıcı panelinden yenile.
+    // İki yol da desteklenir:
+    //   apiKey            → kimlik bilgileri çalışma anında çekilir
+    //   username+credential → panelden alınan sabit bilgiler doğrudan kullanılır
+    // İkisi birden doluysa sabit bilgiler kullanılır.
+    turn: {
+      host: 'puzzlegameaa.metered.live',
+      apiKey: '',
+      username: '7ea849840c346367c20aa635',
+      credential: 'zioLuy8n7tYIpf94'
+    },
+
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      {
-        urls: [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp'
-        ],
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-      }
+      { urls: 'stun:stun1.l.google.com:19302' }
     ]
   },
 

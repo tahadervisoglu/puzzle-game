@@ -22,7 +22,8 @@ PP.Net = function (config) {
     conns: [],         // oda sahibinde: misafir bağlantıları
     hostConn: null,    // misafirde: oda sahibine bağlantı
     ready: false,
-    iceState: null
+    iceState: null,
+    ice: null
   };
 
   function emit(type, payload, from) {
@@ -53,9 +54,17 @@ PP.Net = function (config) {
   }
 
   // TURN aktarıcıları olmadan CGNAT arkasındaki ev bağlantıları birbirini
-  // bulamıyor; bağlantı sonsuza kadar kurulmayı bekliyor.
+  // bulamıyor; bağlantı sonsuza kadar kurulmayı bekliyor. Kimlik bilgileri
+  // sağlayıcıdan çekildiği için önce onu bekleriz.
+  function prepare() {
+    return PP.Ice.get(config).then(function (iceServers) {
+      state.ice = iceServers;
+      return loadLib();
+    });
+  }
+
   function peerOptions() {
-    return { config: { iceServers: config.net.iceServers, sdpSemantics: 'unified-plan' } };
+    return { config: { iceServers: state.ice || config.net.iceServers } };
   }
 
   // Bağlantı neden kurulamadı sorusunu cevaplayabilmek için ICE durumunu izle
@@ -118,7 +127,7 @@ PP.Net = function (config) {
     // Oda kurar, kısa oda kodunu döndürür
     host: function () {
       reset();
-      return loadLib().then(function () {
+      return prepare().then(function () {
         return new Promise(function (resolve, reject) {
           let attempt = 0;
 
@@ -167,7 +176,7 @@ PP.Net = function (config) {
       if (clean.length !== 4) return Promise.reject(new Error('Oda kodu 4 karakter olmalı.'));
 
       reset();
-      return loadLib().then(function () {
+      return prepare().then(function () {
         return new Promise(function (resolve, reject) {
           const peer = new Peer(undefined, peerOptions());
           let settled = false;

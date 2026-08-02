@@ -12,13 +12,17 @@ window.PP = window.PP || {};
 PP.NetDiag = function (config) {
   return {
     run: function (timeoutMs) {
-      return new Promise(function (resolve) {
+      return PP.Ice.get(config).then(function (iceServers) {
+        return new Promise(function (resolve) {
         const found = { host: 0, srflx: 0, relay: 0 };
         const errors = [];
         let pc;
+        if (!iceServers.some(function (s) { return String(s.urls).indexOf('turn:') >= 0; })) {
+          errors.push('TURN kimlik bilgisi alınamadı: ' + (PP.Ice.lastError || 'yapılandırılmamış'));
+        }
 
         try {
-          pc = new RTCPeerConnection({ iceServers: config.net.iceServers });
+          pc = new RTCPeerConnection({ iceServers: iceServers });
         } catch (e) {
           resolve({ ok: false, found: found, errors: ['WebRTC açılamadı: ' + e.message] });
           return;
@@ -62,6 +66,7 @@ PP.NetDiag = function (config) {
             clearTimeout(timer);
             finish();
           });
+        });
       });
     }
   };

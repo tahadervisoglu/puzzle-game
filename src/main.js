@@ -184,7 +184,11 @@
     restart();
 
     const now = Date.now();
-    for (let s = 0; s < 4; s++) lastSeen[s] = now;
+    for (let s = 0; s < 4; s++) {
+      lastSeen[s] = now;
+      delete lastSent[s];
+      delete lastSentAt[s];
+    }
 
     if (progressTimer) clearInterval(progressTimer);
     progressTimer = setInterval(function () {
@@ -249,16 +253,27 @@
 
   // Sahip olduğum her tahtanın özetini yayınla. Oda sahibi botlarınkini de
   // gönderir; misafirler sadece kendi tahtasını.
+  //
+  // Trafik TURN aktarıcısı üzerinden gidip kotadan düştüğü için değişmeyen
+  // tahta tekrar gönderilmez. Yine de kopma tespiti bu mesajları nabız olarak
+  // kullandığından en geç heartbeatMs'de bir gönderilir.
+  const lastSent = {};
+  const lastSentAt = {};
+
   function broadcastBoards() {
     if (!online || over) return;
+    const now = Date.now();
     for (let panel = 0; panel < 4; panel++) {
       const st = players[panel].state;
       if (!st.owned) continue;
-      net.send({
-        t: 'tahta', seat: st.seat,
-        p: players[panel].table.snapshot(),
-        h: (st.hand || []).length          // rakip kart sayısını görür, kartları göremez
-      });
+      const snap = players[panel].table.snapshot();
+      const hand = (st.hand || []).length;
+      const key = hand + ':' + JSON.stringify(snap);
+      const stale = now - (lastSentAt[st.seat] || 0) > cfg.net.heartbeatMs;
+      if (lastSent[st.seat] === key && !stale) continue;
+      lastSent[st.seat] = key;
+      lastSentAt[st.seat] = now;
+      net.send({ t: 'tahta', seat: st.seat, p: snap, h: hand });
     }
   }
 
