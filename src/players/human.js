@@ -32,6 +32,15 @@ PP.Human = function (player, config) {
     }
   }
 
+  // Tahta altımızdan değiştiyse (El değiştir kartı) sürükleme iptal edilir;
+  // yoksa artık var olmayan bir kümeyi taşımaya çalışırız.
+  bus.on('masa:degisti', function () {
+    if (!input.held) return;
+    input.held = null;
+    clearTargets();
+    canvas.classList.remove('grabbing');
+  });
+
   bus.on('niyet:tut', function (pt) {
     if (player.state.finished || player.hasEffect('donuk')) return;
     const p = table.pick(pt.x, pt.y);

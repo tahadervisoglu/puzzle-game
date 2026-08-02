@@ -574,9 +574,16 @@ PP.Table = function (bus, config, board, clusters) {
         } else {
           p.x = e[2] * state.width;
           p.y = e[3] * state.height;
+          // Masadaki her parça bir kümeye ait olmalı. Küme kurulmazsa parça
+          // sürüklenemez hale geliyordu (El değiştir kartından sonraki hata).
+          const c = clusters.create(p.x, p.y);
+          clusters.add(c, p, 0, 0);
         }
         state.order.push(p.id);
       }
+
+      // Tahta komple değiştiyse elde tutulan küme artık yok
+      bus.emit('masa:degisti', {});
     },
 
     // Parçayı doğrudan bir hücreye oturtur (kumar kartları için).
