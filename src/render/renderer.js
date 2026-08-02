@@ -93,10 +93,12 @@ PP.Renderer = function (canvas, table, config, owner) {
 
   // Poster büyüsü: tam resim ızgaranın tam üstüne soluk bindirilir. Parçalar
   // üstüne çizildiği için eksikler hayalet gibi görünür.
-  function drawGhost() {
+  function drawGhost(remaining) {
     const b = table.board.state;
+    // Son saniyelerde sönerek kaybolur, birden yok olmaz
+    const fade = Math.min(1, remaining / config.fx.ghostFadeSec);
     ctx.save();
-    ctx.globalAlpha = config.fx.ghostAlpha;
+    ctx.globalAlpha = config.fx.ghostAlpha * fade;
     ctx.drawImage(source, 0, 0, source.width, source.height, b.x, b.y, b.w, b.h);
     ctx.restore();
   }
@@ -163,7 +165,7 @@ PP.Renderer = function (canvas, table, config, owner) {
         ctx.translate(o.x, o.y);
       }
       drawBoard();
-      if (source && owner && owner.effects.poster > 0) drawGhost();
+      if (source && owner && owner.effects.poster > 0) drawGhost(owner.effects.poster);
 
       if (source) {
         for (let i = 0; i < s.order.length; i++) {

@@ -331,25 +331,6 @@
 
   // --- Büyü arayüzü ---
 
-  function renderPocket() {
-    const pocket = players[0].state.pocket;
-    for (let i = 0; i < 2; i++) {
-      const el = document.getElementById('slot-' + i);
-      const id = pocket[i];
-      const nameEl = el.querySelector('.slot-name');
-      el.classList.remove('light', 'dark');
-      if (!id) {
-        nameEl.textContent = 'boş';
-        el.disabled = true;
-      } else {
-        const skill = PP.skills[id];
-        nameEl.textContent = skill.name;
-        el.classList.add(skill.type === 'light' ? 'light' : 'dark');
-        el.disabled = false;
-      }
-    }
-  }
-
   function showCards(offer) {
     if (!offer) { cardsEl.hidden = true; return; }
     const light = PP.skills[offer.light];
@@ -376,10 +357,6 @@
     referenceEl.classList.toggle('fogged', players[0].hasEffect('sis'));
   }
 
-  function castSlot(i) {
-    if (over) return;
-    if (skills.cast(players[0], i)) renderPocket();
-  }
 
   function resizeAll() {
     for (let i = 0; i < players.length; i++) players[i].resize();
@@ -412,7 +389,6 @@
     pool.reset(cfg.puzzle.cols * cfg.puzzle.rows);
     skills.reset();
     makeBots();
-    renderPocket();
     renderWarnings();
     updateHud();
   }
@@ -631,9 +607,6 @@
     if (e.key === 'Enter') { setupNet(); lobby.join(); }
   });
 
-  document.getElementById('slot-0').addEventListener('click', function () { castSlot(0); });
-  document.getElementById('slot-1').addEventListener('click', function () { castSlot(1); });
-
   document.getElementById('card-light').addEventListener('click', function () {
     skills.choose(players[0], 'light');
   });
@@ -641,9 +614,11 @@
     skills.choose(players[0], 'dark');
   });
 
+  // Kart seçimi klavyeden de yapılabilir
   window.addEventListener('keydown', function (e) {
-    if (e.key === '1') castSlot(0);
-    else if (e.key === '2') castSlot(1);
+    if (over || !players[0].state.pendingOffer) return;
+    if (e.key === '1') skills.choose(players[0], 'light');
+    else if (e.key === '2') skills.choose(players[0], 'dark');
   });
 
   setInterval(function () {
@@ -666,11 +641,8 @@
       showCards(offer);
       audio.play('kart');
     },
-    onPocketChange: function (player) {
-      if (player.state.isHuman) {
-        renderPocket();
-        showCards(player.state.pendingOffer);
-      }
+    onChosen: function (player) {
+      if (player.state.isHuman) showCards(null);
     },
     onWarn: function (player) {
       if (player.state.isHuman) audio.play('uyari');

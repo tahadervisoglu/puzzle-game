@@ -63,13 +63,13 @@ Ekran 4 panele bölünür: sol üstteki büyük panel senin, diğer üçü botla
 
 ### Büyüler
 
-Her %10 doğru parçada önüne **iki kart** çıkar: biri ışık (kendine fayda), biri karanlık (rakibe sabotaj). Birini seçersin, cebe girer — en fazla 2 slot. **1** ve **2** tuşlarıyla (ya da slota tıklayarak) atarsın. Karanlık büyüler otomatik olarak **lidere** gider.
+Her %10 doğru parçada önüne **iki kart** çıkar: biri ışık (kendine fayda), biri karanlık (rakibe sabotaj). Birini seçersin ve **büyü anında çalışır** — cepte bekletme yok. Fare ile tıklayabilir ya da **1** (ışık) / **2** (karanlık) tuşlarını kullanabilirsin. Karanlık büyüler otomatik olarak **lidere** gider.
 
 | Büyü | Tür | Etki |
 |---|---|---|
 | Çifte teslimat | ışık | Anında 2 parça alırsın (havuzda kaparsın, klasikte düşer) |
 | Kontrol | ışık | Yanlış oturan parçaların 3 sn kırmızı yanar |
-| Poster | ışık | Tam resim 3 sn ızgaranın üstünde soluk belirir |
+| Poster | ışık | Tam resim 5 sn ızgaranın üstünde belirir, sonra sönerek kaybolur |
 | Sis | karanlık | Ortak referans 5 sn gizlenir — atan hariç herkese |
 | Rüzgar | karanlık | Hedefin tek duran parçaları savrulur (birleşmiş kümeler korunur) |
 | Karartma | karanlık | Hedefin paneli 6 sn kararır, imleç çevresi fener gibi kalır |

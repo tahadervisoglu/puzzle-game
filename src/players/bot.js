@@ -10,7 +10,6 @@ PP.Bot = function (player, rng, cfg, skills, pool) {
   let cooldown = cfg.thinkMs;
   let drag = null;
   let pickDelay = -1;
-  let useDelay = -1;
   let claimTimer = cfg.claimMs;
 
   // Sis ve Karartma botu da vurur: resmi göremeyince daha çok hata yapar ve
@@ -132,29 +131,20 @@ PP.Bot = function (player, rng, cfg, skills, pool) {
   }
 
   // Kart seçimi: geride kaldıysa saldırıya, öndeyse kendi faydasına yönelir.
+  // Seçim anında uygulanır, cepte bekletme yok.
   function handleSkills(dt, skillCfg) {
     const st = player.state;
+    if (!st.pendingOffer) { pickDelay = -1; return; }
 
-    if (st.pendingOffer) {
-      if (pickDelay < 0) pickDelay = rand(skillCfg.botPickDelay);
-      pickDelay -= dt;
-      if (pickDelay <= 0) {
-        const rival = skills.pickTarget(player);
-        const behind = rival && rival.state.correct > st.correct;
-        const wantDark = behind ? rng.next() < 0.75 : rng.next() < 0.35;
-        skills.choose(player, wantDark ? 'dark' : 'light');
-        pickDelay = -1;
-      }
-    }
+    if (pickDelay < 0) pickDelay = rand(skillCfg.botPickDelay);
+    pickDelay -= dt;
+    if (pickDelay > 0) return;
 
-    if (st.pocket.length) {
-      if (useDelay < 0) useDelay = rand(skillCfg.botUseDelay);
-      useDelay -= dt;
-      if (useDelay <= 0) {
-        skills.cast(player, 0);
-        useDelay = -1;
-      }
-    }
+    const rival = skills.pickTarget(player);
+    const behind = rival && rival.state.correct > st.correct;
+    const wantDark = behind ? rng.next() < 0.75 : rng.next() < 0.35;
+    skills.choose(player, wantDark ? 'dark' : 'light');
+    pickDelay = -1;
   }
 
   return {
@@ -192,7 +182,6 @@ PP.Bot = function (player, rng, cfg, skills, pool) {
       drag = null;
       cooldown = cfg.thinkMs;
       pickDelay = -1;
-      useDelay = -1;
       claimTimer = cfg.claimMs;
     }
   };

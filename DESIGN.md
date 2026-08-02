@@ -28,7 +28,7 @@ Havuz modunun iki kuralı var:
 
 ## Büyü ekonomisi
 
-- İlerleme = doğru birleştirilmiş parça yüzdesi. Her **%10 eşiğinde** 2 kart belirir: biri ışık (kendine fayda), biri karanlık (rakibe sabotaj). Birini seçersin, cebe girer (en fazla 2 slot), istediğin an kullanılır.
+- İlerleme = doğru birleştirilmiş parça yüzdesi. Her **%10 eşiğinde** 2 kart belirir: biri ışık (kendine fayda), biri karanlık (rakibe sabotaj). **Seçilen büyü anında uygulanır** — cep/bekletme yoktur. Bu bilinçli bir sadeleştirme: "doğru anı bekleme" katmanı kalktı, oyun hızlandı ve kart geldiğinde anında karar verme baskısı arttı.
 - **Süre uzadıkça eşikler küçülür** (%10 → %9 → %8...) — oyun uzarsa büyüler sıklaşır, kimse büyüsüz kalmaz.
 - **Yetişme mekaniği:** geride kalan oyuncuya kart seçiminde daha güçlü karanlık seçenekler çıkar; ayrıca karanlık büyüler varsayılan olarak lidere gider.
 - **Spam freni:** aynı hedefe 20 sn içinde aynı büyü ikinci kez gelirse yarı etki.
@@ -41,7 +41,7 @@ Havuz modunun iki kuralı var:
 | Çifte teslimat | Işık | Anında 2 ekstra parça | Temel ekonomi büyüsü |
 | Kontrol | Işık | 3 sn boyunca yanlış oturan parçalar kırmızı yanar | Yanlışı bulmak stratejinin parçası |
 | İpucu | Işık | Elindeki bir parçanın gitmesi gereken bölge parlar | Yeni oyuncu dostu |
-| **Poster** | Işık | Tam resim 3 sn ızgaranın üstünde %30 saydamlıkla belirir | Ortadaki madalyon küçük kaldığı için eklendi |
+| **Poster** | Işık | Tam resim 5 sn ızgaranın üstünde %60 saydamlıkla belirir, son 1,4 sn sönerek kaybolur | Ortadaki madalyon küçük kaldığı için eklendi |
 | Mıknatıs | Işık | 12 sn yerleştirme toleransı 2 katı | Hız oyuncusuna |
 | Kalkan | Işık | Sıradaki saldırıyı yutar | Saldırı spam'ine fren |
 | Turbo | Işık | 15 sn parça gelişi 2 kat hızlı | Çifte teslimatın süreli hali |

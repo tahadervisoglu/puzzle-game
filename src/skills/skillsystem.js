@@ -48,20 +48,20 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
 
   function grant(player) {
     const st = player.state;
-    if (st.pendingOffer || st.pocket.length >= cfg.pocketSize) return;
-    if (st.owed <= 0) return;
+    if (st.pendingOffer || st.owed <= 0) return;
     st.owed--;
     st.pendingOffer = makeOffer(player);
     if (hooks.onOffer) hooks.onOffer(player, st.pendingOffer);
   }
 
+  // Kart seçmek büyüyü doğrudan uygular — cep yok, bekletme yok.
   function choose(player, which) {
     const st = player.state;
     if (!st.pendingOffer) return null;
     const id = which === 'dark' ? st.pendingOffer.dark : st.pendingOffer.light;
     st.pendingOffer = null;
-    if (st.pocket.length < cfg.pocketSize) st.pocket.push(id);
-    if (hooks.onPocketChange) hooks.onPocketChange(player);
+    if (hooks.onChosen) hooks.onChosen(player);
+    castById(player, id);
     return id;
   }
 
@@ -112,21 +112,16 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
     if (hooks.onWarn) hooks.onWarn(player, skill, caster);
   }
 
-  function cast(caster, slotIndex) {
-    const st = caster.state;
-    if (st.finished) return false;
-    const skillId = st.pocket[slotIndex];
-    if (!skillId) return false;
+  function castById(caster, skillId) {
+    if (caster.state.finished) return false;
     const skill = PP.skills[skillId];
+    if (!skill) return false;
 
     let target = null;
     if (skill.type === 'dark' && !skill.hitsEveryone) {
       target = pickTarget(caster);
       if (!target) return false;
     }
-
-    st.pocket.splice(slotIndex, 1);
-    if (hooks.onPocketChange) hooks.onPocketChange(caster);
 
     // Hedefi atan belirler ve açıkça bildirir; yoksa gecikme yüzünden herkes
     // farklı lider görüp farklı hedefe uygulayabilir.
@@ -176,7 +171,6 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
       for (const k in lastHit) delete lastHit[k];
       for (let i = 0; i < players.length; i++) {
         const st = players[i].state;
-        st.pocket = [];
         st.pendingOffer = null;
         st.owed = 0;
         st.nextThreshold = cfg.thresholdStart;
@@ -213,7 +207,7 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
     },
 
     choose: choose,
-    cast: cast,
+    castById: castById,
     remoteCast: remoteCast,
     bySeat: bySeat,
     pickTarget: pickTarget,

@@ -48,10 +48,10 @@ PP.skills = {
     id: 'poster',
     name: 'Poster',
     type: 'light',
-    desc: 'Tam resim 3 sn ızgaranın üstünde soluk belirir',
+    desc: 'Tam resim 5 sn ızgaranın üstünde belirir, sonra söner',
     visual: true,
     apply: function (ctx) {
-      ctx.self.addEffect('poster', 3 * ctx.scale);
+      ctx.self.addEffect('poster', 5 * ctx.scale);
       ctx.fx(ctx.self, 'isik');
     }
   },

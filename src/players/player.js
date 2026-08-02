@@ -29,8 +29,7 @@ PP.Player = function (opts) {
     correct: 0,
     // Büyü sistemi (F3)
     effects: {},          // buyuId -> kalan saniye
-    pocket: [],           // cepteki büyüler
-    pendingOffer: null,   // seçim bekleyen kart çifti
+    pendingOffer: null,   // seçim bekleyen kart çifti (seçilince hemen uygulanır)
     owed: 0,              // hak edilmiş ama henüz sunulmamış kart
     nextThreshold: 0,
     warning: null,        // { text, remaining }
