@@ -19,10 +19,11 @@ Yapbozun referans resmi ortada, herkesin ortak kullanımında durur. Parçalar k
 - Dolu bir hücreye bırakırsanız iki parça **yer değiştirir**.
 - Izgara dışında parçalar birbirine **yapışır** ve küme olarak birlikte taşınır. **Sağ tık** kümeden tek parça koparır.
 
-İki mod var, oyun başında seçilir:
+Üç mod var, oyun başında seçilir:
 
-- **Klasik** — herkese kendi parçaları düşer, birkaç saniyede bir yenisi gelir.
-- **Ortak havuz** — parçalar alttaki ortak havuza düşer, dördünüz de oradan kaparsınız. İhtiyacınız olanı rakipten önce almalısınız.
+- **Klasik** — dört kişi, herkese kendi parçaları düşer, birkaç saniyede bir yenisi gelir.
+- **Teke tek** — iki kişi, iki büyük panel. Her saldırı doğrudan karşınızdakine gider, saklanacak kalabalık yoktur.
+- **Ortak havuz** — dört kişi, parçalar alttaki ortak havuza düşer ve hepiniz oradan kaparsınız. İhtiyacınız olanı rakipten önce almalısınız.
 
 ## Büyüler
 
@@ -37,6 +38,8 @@ Saldırılar hedefin ekranında **bir saniye önceden uyarı verir** — yani g�
 Büyülerden ayrı ikinci bir katman. Belirli aralıklarla elinize **kör bir kart** gelir; ne geleceğini seçemezsiniz. Kartlar elinizde birikir, istediğiniz an oynarsınız.
 
 Rakipler **kaç kartınız olduğunu görür, hangileri olduğunu göremez.**
+
+Deste oyuncu sayısına göre değişir; bazı kartlar teke tekte anlamını yitirdiği için o modda hiç dağıtılmaz.
 
 Destede tahtanızı rastgele bir rakiple takas eden, yazı tura atıp parçalarınızı ya söken ya da yerine oturtan, herkesi birden vuran ve kendinizi de yakabileceğiniz kartlar var.
 

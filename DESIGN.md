@@ -2,11 +2,15 @@
 
 Tricky Towers'ın büyü gerilimini yapboza taşıyan, 4 kişilik, bölünmüş ekranlı rekabetçi yapboz oyunu. JS prototip (vanilla JS + Canvas 2D).
 
-## İki mod
+## Modlar
 
 Oyun başında iki moddan biri seçilir. İkisi de aynı ızgara, küme ve büyü sistemini kullanır; fark **parçaların nereden geldiğidir**.
 
 **Klasik.** Herkese kendi parçaları düşer, 3 saniyede bir. Parça sırası herkeste aynı. Yarış tamamen tempo ve hatasızlık üzerine; rakiple tek teması büyüler.
+
+**Teke tek.** İki oyuncu, iki büyük panel; alt sıra ve havuz şeridi kapanır. Dört panelde iki kişi oynayınca ekranın yarısı boşa gidiyordu. 3. ve 4. koltuk `active = false` olur: panelleri gizlenir, botları durur, büyü ve kumar hedeflemesinde hiç görünmezler, sıralamaya girmezler.
+
+Bu modda **kart destesi de değişir.** Kartlar isteğe bağlı bir `minPlayers` taşır; El değiştir teke tekte rastgeleliğini kaybedip düz bir tahta takasına döndüğü ve maçı tek kartla çevirdiği için 3+ oyuncu ister. Aynı mekanizmayla ileride başka kartlar da modlara göre ayarlanabilir.
 
 **Ortak havuz.** Parçalar kimseye ait değil: ekranın altındaki ortak havuza düşer, dört oyuncu da oradan kapar. İhtiyacın olan parçayı rakipten önce tıklaman gerekir. Bu mod oyunu yapbozdan çıkarıp doğrudan temaslı bir parti oyununa çeviren şey — büyülere gerek kalmadan rakiple çekişirsin.
 

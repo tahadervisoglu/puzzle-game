@@ -30,7 +30,7 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
     let best = null;
     for (let i = 0; i < players.length; i++) {
       const p = players[i];
-      if (p === caster || p.state.finished || p.state.dropped) continue;
+      if (p === caster || p.state.finished || p.state.dropped || !p.state.active) continue;
       if (!best || p.state.correct > best.state.correct) best = p;
     }
     return best;

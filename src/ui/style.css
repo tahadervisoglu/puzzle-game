@@ -740,6 +740,24 @@ button:active { transform: scale(0.97); }
 #stage.klasik #pool { display: none; }
 #stage.klasik #reference { top: 58%; }
 
+/* Teke tek: iki büyük panel, alt sıra ve havuz yok */
+#stage.teketek {
+  grid-template-columns: 60% 40%;
+  grid-template-rows: 100%;
+}
+
+#stage.teketek #panel-2,
+#stage.teketek #panel-3,
+#stage.teketek #pool { display: none; }
+
+#stage.teketek #panel-0,
+#stage.teketek #panel-1 { border-bottom: none; }
+
+#stage.teketek #reference { left: 60%; top: 50%; }
+
+/* Tek rakip olduğu için başlık daha büyük */
+#stage.teketek #head-1 { font-size: 13px; padding: 7px 10px; }
+
 #win {
   position: absolute;
   inset: 0;

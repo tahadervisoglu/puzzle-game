@@ -133,6 +133,25 @@
     }
   }
 
+  // Teke tekte 3. ve 4. koltuk devre dışı kalır: panelleri gizlenir, botları
+  // durur, büyü ve kumar hedeflemesinde hiç görünmezler.
+  function applyStageMode() {
+    const solo = cfg.mode === 'teketek';
+    stageEl.classList.toggle('klasik', cfg.mode === 'klasik');
+    stageEl.classList.toggle('teketek', solo);
+    for (let panel = 0; panel < 4; panel++) {
+      const active = !solo || panel < 2;
+      players[panel].state.active = active;
+      if (panel > 0 && !active) bots[panel - 1].active = false;
+    }
+  }
+
+  function activeCount() {
+    let n = 0;
+    for (let i = 0; i < players.length; i++) if (players[i].state.active) n++;
+    return n;
+  }
+
   function setPanelName(panel, text) {
     players[panel].state.name = text;
     const el = document.getElementById('name-' + panel);
@@ -162,7 +181,7 @@
       st.remote = panel !== 0 && (human || !isHost);
       st.owned = !st.remote;
       setPanelName(panel, 'Oyuncu ' + (seat + 1));
-      if (panel > 0) bots[panel - 1].active = !st.remote;
+      if (panel > 0) bots[panel - 1].active = st.active && !st.remote;
     }
   }
 
@@ -178,7 +197,7 @@
     cfg.mode = info.mode;
     roundSeed = info.seed >>> 0;
     netMembers = info.members || [];
-    stageEl.classList.toggle('klasik', cfg.mode === 'klasik');
+    applyStageMode();
     applySeating(netMembers);
     resizeAll();
     restart();
@@ -548,6 +567,7 @@
     skills.reset();
     gamble.reset();
     makeBots();
+    applyStageMode();      // kapalı koltuklar kapalı kalsın
     renderHands();
     renderWarnings();
     updateHud();
@@ -564,6 +584,7 @@
     let leader = -1;
     let leaderScore = -1;
     for (let i = 0; i < players.length; i++) {
+      if (!players[i].state.active) continue;
       if (players[i].state.correct > leaderScore) {
         leaderScore = players[i].state.correct;
         leader = i;
@@ -614,7 +635,9 @@
     const total = cfg.puzzle.cols * cfg.puzzle.rows;
     winTitleEl.textContent = winner.state.isHuman ? 'Kazandın' : winner.state.name + ' kazandı';
 
-    const ranked = players.slice().sort(function (a, b) {
+    const ranked = players.filter(function (p) {
+      return p.state.active;
+    }).sort(function (a, b) {
       if (a.state.finished !== b.state.finished) return a.state.finished ? -1 : 1;
       if (a.state.finished) return a.state.finishedAt - b.state.finishedAt;
       return b.state.correct - a.state.correct;
@@ -653,6 +676,7 @@
       if (bots[i].active && bots[i].ctrl) bots[i].ctrl.update(dt, cfg.skills);
     }
     for (let i = 0; i < players.length; i++) {
+      if (!players[i].state.active) continue;
       if (players[i].update(dt)) finish(players[i]);
     }
   }
@@ -707,7 +731,7 @@
   function setMode(mode) {
     goOffline();
     cfg.mode = mode;
-    stageEl.classList.toggle('klasik', mode === 'klasik');
+    applyStageMode();
     startEl.hidden = true;
     started = true;
     resizeAll();
@@ -753,6 +777,7 @@
   });
   document.getElementById('win-mode').addEventListener('click', showModeSelect);
   document.getElementById('mode-klasik').addEventListener('click', function () { setMode('klasik'); });
+  document.getElementById('mode-teketek').addEventListener('click', function () { setMode('teketek'); });
   document.getElementById('mode-havuz').addEventListener('click', function () { setMode('havuz'); });
 
   // Ağ kodu ancak buraya tıklanınca yüklenir

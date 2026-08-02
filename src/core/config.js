@@ -33,7 +33,9 @@ PP.config = {
   // yan yana park edilen parçalar kazara birleşmesin, isteyerek hizalansın.
   join: { toleranceRatio: 0.3, maxCascade: 4 },
 
-  // 'klasik' = herkese kendi parçaları düşer · 'havuz' = ortak havuzdan kapılır
+  // 'klasik'  = 4 kişi, herkese kendi parçaları düşer
+  // 'havuz'   = 4 kişi, ortak havuzdan kapılır
+  // 'teketek' = 2 kişi, iki panel; bazı kartlar bu modda desteden çıkar
   mode: 'klasik',
 
   // Klasik mod: parçalar doğrudan oyuncunun masasına düşer

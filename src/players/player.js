@@ -15,6 +15,7 @@ PP.Player = function (opts) {
     name: opts.name,
     isHuman: !!opts.isHuman,
     seat: opts.id,       // ağ oyununda koltuk numarası; panelden bağımsız
+    active: true,        // teke tek modunda 3. ve 4. koltuk devre dışı kalır
     remote: false,       // uzaktaki gerçek oyuncu — yerel simülasyon çalışmaz
     owned: true,         // bu makinede simüle ediliyor mu (büyü etkileri buna bakar)
     dropped: false,      // bağlantısı koptu — tahtası donar, hedeflenmez
@@ -182,8 +183,8 @@ PP.Player = function (opts) {
       // Uzaktaki oyuncunun tahtası ağdan gelir, burada simüle edilmez
       if (state.remote) return false;
 
-      // Klasik modda parçalar kendiliğinden düşer; Kilit büyüsü akışı durdurur
-      if (config.mode === 'klasik' && state.blockedUntil <= 0 && !table.allArrived()) {
+      // Havuz dışındaki modlarda parçalar kendiliğinden düşer; Kilit durdurur
+      if (config.mode !== 'havuz' && state.blockedUntil <= 0 && !table.allArrived()) {
         state.dripAcc += dt * 1000;
         while (state.dripAcc >= config.drip.intervalMs && !table.allArrived()) {
           state.dripAcc -= config.drip.intervalMs;

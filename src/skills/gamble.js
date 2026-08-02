@@ -72,7 +72,7 @@ function gOthers(ctx, includeSelf) {
   const out = [];
   for (let i = 0; i < ctx.players.length; i++) {
     const p = ctx.players[i];
-    if (p.state.finished || p.state.dropped) continue;
+    if (!p.state.active || p.state.finished || p.state.dropped) continue;
     if (!includeSelf && p === ctx.self) continue;
     out.push(p);
   }
@@ -97,6 +97,9 @@ PP.gambleCards = {
     name: 'El değiştir',
     desc: 'Tahtanı RASTGELE bir rakiple değiştirirsin — kim olduğunu bilmezsin',
     risk: 'high',
+    // Teke tekte rastgelelik kalmaz, düz bir tahta takasına döner ve
+    // maçı tek kartla çevirir; o yüzden 3+ oyuncu ister.
+    minPlayers: 3,
     apply: function (ctx) {
       const rivals = gOthers(ctx, false);
       if (!rivals.length) return;
@@ -243,10 +246,23 @@ PP.Gamble = function (players, config, rng, hooks) {
   const duels = [];
   let acc = 0;
 
+  // Oyuncu sayısına uymayan kartlar desteden çıkarılır (ör. El değiştir
+  // teke tekte anlamsız kalıyor)
+  function deckFor() {
+    let count = 0;
+    for (let i = 0; i < players.length; i++) if (players[i].state.active) count++;
+    return PP.gambleDeck.filter(function (id) {
+      const card = PP.gambleCards[id];
+      return card && (!card.minPlayers || count >= card.minPlayers);
+    });
+  }
+
   function draw(player) {
     const st = player.state;
     if (st.hand.length >= cfg.handSize) return;
-    st.hand.push(gRandom(rng, PP.gambleDeck));
+    const deck = deckFor();
+    if (!deck.length) return;
+    st.hand.push(gRandom(rng, deck));
     if (hooks.onHandChange) hooks.onHandChange(player);
   }
 
@@ -342,7 +358,7 @@ PP.Gamble = function (players, config, rng, hooks) {
         acc -= cfg.drawMs;
         for (let i = 0; i < players.length; i++) {
           const st = players[i].state;
-          if (st.finished || st.dropped) continue;
+          if (!st.active || st.finished || st.dropped) continue;
           if (st.owned) draw(players[i]);
         }
       }
