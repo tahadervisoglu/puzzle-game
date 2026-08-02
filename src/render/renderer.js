@@ -133,6 +133,35 @@ PP.Renderer = function (canvas, table, config, owner) {
     ctx.restore();
   }
 
+  // Dondur kartı: mavi buz katmanı, kenarlarda kırağı ve "dondun" yazısı.
+  // Hareket edemediğin bakar bakmaz anlaşılsın diye.
+  function drawFrost(s, remaining) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(120,190,255,0.22)';
+    ctx.fillRect(0, 0, s.width, s.height);
+
+    const grad = ctx.createRadialGradient(
+      s.width / 2, s.height / 2, Math.min(s.width, s.height) * 0.25,
+      s.width / 2, s.height / 2, Math.max(s.width, s.height) * 0.65
+    );
+    grad.addColorStop(0, 'rgba(180,225,255,0)');
+    grad.addColorStop(1, 'rgba(180,225,255,0.6)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, s.width, s.height);
+
+    ctx.strokeStyle = 'rgba(215,240,255,0.75)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, s.width - 4, s.height - 4);
+
+    if (owner.isHuman) {
+      ctx.fillStyle = 'rgba(235,248,255,0.92)';
+      ctx.font = '600 20px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('DONDUN  ' + remaining.toFixed(1) + 's', s.width / 2, s.height * 0.16);
+    }
+    ctx.restore();
+  }
+
   // Karartma büyüsü: insan oyuncuda imleç çevresi fener gibi açık kalır,
   // botlarda panel tümden kararır.
   function drawBlackout(s) {
@@ -190,6 +219,7 @@ PP.Renderer = function (canvas, table, config, owner) {
 
       if (fx) fx.draw(ctx, s.width, s.height);
       if (owner && owner.effects.karartma > 0) drawBlackout(s);
+      if (owner && owner.effects.donuk > 0) drawFrost(s, owner.effects.donuk);
     }
   };
 };

@@ -6,6 +6,8 @@ PP.Board = function () {
   const state = {
     cols: 0, rows: 0, size: 0,
     x: 0, y: 0, w: 0, h: 0,
+    baseX: 0, baseY: 0,   // sarsıntısız konum
+    shaking: false,
     cells: [],          // hücre başına parça id'si ya da null
     targets: [],        // sürüklenen kümenin oturacağı hücreler
     swapTarget: -1      // dolu hücre: bırakılırsa yer değiştirilecek
@@ -26,9 +28,20 @@ PP.Board = function () {
       state.size = size;
       state.w = cols * size;
       state.h = rows * size;
-      state.x = Math.round((canvasW - state.w) / 2);
-      state.y = Math.round((canvasH - state.h) / 2);
+      state.baseX = Math.round((canvasW - state.w) / 2);
+      state.baseY = Math.round((canvasH - state.h) / 2);
+      state.x = state.baseX;
+      state.y = state.baseY;
       if (shapeChanged || state.cells.length !== cols * rows) reset();
+    },
+
+    // Deprem: ızgaranın GERÇEK konumu kayar. Hem çizim hem yerleştirme aynı
+    // konumu kullandığı için gördüğünüz yer doğru yerdir — ama ızgara hareket
+    // ettiği için nişan aldığınız hücre siz bırakana kadar kaymış olabilir.
+    shake: function (dx, dy) {
+      state.x = state.baseX + dx;
+      state.y = state.baseY + dy;
+      state.shaking = !!(dx || dy);
     },
 
     reset: reset,

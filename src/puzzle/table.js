@@ -500,6 +500,17 @@ PP.Table = function (bus, config, board, clusters) {
 
     relayout: relayout,
     swapCellUnder: occupiedCellUnder,
+
+    // Izgara kaydığında oturmuş parçalar onunla birlikte hareket etmeli
+    syncSeated: function () {
+      for (let i = 0; i < state.pieces.length; i++) {
+        const p = state.pieces[i];
+        if (p.cell < 0) continue;
+        p.x = board.cellX(p.cell);
+        p.y = board.cellY(p.cell);
+      }
+    },
+
     prepare: prepare,
     receive: receive,
     dripNext: dripNext,

@@ -54,7 +54,11 @@ Havuz modunun iki kuralı var:
 | Yapışkan | Karanlık | Hedefin sürükleme hızı %50, 6 sn | Hafif ama sinir bozucu |
 | Sahte parça | Karanlık | Hedefe hiçbir yere oturmayan 2 parça | Masayı kirletir |
 | **Kilit** | Karanlık | Hedefin parça akışı 5 sn durur | Her iki modda çalışır |
-| **Deprem** | Karanlık | Atan hariç herkesin ızgarasından 2 parça sökülür | Ortam olayı; üç kişiyi birden vurduğu için 3 yerine 2 parça |
+| **Deprem** | Karanlık | Atan hariç herkesin ızgarası 3 sn sallanır, 2 parça sökülür | Ortam olayı; üç kişiyi birden vurduğu için 3 yerine 2 parça |
+
+**Deprem'de ızgara gerçekten kayar.** Sarsıntı sırasında ızgaranın *gerçek* konumu oynar; çizim ve yerleştirme aynı konumu kullandığı için gördüğünüz yer doğru yerdir, ama ızgara hareket ettiğinden nişan aldığınız hücre siz bırakana kadar kaymış olabilir. Oturmuş parçalar ızgarayı takip eder. Sarsıntı sönerek durur.
+
+**Dondur'da mavi buz katmanı** panelin üstüne biner, kenarlarda kırağı belirir ve kalan süre yazılır — hareket edemediğiniz bakar bakmaz anlaşılsın diye.
 | **Takas** | Karanlık | Hedefin ızgarasında iki parçanın yeri değişir | **Görünmez hasar** — tahta dolu görünür, ilerleme düşer |
 | **Yapıştır** | Karanlık | Hedefin masadaki parçaları tek yığına yapışır | Sevilen mekaniği cezaya çevirir |
 
@@ -95,6 +99,15 @@ Büyü sisteminden **bilinçli olarak ayrı** ikinci bir katman:
 **Gizli bilgi.** Rakip kaç kartın olduğunu görür (panel başlığındaki rozet), hangileri olduğunu göremez. Ağ oyununda da sadece kart *sayısı* paylaşılır — tahta özetine tek bir sayı olarak eklenir.
 
 **Kumarı kumar yapan şey:** kartı seçemezsin. Bir kartı elinde tutup "doğru anı" beklemek serbesttir, ama hangi kartın geleceğine karar veremezsin. Ayrıca destede seni de vuran kartlar vardır (Rulet, Ateş çemberi, Çifte ya da hiç'in kötü yüzü) — bu olmadan sistem sadece "bedava güç" olurdu.
+
+**Sonucu açığa çıkaran animasyonlar.** Kumar hissi sonucun kendisinden değil, beklerken geçen o birkaç saniyeden gelir. Bu yüzden sonuç önce belirlenir (ağda iki taraf farklı sonuca varmasın diye), animasyon sadece onu açığa çıkarır:
+
+- **Çifte ya da hiç** → sol altta iki seçenek arasında gidip gelen, yavaşlayarak duran bir rulet
+- **El değiştir** → üç rakip paneli sırayla parlar, yavaşlar, birinde durup yanıp söner; tahta ondan sonra alınır
+
+Animasyon sadece kartı oynayan insana gösterilir; bot ya da uzak oyuncuda etki anında uygulanır.
+
+**İşe yaramayan kart teklif edilmez.** Tüm parçalar geldikten sonra "2 parça al" gibi kartlar ölü kalıyordu. Artık her kart isteğe bağlı bir `useful()` yordamı taşır ve teklif anında o an bir işe yarayıp yaramadığına bakılır; yaramıyorsa deste başka kart verir. Bu kural Hırsız, Rüzgar, Takas gibi geç oyunda ölen kartları da otomatik olarak düzeltir.
 
 **Tasarım sırasında elenen fikir:** "Kör takas" (kendi ızgarandaki iki parçanın yeri habersiz değişir) kullanıcı tarafından reddedildi — cezası eğlenceli değil, sadece sinir bozucuydu. "Çifte ya da hiç" de parça kazanmak/kaybetmek yerine **kendi parçalarının kaderini** riske atacak şekilde yeniden yazıldı: ya iki parçan sökülür ya iki parçan doğru yerine oturur. Bu hâli tematik olarak çok daha yerinde.
 

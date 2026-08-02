@@ -105,7 +105,9 @@ PP.config = {
     popDecay: 0.86,      // yerleşme sıçramasının sönümü
     popScale: 0.13,      // yerleşince parçanın ne kadar şişeceği
     ghostAlpha: 0.6,     // Poster büyüsünde tam resmin saydamlığı
-    ghostFadeSec: 1.4    // son saniyelerde sönerek kaybolur
+    ghostFadeSec: 1.4,   // son saniyelerde sönerek kaybolur
+    quakeSec: 3,         // Deprem'de ızgaranın sallandığı süre
+    quakeAmp: 26         // sallanma genliği (px) — nişan almayı zorlaştırır
   },
 
   audio: {

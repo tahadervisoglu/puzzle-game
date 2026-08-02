@@ -13,6 +13,10 @@ PP.skills = {
     name: 'Çifte teslimat',
     type: 'light',
     desc: 'Anında 2 parça alırsın',
+    // Tüm parçalar geldiyse bu kartın hiçbir anlamı kalmaz
+    useful: function (self) {
+      return PP.config.mode === 'havuz' ? true : !self.table.allArrived();
+    },
     apply: function (ctx) {
       const n = ctx.scale < 1 ? 1 : 2;
       for (let i = 0; i < n; i++) {
@@ -80,6 +84,9 @@ PP.skills = {
     type: 'dark',
     desc: 'Atan hariç herkesin tek duran parçaları savrulur',
     hitsEveryone: true,
+    useful: function (self, rivals) {
+      return rivals.some(function (r) { return r.table.loosePieces().length > 0; });
+    },
     apply: function (ctx) {
       for (let i = 0; i < ctx.players.length; i++) {
         const t = ctx.players[i];
@@ -116,6 +123,9 @@ PP.skills = {
     name: 'Hırsız',
     type: 'dark',
     desc: 'Hedefin masasındaki bir parçayı çalarsın',
+    useful: function (self, rivals) {
+      return rivals.some(function (r) { return r.table.loosePieces().length > 0; });
+    },
     apply: function (ctx) {
       const loose = ctx.target.table.loosePieces();
       if (!loose.length) return;
@@ -157,12 +167,16 @@ PP.skills = {
     id: 'deprem',
     name: 'Deprem',
     type: 'dark',
-    desc: 'Atan hariç herkesin ızgarasından 2 parça sökülür',
+    desc: 'Atan hariç herkesin ızgarası sarsılır, 2 parça sökülür',
     hitsEveryone: true,
+    useful: function (self, rivals) {
+      return rivals.some(function (r) { return r.table.seatedPieces().length > 0; });
+    },
     apply: function (ctx) {
       for (let i = 0; i < ctx.players.length; i++) {
         const t = ctx.players[i];
         if (t === ctx.self || t.state.finished || t.state.dropped) continue;
+        t.addEffect('sarsinti', PP.config.fx.quakeSec);
         if (!ctx.owns(t)) { ctx.fx(t, 'deprem'); continue; }
 
         const seated = t.table.seatedPieces();
@@ -186,6 +200,9 @@ PP.skills = {
     name: 'Takas',
     type: 'dark',
     desc: 'Hedefin ızgarasında iki parçanın yeri değişir — nerede olduğunu bilmez',
+    useful: function (self, rivals) {
+      return rivals.some(function (r) { return r.table.seatedPieces().length >= 2; });
+    },
     apply: function (ctx) {
       const t = ctx.target;
       const n = ctx.scale < 1 ? 1 : 2;
@@ -206,6 +223,9 @@ PP.skills = {
     name: 'Yapıştır',
     type: 'dark',
     desc: 'Hedefin masadaki parçaları tek yığına yapışır — sağ tıkla ayırması gerekir',
+    useful: function (self, rivals) {
+      return rivals.some(function (r) { return r.table.loosePieces().length >= 2; });
+    },
     apply: function (ctx) {
       const n = ctx.target.table.clumpLoose();
       if (n) ctx.fx(ctx.target, 'yapistir');

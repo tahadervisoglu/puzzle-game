@@ -152,6 +152,23 @@ PP.Player = function (opts) {
         state.effects[id] -= dt;
         if (state.effects[id] <= 0) delete state.effects[id];
       }
+
+      // Deprem: ızgaranın gerçek konumu sallanır, oturmuş parçalar onu takip
+      // eder. Sönerek durur, yoksa bitişi ani ve garip olur.
+      const quake = state.effects.sarsinti || 0;
+      if (quake > 0) {
+        const k = Math.min(1, quake / config.fx.quakeSec);
+        const amp = config.fx.quakeAmp * k * k;
+        state.quakePhase = (state.quakePhase || 0) + dt * 34;
+        board.shake(
+          Math.sin(state.quakePhase) * amp,
+          Math.cos(state.quakePhase * 1.37) * amp * 0.7
+        );
+        table.syncSeated();
+      } else if (board.state.shaking) {
+        board.shake(0, 0);
+        table.syncSeated();
+      }
       if (state.warning) {
         state.warning.remaining -= dt;
         if (state.warning.remaining <= 0) state.warning = null;

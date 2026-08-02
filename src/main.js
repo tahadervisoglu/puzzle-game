@@ -418,6 +418,72 @@
     }
   }
 
+  // Sonuç zaten belliyken onu açığa çıkaran animasyonlar. Kumar hissi
+  // sonucun kendisinden değil, beklerken geçen o birkaç saniyeden geliyor.
+  function spinRoulette(win, done) {
+    const box = document.getElementById('roulette');
+    const lose = document.getElementById('rl-lose');
+    const winEl = document.getElementById('rl-win');
+    box.hidden = false;
+    let i = 0;
+    const steps = 15;
+
+    function tick() {
+      const onWin = i % 2 === 1;
+      lose.classList.toggle('on', !onWin);
+      winEl.classList.toggle('on', onWin);
+      audio.play('tut');
+      i++;
+      if (i < steps) {
+        setTimeout(tick, 55 + i * i * 1.6);       // gittikçe yavaşlar
+        return;
+      }
+      lose.classList.toggle('on', !win);
+      winEl.classList.toggle('on', win);
+      box.classList.add('settled');
+      audio.play(win ? 'kazandi' : 'darbe');
+      setTimeout(function () {
+        box.hidden = true;
+        box.classList.remove('settled');
+        lose.classList.remove('on');
+        winEl.classList.remove('on');
+        done();
+      }, 850);
+    }
+    tick();
+  }
+
+  function spinPanels(targetPanel, done) {
+    const panels = [1, 2, 3];
+    function clear() {
+      panels.forEach(function (p) {
+        document.getElementById('panel-' + p).classList.remove('picking');
+      });
+    }
+    let i = 0;
+    const steps = 17;
+
+    function tick() {
+      clear();
+      document.getElementById('panel-' + panels[i % panels.length]).classList.add('picking');
+      audio.play('tut');
+      i++;
+      if (i < steps) {
+        setTimeout(tick, 60 + i * i * 1.5);
+        return;
+      }
+      clear();
+      const el = document.getElementById('panel-' + targetPanel);
+      el.classList.add('picked');
+      audio.play('kazandi');
+      setTimeout(function () {
+        el.classList.remove('picked');
+        done();
+      }, 950);
+    }
+    tick();
+  }
+
   function playCard(index) {
     if (over || !gamble) return;
     if (gamble.play(players[0], index)) audio.play('buyu');
@@ -812,6 +878,14 @@
     },
     onLocalPlay: function (cardId, seat) {
       if (online && net) net.send({ t: 'kumar', card: cardId, seat: seat });
+    },
+    onReveal: function (kind, data, done) {
+      if (kind === 'rulet') { spinRoulette(data.win, done); return; }
+      if (kind === 'secim') {
+        const panel = players.indexOf(data.target);
+        if (panel > 0) { spinPanels(panel, done); return; }
+      }
+      done();
     }
   });
 

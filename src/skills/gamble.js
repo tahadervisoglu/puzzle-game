@@ -101,16 +101,20 @@ PP.gambleCards = {
       const rivals = gOthers(ctx, false);
       if (!rivals.length) return;
       const other = gRandom(ctx.rng, rivals);
-      // Karşılıklı anlık görüntü takası: her istemci kendi tahtasını
-      // diğerinin son bilinen hâline çevirir, ikisi de aynı sonuca varır.
-      const mine = ctx.self.table.snapshot();
-      const theirs = other.table.snapshot();
-      if (ctx.owns(ctx.self)) ctx.self.table.applySnapshot(theirs);
-      if (ctx.owns(other)) other.table.applySnapshot(mine);
-      ctx.self.refreshProgress();
-      other.refreshProgress();
-      ctx.fx(ctx.self, 'takas');
-      ctx.fx(other, 'takas');
+      // Hedef önce belirlenir, animasyon sadece onu açığa çıkarır — yoksa
+      // ağda iki taraf farklı sonuca varabilirdi.
+      ctx.reveal('secim', { target: other }, function () {
+        // Karşılıklı anlık görüntü takası: her istemci kendi tahtasını
+        // diğerinin son bilinen hâline çevirir, ikisi de aynı sonuca varır.
+        const mine = ctx.self.table.snapshot();
+        const theirs = other.table.snapshot();
+        if (ctx.owns(ctx.self)) ctx.self.table.applySnapshot(theirs);
+        if (ctx.owns(other)) other.table.applySnapshot(mine);
+        ctx.self.refreshProgress();
+        other.refreshProgress();
+        ctx.fx(ctx.self, 'takas');
+        ctx.fx(other, 'takas');
+      });
     }
   },
 
@@ -121,15 +125,19 @@ PP.gambleCards = {
     risk: 'high',
     apply: function (ctx) {
       if (!ctx.owns(ctx.self)) return;
-      if (ctx.rng.next() < 0.5) {
-        gKnock(ctx, ctx.self, 2);
-        ctx.fx(ctx.self, 'hirsiz');
-      } else {
-        // Oturtacak uygun parça kalmadıysa kart boşa gitmesin, parça versin
-        const seated = gSeatCorrect(ctx, ctx.self, 2);
-        if (seated < 2) gGain(ctx, ctx.self, 2 - seated);
-        ctx.fx(ctx.self, 'isik');
-      }
+      // Sonuç önce atılır, rulet onu açığa çıkarır
+      const win = ctx.rng.next() >= 0.5;
+      ctx.reveal('rulet', { win: win }, function () {
+        if (!win) {
+          gKnock(ctx, ctx.self, 2);
+          ctx.fx(ctx.self, 'hirsiz');
+        } else {
+          // Oturtacak uygun parça kalmadıysa kart boşa gitmesin, parça versin
+          const seated = gSeatCorrect(ctx, ctx.self, 2);
+          if (seated < 2) gGain(ctx, ctx.self, 2 - seated);
+          ctx.fx(ctx.self, 'isik');
+        }
+      });
     }
   },
 
@@ -261,7 +269,14 @@ PP.Gamble = function (players, config, rng, hooks) {
       rng: rng,
       fx: PP.fxFor,
       owns: function (p) { return p.state.owned; },
-      startDuel: startDuel
+      startDuel: startDuel,
+
+      // Sonucu açığa çıkaran animasyon. Sadece kartı oynayan insan görür;
+      // bot ya da uzak oyuncuda etki anında uygulanır.
+      reveal: function (kind, data, done) {
+        if (hooks.onReveal && player.state.isHuman) hooks.onReveal(kind, data, done);
+        else done();
+      }
     };
   }
 

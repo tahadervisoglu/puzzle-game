@@ -210,6 +210,79 @@ html, body {
   to { opacity: 1; }
 }
 
+/* Rulet: sonuç belliyken onu açığa çıkaran animasyon */
+.roulette {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 9px 12px;
+  background: rgba(30, 20, 14, 0.96);
+  border: 1px solid rgba(239, 166, 43, 0.6);
+  border-radius: 10px;
+  z-index: 4;
+}
+
+.roulette[hidden] { display: none; }
+.roulette.settled { border-color: rgba(239, 166, 43, 1); }
+
+.rl-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: rgba(243, 217, 166, 0.75);
+}
+
+.rl-slots { display: flex; flex-direction: column; gap: 4px; }
+
+.rl-slot {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  font-size: 12px;
+  color: rgba(232, 230, 225, 0.45);
+  transition: none;
+}
+
+.rl-slot.on.win {
+  background: rgba(29, 158, 117, 0.35);
+  border-color: #5dcaa5;
+  color: #d6f5e8;
+}
+
+.rl-slot.on.lose {
+  background: rgba(226, 75, 74, 0.35);
+  border-color: #e24b4a;
+  color: #ffd9d9;
+}
+
+/* El değiştir: rakipler sırayla parlar, birinde durur */
+.panel.picking::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 3px solid rgba(239, 166, 43, 0.8);
+  background: rgba(239, 166, 43, 0.12);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.panel.picked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 4px solid #efa62b;
+  background: rgba(239, 166, 43, 0.3);
+  pointer-events: none;
+  z-index: 3;
+  animation: pickedPulse 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes pickedPulse {
+  from { background: rgba(239, 166, 43, 0.16); }
+  to { background: rgba(239, 166, 43, 0.42); }
+}
+
 /* Kumar eli: kendi kartlarını görürsün, rakip sadece sayıyı görür */
 .hand {
   position: absolute;
@@ -283,13 +356,15 @@ html, body {
 
 .cards-badge[hidden] { display: none; }
 
-/* Kart seçimi: iki karttan biri — seçilen büyü anında çalışır */
+/* Kart seçimi: iki karttan biri — seçilen büyü anında çalışır.
+   Yapbozun üstünü kapatmasın diye panelin sağ kenarında durur. */
 .cards {
   position: absolute;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
+  flex-direction: column;
   gap: 10px;
   z-index: 3;
 }
@@ -310,8 +385,8 @@ html, body {
 }
 
 @keyframes cardIn {
-  from { transform: translateY(6px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateX(10px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 .card-light { border: 1px solid rgba(93, 202, 165, 0.65); }

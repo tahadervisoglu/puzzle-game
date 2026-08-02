@@ -38,11 +38,27 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
 
   function pick(pool) { return pool[Math.floor(rng.next() * pool.length)]; }
 
+  // O an gerçekten bir işe yarayan kartlar. Tüm parçalar geldikten sonra
+  // "2 parça al" gibi kartlar ölü kalıyordu; artık hiç teklif edilmiyorlar.
+  function usable(pool, player) {
+    const rivals = [];
+    for (let i = 0; i < players.length; i++) {
+      const p = players[i];
+      if (p !== player && !p.state.finished && !p.state.dropped) rivals.push(p);
+    }
+    const out = pool.filter(function (id) {
+      const skill = PP.skills[id];
+      if (!skill) return false;
+      return !skill.useful || skill.useful(player, rivals);
+    });
+    return out.length ? out : pool;   // hiçbiri uygun değilse yine de bir şey sun
+  }
+
   function makeOffer(player) {
     const behind = isLastPlace(player);
     return {
-      light: pick(PP.skillPools.light),
-      dark: pick(behind ? PP.skillPools.darkStrong : PP.skillPools.darkMild)
+      light: pick(usable(PP.skillPools.light, player)),
+      dark: pick(usable(behind ? PP.skillPools.darkStrong : PP.skillPools.darkMild, player))
     };
   }
 
