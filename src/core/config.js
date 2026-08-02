@@ -56,7 +56,29 @@ PP.config = {
 
   // Sekme aniden kapanınca WebRTC kopmayı bildirmiyor; sürekli akan tahta
   // özetlerini nabız sayıp bu süre kadar sessizlik olursa kopmuş sayıyoruz.
-  net: { snapshotMs: 180, timeoutMs: 4000 },
+  net: {
+    snapshotMs: 180,
+    timeoutMs: 4000,
+    connectTimeoutMs: 15000,   // bu sürede bağlanamazsa anlamlı hata ver
+
+    // Ev bağlantılarının çoğu (CGNAT) doğrudan bağlantıya izin vermiyor.
+    // STUN sadece "dış IP'm ne" sorusunu cevaplar; bağlantı yine kurulamazsa
+    // trafiği TURN aktarıcısı üzerinden taşımak gerekir.
+    // Aktarıcılar çalışmazsa buraya kendi TURN bilgilerini yazabilirsin.
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
+    ]
+  },
 
   fx: {
     maxShake: 16,

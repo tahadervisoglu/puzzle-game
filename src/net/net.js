@@ -7,7 +7,7 @@ window.PP = window.PP || {};
 // dağıtır. Herkesin herkese bağlandığı düzenden çok daha az şey ters gider.
 //
 // PeerJS tembel yüklenir — tek kişilik oyun oynanırken ağ kodu hiç indirilmez.
-PP.Net = function () {
+PP.Net = function (config) {
   const PEERJS_URL = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
   const PREFIX = 'puzzleparty-';
   // Birbirine benzeyen harf/rakamlar (0/O, 1/I) kod okurken hata çıkarıyor
@@ -21,7 +21,8 @@ PP.Net = function () {
     peer: null,
     conns: [],         // oda sahibinde: misafir bağlantıları
     hostConn: null,    // misafirde: oda sahibine bağlantı
-    ready: false
+    ready: false,
+    iceState: null
   };
 
   function emit(type, payload, from) {
@@ -51,6 +52,24 @@ PP.Net = function () {
     return out;
   }
 
+  // TURN aktarıcıları olmadan CGNAT arkasındaki ev bağlantıları birbirini
+  // bulamıyor; bağlantı sonsuza kadar kurulmayı bekliyor.
+  function peerOptions() {
+    return { config: { iceServers: config.net.iceServers, sdpSemantics: 'unified-plan' } };
+  }
+
+  // Bağlantı neden kurulamadı sorusunu cevaplayabilmek için ICE durumunu izle
+  function watchIce(conn) {
+    const pc = conn.peerConnection;
+    if (!pc) return;
+    pc.oniceconnectionstatechange = function () {
+      state.iceState = pc.iceConnectionState;
+      if (pc.iceConnectionState === 'failed') {
+        emit('hata', { error: new Error('Doğrudan bağlantı kurulamadı (ağ engeli).') });
+      }
+    };
+  }
+
   function wireIncoming(conn) {
     conn.on('data', function (msg) {
       if (!msg || !msg.t) return;
@@ -63,6 +82,22 @@ PP.Net = function () {
       if (i >= 0) state.conns.splice(i, 1);
       emit('ayrildi', { id: conn.peer }, conn.peer);
     });
+  }
+
+  // Önce oda kurup sonra katılmaya çalışınca eski oda ayakta kalıyor ve
+  // durum bozuluyordu; her yeni denemeden önce temizle.
+  function reset() {
+    if (state.peer) {
+      try { state.peer.destroy(); } catch (e) { /* yoksay */ }
+    }
+    state.peer = null;
+    state.conns = [];
+    state.hostConn = null;
+    state.role = null;
+    state.code = null;
+    state.selfId = null;
+    state.ready = false;
+    state.iceState = null;
   }
 
   function relay(msg, exceptId) {
@@ -82,13 +117,14 @@ PP.Net = function () {
 
     // Oda kurar, kısa oda kodunu döndürür
     host: function () {
+      reset();
       return loadLib().then(function () {
         return new Promise(function (resolve, reject) {
           let attempt = 0;
 
           function tryCode() {
             const code = randomCode();
-            const peer = new Peer(PREFIX + code);
+            const peer = new Peer(PREFIX + code, peerOptions());
 
             peer.on('open', function (id) {
               state.peer = peer;
@@ -97,6 +133,7 @@ PP.Net = function () {
               state.selfId = id;
               state.ready = true;
               peer.on('connection', function (conn) {
+                watchIce(conn);
                 conn.on('open', function () {
                   state.conns.push(conn);
                   emit('katildi', { id: conn.peer }, conn.peer);
@@ -129,10 +166,22 @@ PP.Net = function () {
       const clean = String(code || '').trim().toUpperCase();
       if (clean.length !== 4) return Promise.reject(new Error('Oda kodu 4 karakter olmalı.'));
 
+      reset();
       return loadLib().then(function () {
         return new Promise(function (resolve, reject) {
-          const peer = new Peer();
+          const peer = new Peer(undefined, peerOptions());
           let settled = false;
+
+          // Sonsuza kadar "Bağlanılıyor" yazmasın
+          const timer = setTimeout(function () {
+            if (settled) return;
+            settled = true;
+            peer.destroy();
+            reject(new Error(
+              'Bağlantı kurulamadı. Oda kodu doğruysa ağınız doğrudan ' +
+              'bağlantıya izin vermiyor olabilir.'
+            ));
+          }, config.net.connectTimeoutMs);
 
           peer.on('open', function (id) {
             state.peer = peer;
@@ -141,8 +190,11 @@ PP.Net = function () {
             state.selfId = id;
 
             const conn = peer.connect(PREFIX + clean, { reliable: true });
+            watchIce(conn);
             conn.on('open', function () {
+              if (settled) return;
               settled = true;
+              clearTimeout(timer);
               state.hostConn = conn;
               state.ready = true;
               resolve(conn);
@@ -156,6 +208,8 @@ PP.Net = function () {
 
           peer.on('error', function (err) {
             if (settled) { emit('hata', { error: err }); return; }
+            settled = true;
+            clearTimeout(timer);
             if (err && err.type === 'peer-unavailable') {
               reject(new Error('Böyle bir oda bulunamadı: ' + clean));
             } else {
@@ -176,14 +230,6 @@ PP.Net = function () {
       return state.role === 'host' ? state.conns.length : (state.hostConn ? 1 : 0);
     },
 
-    close: function () {
-      if (state.peer) state.peer.destroy();
-      state.peer = null;
-      state.conns = [];
-      state.hostConn = null;
-      state.role = null;
-      state.code = null;
-      state.ready = false;
-    }
+    close: reset
   };
 };

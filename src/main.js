@@ -242,8 +242,18 @@
 
   function setupNet() {
     if (net) return;
-    net = PP.Net();
+    net = PP.Net(cfg);
     lobby = PP.Lobby(net, cfg, startNetworkRound);
+
+    net.on('hata', function (info) {
+      const msg = (info.error && info.error.message) || 'Bağlantı hatası.';
+      const el = document.getElementById('net-error');
+      el.textContent = msg;
+      el.hidden = false;
+      // Lobi açıkken başlangıç ekranındaki hata görünmüyor
+      const lobbyPanel = document.getElementById('lobby');
+      if (!lobbyPanel.hidden) document.getElementById('lobby-status').textContent = msg;
+    });
 
     net.on('tahta', function (msg) {
       lastSeen[msg.seat] = Date.now();

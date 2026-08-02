@@ -24,8 +24,20 @@ Lobide kimlerin geldiğini görürsünüz, oda sahibi başlatır. Boş koltuklar
 
 Arkadaşlarının oyunu açabilmesi için sayfanın bir https adresinde durması gerekir (GitHub Pages ya da Netlify, ikisi de ücretsiz). Kendin test etmek için iki tarayıcı penceresi açıp birinde oda kurup diğerinde katılabilirsin.
 
+### "Bağlanılıyor"da takılırsa
+
+Oda kodu üretiliyor ama bağlantı kurulmuyorsa sorun kod değil **ağ**. Ev bağlantılarının çoğu (özellikle CGNAT kullananlar) iki bilgisayarın doğrudan birbirine bağlanmasına izin vermiyor. Bunun için trafiği aktaran TURN sunucuları [config.js](src/core/config.js) içinde tanımlı.
+
+Oradaki aktarıcılar ücretsiz ve herkese açık — yoğunlukta yavaşlayabilir ya da tamamen kapanabilir. Hâlâ bağlanamıyorsanız yapılacaklar sırasıyla:
+
+1. Biriniz mobil veri / farklı bir ağ deneyin (sorunun ağ kaynaklı olduğunu doğrular)
+2. `config.js` içindeki `net.iceServers` listesine kendi TURN bilgilerinizi yazın
+3. Kalıcı çözüm: WebRTC yerine küçük bir WebSocket röle sunucusu — herkes sunucuya dışa doğru bağlandığı için NAT hiç devreye girmez
+
+Bağlantı 15 saniyede kurulamazsa oyun artık sonsuza kadar beklemek yerine hata veriyor.
+
 **F5'te olanlar:** oda kurma/katılma, lobi, ortak seed ile senkron başlangıç, canlı ilerleme çubukları.
-**Henüz yok (F6):** rakiplerin parçalarını hareket ederken görmek, büyülerin karşı tarafa geçmesi, kopan bağlantının bota dönüşmesi.
+**F6'da eklenenler:** rakiplerin tahtalarını canlı görmek, büyülerin karşı tarafa geçmesi, tur bitişi senkronu, düşen oyuncu bildirimi.
 
 ## Çalıştırma
 
