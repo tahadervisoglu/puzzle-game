@@ -116,8 +116,9 @@ PP.config = {
     ghostBase: 0.3,      // referans oyun boyunca ızgarada bu saydamlıkta durur
     ghostAlpha: 0.6,     // Poster büyüsü onu bu seviyeye çıkarır
     ghostFadeSec: 1.4,   // Poster sönerek taban seviyesine iner
-    quakeSec: 3,         // Deprem'de ızgaranın sallandığı süre
-    quakeAmp: 26         // sallanma genliği (px) — nişan almayı zorlaştırır
+    quakeSec: 5,         // Deprem'de ızgaranın sallandığı süre
+    quakeAmp: 44,        // sallanma genliği (px) — nişan almayı zorlaştırır
+    crackCount: 7        // deprem sırasında ızgarada beliren çatlak sayısı
   },
 
   audio: {

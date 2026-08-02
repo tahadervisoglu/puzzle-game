@@ -73,17 +73,14 @@ html, body {
 #panel-1, #panel-3 { border-right: none; }
 #panel-2, #panel-3 { border-bottom: none; }
 
+/* Masa dokusu canvas'a çiziliyor; buradaki renk sadece yüklenene kadar */
 .panel canvas {
   display: block;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 50% 45%, #2b3040 0%, #1a1e2b 55%, #12151e 100%);
+  background: #4a2e18;
   touch-action: none;
   user-select: none;
-}
-
-.panel-main canvas {
-  background: radial-gradient(circle at 50% 45%, #323850 0%, #1c2130 55%, #13161f 100%);
 }
 
 #canvas-0.grabbable { cursor: grab; }
@@ -489,35 +486,44 @@ button:hover { background: rgba(255, 255, 255, 0.08); }
 button:active { transform: scale(0.97); }
 
 /* Mod seçim ekranı */
+/* Başlangıç ekranı: masanın ahşabını ve oyunun sıcak renklerini taşır */
 #start {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 12, 18, 0.9);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(239, 166, 43, 0.16), transparent 45%),
+    radial-gradient(circle at 82% 78%, rgba(125, 116, 220, 0.2), transparent 50%),
+    linear-gradient(160deg, #3b2415 0%, #241a2e 55%, #12131c 100%);
   z-index: 6;
 }
 
 #start[hidden] { display: none; }
 
 .start-card {
-  padding: 26px 30px;
-  background: rgba(20, 24, 34, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 16px;
+  padding: 28px 32px;
+  background: linear-gradient(180deg, rgba(38, 30, 46, 0.97), rgba(22, 20, 30, 0.98));
+  border: 1px solid rgba(239, 196, 90, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
   text-align: center;
 }
 
 .start-title {
   margin: 0 0 4px;
-  font-size: 22px;
-  font-weight: 500;
-  color: #bdb6f5;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: linear-gradient(92deg, #efc45a 0%, #f0937a 45%, #bdb6f5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .start-sub {
-  margin: 0 0 18px;
+  margin: 0 0 20px;
   font-size: 13px;
   color: rgba(232, 230, 225, 0.55);
 }
@@ -535,8 +541,21 @@ button:active { transform: scale(0.97); }
   text-align: left;
 }
 
-.mode:hover { background: rgba(125, 116, 220, 0.16); border-color: rgba(160, 150, 255, 0.7); }
-.mode.primary { border-color: rgba(160, 150, 255, 0.75); background: rgba(125, 116, 220, 0.1); }
+.mode:hover {
+  background: rgba(125, 116, 220, 0.18);
+  border-color: rgba(160, 150, 255, 0.8);
+  transform: translateY(-2px);
+}
+
+.mode { transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease; }
+
+.mode.primary {
+  border-color: rgba(239, 196, 90, 0.6);
+  background: linear-gradient(180deg, rgba(239, 166, 43, 0.14), rgba(125, 116, 220, 0.1));
+}
+
+.mode.primary:hover { border-color: rgba(239, 196, 90, 0.95); }
+.mode.primary .mode-badge { background: rgba(239, 166, 43, 0.28); color: #f3d9a6; }
 
 .mode-badge {
   align-self: flex-start;
@@ -705,6 +724,29 @@ button:active { transform: scale(0.97); }
   font-size: 11px;
   color: rgba(232, 230, 225, 0.45);
 }
+
+/* Davet linki */
+.invite {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.invite[hidden] { display: none; }
+
+.invite-link {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(239, 196, 90, 0.35);
+  border-radius: 6px;
+  color: rgba(243, 217, 166, 0.9);
+  font: inherit;
+  font-size: 11px;
+}
+
+#invite-copy { white-space: nowrap; }
 
 .lobby-modes {
   display: flex;

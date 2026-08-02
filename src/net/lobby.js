@@ -13,8 +13,16 @@ PP.Lobby = function (net, config, onStart) {
     joinCode: document.getElementById('join-code'),
     netError: document.getElementById('net-error'),
     modes: document.getElementById('lobby-modes'),
-    modeLabel: document.getElementById('lobby-mode-label')
+    modeLabel: document.getElementById('lobby-mode-label'),
+    invite: document.getElementById('invite'),
+    inviteLink: document.getElementById('invite-link'),
+    inviteCopy: document.getElementById('invite-copy')
   };
+
+  // Davet linki: kodu elle yazdırmak yerine tıklanabilir adres
+  function inviteUrl(code) {
+    return location.origin + location.pathname + '?oda=' + code;
+  }
 
   const MODE_NAMES = { klasik: 'Klasik', teketek: 'Teke tek', havuz: 'Ortak havuz' };
 
@@ -65,6 +73,12 @@ PP.Lobby = function (net, config, onStart) {
 
   function render() {
     el.code.textContent = net.state.code || '----';
+    if (net.state.code) {
+      el.invite.hidden = false;
+      el.inviteLink.value = inviteUrl(net.state.code);
+    } else {
+      el.invite.hidden = true;
+    }
     renderModes();
     el.list.innerHTML = '';
     for (let s = 0; s < maxSeats(); s++) {
@@ -204,6 +218,29 @@ PP.Lobby = function (net, config, onStart) {
     },
 
     setMode: setMode,
+
+    // Adresteki ?oda=KOD ile gelen kişi doğrudan bağlanır
+    joinFromUrl: function () {
+      const m = /[?&]oda=([A-Za-z0-9]{4})/.exec(location.search);
+      if (!m) return false;
+      el.joinCode.value = m[1].toUpperCase();
+      this.join();
+      return true;
+    },
+
+    copyInvite: function () {
+      el.inviteLink.select();
+      const done = function () {
+        el.inviteCopy.textContent = 'kopyalandı';
+        setTimeout(function () { el.inviteCopy.textContent = 'kopyala'; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(el.inviteLink.value).then(done, function () {});
+      } else {
+        try { document.execCommand('copy'); done(); } catch (e) { /* yoksay */ }
+      }
+    },
+
     mySeat: function () { return mySeat; }
   };
 };

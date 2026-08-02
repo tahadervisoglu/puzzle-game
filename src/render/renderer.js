@@ -13,7 +13,115 @@ PP.Renderer = function (canvas, table, config, owner) {
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    tableTex = w > 0 && h > 0 ? buildTable(w, h) : null;
     return { w: w, h: h };
+  }
+
+  // Ahşap masa dokusu. Panel boyutu değişince bir kez üretilip saklanır;
+  // her karede yeniden çizmek gereksiz olurdu.
+  let tableTex = null;
+
+  function buildTable(w, h) {
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w));
+    c.height = Math.max(1, Math.round(h));
+    const g = c.getContext('2d');
+    let seed = 1337;
+    function rnd() {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    }
+
+    const base = g.createLinearGradient(0, 0, w * 0.3, h);
+    base.addColorStop(0, '#6b4526');
+    base.addColorStop(0.5, '#5a381e');
+    base.addColorStop(1, '#472b16');
+    g.fillStyle = base;
+    g.fillRect(0, 0, w, h);
+
+    // Damar çizgileri
+    for (let i = 0; i < Math.round(h / 5) + 40; i++) {
+      const y = rnd() * h;
+      const alpha = 0.03 + rnd() * 0.07;
+      g.strokeStyle = rnd() < 0.5
+        ? 'rgba(30,18,8,' + alpha.toFixed(3) + ')'
+        : 'rgba(160,115,70,' + (alpha * 0.7).toFixed(3) + ')';
+      g.lineWidth = 0.6 + rnd() * 2.2;
+      g.beginPath();
+      g.moveTo(-10, y);
+      let x = -10;
+      let cy = y;
+      while (x < w + 10) {
+        x += 40 + rnd() * 70;
+        cy += (rnd() - 0.5) * 7;
+        g.lineTo(x, cy);
+      }
+      g.stroke();
+    }
+
+    // Budaklar
+    for (let i = 0; i < 3; i++) {
+      const kx = rnd() * w;
+      const ky = rnd() * h;
+      for (let r = 4; r < 26; r += 3.5) {
+        g.strokeStyle = 'rgba(38,22,10,' + (0.12 - r * 0.003).toFixed(3) + ')';
+        g.lineWidth = 1.4;
+        g.beginPath();
+        g.ellipse(kx, ky, r, r * 0.62, rnd() * 3, 0, Math.PI * 2);
+        g.stroke();
+      }
+    }
+
+    // Kenarlara doğru koyulaşan gölge, masaya derinlik verir
+    const vig = g.createRadialGradient(
+      w / 2, h / 2, Math.min(w, h) * 0.2,
+      w / 2, h / 2, Math.max(w, h) * 0.75
+    );
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+    g.fillStyle = vig;
+    g.fillRect(0, 0, w, h);
+
+    return c;
+  }
+
+  // Deprem çatlakları: ızgaranın ortasından dışa doğru yarılan hatlar
+  function drawCracks(power) {
+    const b = table.board.state;
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
+    const n = config.fx.crackCount;
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (let i = 0; i < n; i++) {
+      let seed = (i + 1) * 9781;
+      function rnd() {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      }
+      const ang = (i / n) * Math.PI * 2 + rnd() * 0.6;
+      const len = (b.w + b.h) * 0.35 * (0.5 + rnd() * 0.7) * power;
+      let x = cx;
+      let y = cy;
+      ctx.strokeStyle = 'rgba(20,12,6,' + (0.75 * power).toFixed(3) + ')';
+      ctx.lineWidth = 3.2 * power;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      let step = 0;
+      while (step < len) {
+        const seg = 14 + rnd() * 26;
+        step += seg;
+        x += Math.cos(ang + (rnd() - 0.5) * 0.9) * seg;
+        y += Math.sin(ang + (rnd() - 0.5) * 0.9) * seg;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      // İnce açık kenar: çatlağın derinlik hissi
+      ctx.strokeStyle = 'rgba(230,200,160,' + (0.28 * power).toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawBoard() {
@@ -289,6 +397,7 @@ PP.Renderer = function (canvas, table, config, owner) {
       const fx = owner && owner.fx;
 
       ctx.clearRect(0, 0, s.width, s.height);
+      if (tableTex) ctx.drawImage(tableTex, 0, 0, s.width, s.height);
 
       // Sarsıntı sadece masayı oynatır; partikül ve parlama sabit katmanda
       ctx.save();
@@ -305,6 +414,9 @@ PP.Renderer = function (canvas, table, config, owner) {
           if (p && p.arrived) drawPiece(p, size);
         }
         if (owner && owner.effects.kontrol > 0) drawWrongMarks(size);
+        if (owner && owner.effects.sarsinti > 0) {
+          drawCracks(Math.min(1, owner.effects.sarsinti / config.fx.quakeSec));
+        }
         if (owner && owner.hand_) drawHand(owner.hand_, size);
       }
       ctx.restore();

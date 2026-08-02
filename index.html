@@ -193,7 +193,11 @@
     <div class="lobby-card">
       <p class="lobby-title">Oda kodu</p>
       <p class="lobby-code" id="lobby-code">----</p>
-      <p class="lobby-hint">Bu kodu arkadaşlarına gönder</p>
+      <div class="invite" id="invite" hidden>
+        <input class="invite-link" id="invite-link" type="text" readonly>
+        <button id="invite-copy" type="button">kopyala</button>
+      </div>
+      <p class="lobby-hint">Linki gönder — tıklayan doğrudan odaya girer</p>
       <div class="lobby-modes" id="lobby-modes" hidden>
         <button class="lmode" type="button" data-mode="klasik">Klasik</button>
         <button class="lmode" type="button" data-mode="teketek">Teke tek</button>

@@ -361,6 +361,9 @@
     });
 
     document.getElementById('lobby-start').addEventListener('click', lobby.start);
+    document.getElementById('invite-copy').addEventListener('click', function () {
+      lobby.copyInvite();
+    });
     const modeBtns = document.querySelectorAll('#lobby-modes .lmode');
     for (let i = 0; i < modeBtns.length; i++) {
       modeBtns[i].addEventListener('click', function () {
@@ -939,6 +942,13 @@
   rebuild();
   PP.Tuner(game, cfg);
   PP.Loop(cfg.sim.stepMs, update, render).start();
+
+  // Davet linkiyle gelindiyse ağ katmanı yüklenip doğrudan odaya bağlanılır.
+  // Normalde ağ kodu sadece tıklamayla yüklenir; burada niyet zaten belli.
+  if (/[?&]oda=/.test(location.search)) {
+    setupNet();
+    lobby.joinFromUrl();
+  }
 
   PP.game = game;
   PP.players = players;

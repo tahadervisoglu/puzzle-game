@@ -180,8 +180,9 @@ PP.Player = function (opts) {
       // eder. Sönerek durur, yoksa bitişi ani ve garip olur.
       const quake = state.effects.sarsinti || 0;
       if (quake > 0) {
+        // Sönüm yumuşak: k*k çok hızlı düşüp sallantıyı görünmez kılıyordu
         const k = Math.min(1, quake / config.fx.quakeSec);
-        const amp = config.fx.quakeAmp * k * k;
+        const amp = config.fx.quakeAmp * (0.35 + 0.65 * k);
         state.quakePhase = (state.quakePhase || 0) + dt * 34;
         board.shake(
           Math.sin(state.quakePhase) * amp,
