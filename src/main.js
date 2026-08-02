@@ -715,7 +715,11 @@
       const lines = [
         'Kendi adresim (host)   : ' + (r.found.host ? 'var' : 'YOK'),
         'Dış adresim (STUN)     : ' + (r.stunOk ? 'çalışıyor' : 'ÇALIŞMIYOR'),
-        'Aktarıcı (TURN)        : ' + (r.turnOk ? 'çalışıyor' : 'ÇALIŞMIYOR')
+        'Aktarıcı (TURN)        : ' + (r.turnOk ? 'çalışıyor' : 'ÇALIŞMIYOR'),
+        '',
+        'Kaynak: ' + (r.source || '-'),
+        'Denenen TURN adresleri:',
+        r.turnUrls.length ? '  ' + r.turnUrls.join('\n  ') : '  (yok)'
       ];
       if (r.errors.length) lines.push('', r.errors.join('\n'));
       lines.push('');

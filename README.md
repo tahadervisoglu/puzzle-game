@@ -34,7 +34,9 @@ Proje **Metered** TURN servisini kullanıyor. Bilgiler [config.js](src/core/conf
 turn: { host, apiKey, username, credential }
 ```
 
-İki yol da destekleniyor: panelden alınan **sabit kullanıcı adı/şifre** (şu an kullanılan) ya da **API anahtarı** ile çalışma anında çekme. İkisi birden doluysa sabit bilgiler kullanılır.
+Üç yol destekleniyor, bu sırayla denenir: panelden kopyalanan **hazır dizi** (`servers`), panelden alınan **sabit kullanıcı adı/şifre** (şu an kullanılan) ya da **API anahtarı** ile çalışma anında çekme.
+
+> **Tuzak:** TURN sunucusunun alan adı, panelin alan adıyla **aynı değildir**. Panel adresiniz `<uygulama>.metered.live` olsa bile TURN adresleri `...relay.metered.ca` üzerindedir. İkisini karıştırırsanız hiç `relay` adayı üretilmez ve bağlantı testi `701` verir — bu proje tam olarak bu hatayı yaşadı. Emin olmak için panelde kimlik bilgisinin yanındaki **"Show ICE Servers Array"** çıktısını `turn.servers` alanına olduğu gibi yapıştırın.
 
 **Plan ve kota — önemli.** Ücretsiz plan aylık kotayla sınırlı ve TURN'den geçen her bayt kotadan düşer. Kota biterse aktarıcı çalışmayı durdurur, yani multiplayer bağlanmaz (tek kişilik oyun etkilenmez). Metered'ın "Free: 20GB" planı var; 500MB'lık deneme planında kalmayın, ikisi de ücretsiz.
 

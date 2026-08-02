@@ -28,11 +28,21 @@ PP.NetDiag = function (config) {
           return;
         }
 
+        const turnUrls = [];
+        iceServers.forEach(function (s) {
+          const list = Array.isArray(s.urls) ? s.urls : [s.urls];
+          list.forEach(function (u) {
+            if (String(u).indexOf('turn') === 0) turnUrls.push(u);
+          });
+        });
+
         function finish() {
           try { pc.close(); } catch (e) { /* yoksay */ }
           resolve({
             found: found,
             errors: errors,
+            turnUrls: turnUrls,
+            source: PP.Ice.source,
             stunOk: found.srflx > 0,
             turnOk: found.relay > 0
           });

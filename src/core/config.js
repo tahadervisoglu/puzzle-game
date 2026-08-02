@@ -70,15 +70,22 @@ PP.config = {
     // bilgiler geliyor). Anahtar bu depoda açıkta duruyor; depo public olduğu
     // için başkası da kotayı kullanabilir. Kotayı korumak gerekirse anahtarı
     // sağlayıcı panelinden yenile.
-    // İki yol da desteklenir:
-    //   apiKey            → kimlik bilgileri çalışma anında çekilir
-    //   username+credential → panelden alınan sabit bilgiler doğrudan kullanılır
-    // İkisi birden doluysa sabit bilgiler kullanılır.
+    // Üç yol da desteklenir, bu sırayla denenir:
+    //   1) servers  → sağlayıcı panelinden kopyalanan diziyi olduğu gibi yapıştır
+    //   2) username+credential → adresler host'tan üretilir
+    //   3) apiKey   → kimlik bilgileri çalışma anında çekilir
+    //
+    // DİKKAT: TURN sunucusunun alan adı, panelin alan adıyla AYNI DEĞİLDİR.
+    // Panel "puzzlegameaa.metered.live" olsa bile TURN adresleri
+    // "...relay.metered.ca" üzerindedir. En garantisi panelde kimlik bilgisinin
+    // yanındaki "Show ICE Servers Array" çıktısını buraya yapıştırmaktır.
     turn: {
-      host: 'puzzlegameaa.metered.live',
+      host: 'global.relay.metered.ca',
+      apiHost: 'puzzlegameaa.metered.live',
       apiKey: '',
       username: '7ea849840c346367c20aa635',
-      credential: 'zioLuy8n7tYIpf94'
+      credential: 'zioLuy8n7tYIpf94',
+      servers: []    // panelden kopyalanan dizi buraya; doluysa üstteki alanlar kullanılmaz
     },
 
     iceServers: [
