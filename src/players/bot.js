@@ -33,8 +33,9 @@ PP.Bot = function (player, rng, cfg, skills, pool, gamble) {
     return p.row * board.state.cols + p.col;
   }
 
-  // Izgaradaki parçayı söküp masaya geri atar
+  // Izgaradaki parçayı söküp masaya geri atar. Kalıcı parça sökülmez.
   function evict(p) {
+    if (!p || p.locked) return null;
     const c = table.liftFromBoard(p);
     table.park(c, rng);
     return c;
@@ -86,7 +87,7 @@ PP.Bot = function (player, rng, cfg, skills, pool, gamble) {
       } else {
         // Doğru hücrede yanlış parça var: önce onu çıkar
         const occ = table.byId(board.state.cells[correct]);
-        if (occ) { evict(occ); cell = correct; }
+        if (occ && evict(occ)) cell = correct;
       }
       if (cell < 0) {
         const empties = emptyCells();
@@ -107,7 +108,7 @@ PP.Bot = function (player, rng, cfg, skills, pool, gamble) {
         cell = correct;
       } else {
         const occ = table.byId(board.state.cells[correct]);
-        if (occ) { evict(occ); cell = correct; }
+        if (occ && evict(occ)) cell = correct;
       }
     }
 

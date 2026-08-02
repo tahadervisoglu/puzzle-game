@@ -551,7 +551,8 @@ PP.Table = function (bus, config, board, clusters) {
           p.cell,
           seated ? 0 : Math.round((p.x / w) * 1000) / 1000,
           seated ? 0 : Math.round((p.y / h) * 1000) / 1000,
-          (c && c.members.length > 1) ? 1 : 0
+          (c && c.members.length > 1) ? 1 : 0,
+          p.locked ? 1 : 0
         ]);
       }
       return out;
@@ -571,6 +572,11 @@ PP.Table = function (bus, config, board, clusters) {
         p.rx = 0;
         p.ry = 0;
         p.pop = 0;
+        // Kilit bayrağı da sıfırlanmalı: sıfırlanmadığında takas sonrası
+        // kilitli bir parça masaya düşüyor, ne tutulabiliyor ne de hücresi
+        // doluyordu.
+        p.locked = false;
+        p.lockT = 0;
       }
       state.order = [];
 
@@ -585,6 +591,7 @@ PP.Table = function (bus, config, board, clusters) {
           board.occupy(e[1], p.id);
           p.x = board.cellX(e[1]);
           p.y = board.cellY(e[1]);
+          p.locked = !!e[5];          // kilit sadece oturmuş parçada olabilir
         } else {
           p.x = e[2] * state.width;
           p.y = e[3] * state.height;
@@ -736,7 +743,7 @@ PP.Table = function (bus, config, board, clusters) {
       const out = [];
       for (let i = 0; i < state.pieces.length; i++) {
         const p = state.pieces[i];
-        if (p.arrived && p.cell < 0 && !p.held) out.push(p.id);
+        if (p.arrived && p.cell < 0 && !p.held && !p.locked) out.push(p.id);
       }
       return out;
     },
@@ -855,6 +862,13 @@ PP.Table = function (bus, config, board, clusters) {
         if (p.pop) {
           p.pop *= pop;
           if (p.pop < 0.01) p.pop = 0;
+        }
+
+        // Güvenlik ağı: kilitli parça hücresinden çıkmışsa kilidi düşer.
+        // Yoksa masada tutulamayan, hücresi de boş kalan bir parça oluşuyor.
+        if (p.locked && p.cell < 0) {
+          p.locked = false;
+          p.lockT = 0;
         }
 
         // Doğru hücrede yeterince duran parça kalıcılaşır
