@@ -496,6 +496,25 @@ button:active { transform: scale(0.97); }
 
 .net-error[hidden] { display: none; }
 
+.diag {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  max-width: 420px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(232, 230, 225, 0.75);
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.diag[hidden] { display: none; }
+
+#btn-diag { margin-left: 6px; font-size: 10px; padding: 2px 7px; }
+
 /* Lobi */
 #lobby {
   position: absolute;

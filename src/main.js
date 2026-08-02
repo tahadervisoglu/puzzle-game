@@ -607,6 +607,36 @@
     if (e.key === 'Enter') { setupNet(); lobby.join(); }
   });
 
+  // Bağlantı testi: hangi katmanın çalışmadığını tahmin etmeden gösterir
+  document.getElementById('btn-diag').addEventListener('click', function () {
+    const box = document.getElementById('diag');
+    const btn = document.getElementById('btn-diag');
+    box.hidden = false;
+    box.textContent = 'test ediliyor…';
+    btn.disabled = true;
+
+    PP.NetDiag(cfg).run(8000).then(function (r) {
+      btn.disabled = false;
+      const lines = [
+        'Kendi adresim (host)   : ' + (r.found.host ? 'var' : 'YOK'),
+        'Dış adresim (STUN)     : ' + (r.stunOk ? 'çalışıyor' : 'ÇALIŞMIYOR'),
+        'Aktarıcı (TURN)        : ' + (r.turnOk ? 'çalışıyor' : 'ÇALIŞMIYOR')
+      ];
+      if (r.errors.length) lines.push('', r.errors.join('\n'));
+      lines.push('');
+      if (r.turnOk) {
+        lines.push('Sonuç: aktarıcı hazır. Bağlanamıyorsanız sorun');
+        lines.push('başka yerde — bunu bana söyle.');
+      } else if (r.stunOk) {
+        lines.push('Sonuç: TURN aktarıcısı çalışmıyor. Ev ağlarının');
+        lines.push('çoğunda bağlantı bu yüzden kurulamaz.');
+      } else {
+        lines.push('Sonuç: ağ WebRTC trafiğini tamamen engelliyor.');
+      }
+      box.textContent = lines.join('\n');
+    });
+  });
+
   document.getElementById('card-light').addEventListener('click', function () {
     skills.choose(players[0], 'light');
   });

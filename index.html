@@ -161,8 +161,12 @@
           <input id="join-code" type="text" maxlength="4" placeholder="KOD" autocomplete="off" spellcheck="false">
           <button id="btn-join" type="button">Katıl</button>
         </div>
-        <p class="online-note">Bağlantı sadece buraya tıklayınca kurulur — tek kişilik oyun internetsiz de çalışır.</p>
+        <p class="online-note">
+          Bağlantı sadece buraya tıklayınca kurulur — tek kişilik oyun internetsiz de çalışır.
+          <button id="btn-diag" type="button">bağlantı testi</button>
+        </p>
         <p class="net-error" id="net-error" hidden></p>
+        <pre class="diag" id="diag" hidden></pre>
       </div>
     </div>
   </div>
@@ -213,6 +217,7 @@
 <script src="src/render/fx.js"></script>
 <script src="src/render/renderer.js"></script>
 <script src="src/render/poolview.js"></script>
+<script src="src/net/diag.js"></script>
 <script src="src/net/net.js"></script>
 <script src="src/net/lobby.js"></script>
 <script src="src/ui/tuner.js"></script>
