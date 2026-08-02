@@ -11,13 +11,21 @@ PP.Lobby = function (net, config, onStart) {
     start: document.getElementById('lobby-start'),
     leave: document.getElementById('lobby-leave'),
     joinCode: document.getElementById('join-code'),
-    netError: document.getElementById('net-error')
+    netError: document.getElementById('net-error'),
+    modes: document.getElementById('lobby-modes'),
+    modeLabel: document.getElementById('lobby-mode-label')
   };
+
+  const MODE_NAMES = { klasik: 'Klasik', teketek: 'Teke tek', havuz: 'Ortak havuz' };
 
   // [{ id, seat }] — id null ise o koltuk bot
   let members = [];
   let mySeat = 0;
   let busy = false;
+  let mode = config.mode;
+
+  // Teke tekte sadece iki koltuk vardır
+  function maxSeats() { return mode === 'teketek' ? 2 : 4; }
 
   function setError(msg) {
     el.netError.textContent = msg || '';
@@ -34,16 +42,32 @@ PP.Lobby = function (net, config, onStart) {
   }
 
   function freeSeat() {
-    for (let s = 0; s < 4; s++) {
+    for (let s = 0; s < maxSeats(); s++) {
       if (!members.some(function (m) { return m.seat === s; })) return s;
     }
     return -1;
   }
 
+  function renderModes() {
+    const isHost = net.state.role === 'host';
+    el.modes.hidden = !isHost;
+    el.modeLabel.textContent = 'Mod: ' + (MODE_NAMES[mode] || mode) +
+      (mode === 'teketek' ? ' · 2 kişilik' : ' · 4 kişilik');
+    if (!isHost) return;
+    const buttons = el.modes.querySelectorAll('.lmode');
+    for (let i = 0; i < buttons.length; i++) {
+      const m = buttons[i].dataset.mode;
+      buttons[i].classList.toggle('on', m === mode);
+      // Bağlı oyuncu sayısı sığmıyorsa o mod seçilemez
+      buttons[i].disabled = m === 'teketek' && members.length > 2;
+    }
+  }
+
   function render() {
     el.code.textContent = net.state.code || '----';
+    renderModes();
     el.list.innerHTML = '';
-    for (let s = 0; s < 4; s++) {
+    for (let s = 0; s < maxSeats(); s++) {
       const m = members.find(function (x) { return x.seat === s; });
       const li = document.createElement('li');
       const isMe = m && m.id === net.state.selfId;
@@ -64,9 +88,18 @@ PP.Lobby = function (net, config, onStart) {
     el.start.hidden = net.state.role !== 'host';
   }
 
-  // Oda sahibi listeyi dağıtır
+  // Oda sahibi listeyi ve seçili modu dağıtır
   function publish() {
-    net.send({ t: 'lobi', members: members });
+    net.send({ t: 'lobi', members: members, mode: mode });
+  }
+
+  function setMode(next) {
+    if (net.state.role !== 'host') return;
+    if (next === 'teketek' && members.length > 2) return;   // sığmıyor
+    mode = next;
+    config.mode = next;
+    render();
+    publish();
   }
 
   net.on('katildi', function (info) {
@@ -87,6 +120,7 @@ PP.Lobby = function (net, config, onStart) {
 
   net.on('lobi', function (msg) {
     members = msg.members || [];
+    if (msg.mode) { mode = msg.mode; config.mode = msg.mode; }
     const mine = members.find(function (m) { return m.id === net.state.selfId; });
     if (mine) mySeat = mine.seat;
     render();
@@ -117,6 +151,7 @@ PP.Lobby = function (net, config, onStart) {
         setError('');
         members = [{ id: net.state.selfId, seat: 0 }];
         mySeat = 0;
+        mode = config.mode;
         open();
         render();
       }).catch(function (err) {
@@ -147,7 +182,7 @@ PP.Lobby = function (net, config, onStart) {
       const payload = {
         t: 'basla',
         seed: Math.floor(Math.random() * 0x7fffffff),
-        mode: config.mode,
+        mode: mode,
         members: members
       };
       net.send(payload);
@@ -168,6 +203,7 @@ PP.Lobby = function (net, config, onStart) {
       document.getElementById('start').hidden = false;
     },
 
+    setMode: setMode,
     mySeat: function () { return mySeat; }
   };
 };

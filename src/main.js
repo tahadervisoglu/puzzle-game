@@ -361,6 +361,12 @@
     });
 
     document.getElementById('lobby-start').addEventListener('click', lobby.start);
+    const modeBtns = document.querySelectorAll('#lobby-modes .lmode');
+    for (let i = 0; i < modeBtns.length; i++) {
+      modeBtns[i].addEventListener('click', function () {
+        lobby.setMode(this.dataset.mode);
+      });
+    }
     document.getElementById('lobby-leave').addEventListener('click', function () {
       lobby.leave();
       goOffline();

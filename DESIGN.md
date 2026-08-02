@@ -173,11 +173,13 @@ Tek kişilik yapı olduğu gibi korunur; multiplayer ayrı bir yoldur ve **ancak
 
 **Topoloji:** yıldız. Herkes oda sahibine bağlanır, oda sahibi mesajları dağıtır. Tam ağ (herkes herkese) düzeninden çok daha az şey ters gider.
 
+**Modu oda sahibi seçer.** Lobide mod düğmeleri sadece oda sahibinde görünür; seçim `lobi` mesajıyla herkese dağıtılır ve `basla` ile birlikte gider, böylece herkes aynı modda başlar. Teke tek seçilince oda iki koltuğa iner; iki kişiden fazlası bağlıyken bu mod seçilemez, kimseyi habersiz atmamak için düğme kapanır.
+
 **Koltuk ≠ panel.** Koltuk numarası ağda kimliktir; panel numarası ekranda nereye çizildiğidir. Her istemcide kendi koltuğu panel 0'a (büyük panel) eşlenir. Böylece her oyuncu kendini büyük panelde görür ve ekran düzenine hiç dokunmak gerekmez.
 
 | Faz | Kapsam |
 |---|---|
-| **F5** ✅ | Oda kur/katıl, lobi, koltuk dağıtımı, boş koltuklara bot, ortak seed ile senkron başlangıç, canlı ilerleme çubukları |
+| **F5** ✅ | Oda kur/katıl, lobi, mod seçimi, koltuk dağıtımı, boş koltuklara bot, ortak seed ile senkron başlangıç, canlı ilerleme çubukları |
 | **F6** | Tahta özetleri (rakiplerin parçalarını görmek), büyülerin ağ üzerinden iletimi, tur bitişinde ortak sonuç, kopan bağlantının bota dönüşmesi |
 
 Basit tutmak için verilen kararlar: tahta durumu fark hesabı yapılmadan olduğu gibi gönderilir (15 parça zaten küçüktür), büyünün hedefini atan seçip açıkça bildirir (gecikme yüzünden kimse farklı lider görmesin), yeniden bağlanma ve merkez değişimi yoktur.

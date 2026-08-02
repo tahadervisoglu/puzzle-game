@@ -706,6 +706,34 @@ button:active { transform: scale(0.97); }
   color: rgba(232, 230, 225, 0.45);
 }
 
+.lobby-modes {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.lobby-modes[hidden] { display: none; }
+
+.lmode {
+  flex: 1;
+  padding: 5px 4px;
+  font-size: 11px;
+}
+
+.lmode.on {
+  background: rgba(125, 116, 220, 0.24);
+  border-color: rgba(160, 150, 255, 0.75);
+  color: #cecbf6;
+}
+
+.lmode:disabled { opacity: 0.35; cursor: default; }
+
+.lobby-mode-label {
+  margin: 0 0 12px;
+  font-size: 11px;
+  color: rgba(232, 230, 225, 0.5);
+}
+
 .lobby-list {
   margin: 0 0 12px;
   padding: 0;

@@ -47,6 +47,8 @@ Destede tahtanızı rastgele bir rakiple takas eden, yazı tura atıp parçalar�
 
 Başlangıç ekranından **oda kurun**, çıkan kısa kodu arkadaşlarınıza gönderin, onlar da o kodla katılsın. Boş koltukları bot doldurur, yani iki kişiyle de oynanır. Herkes kendini büyük panelde, diğerlerini küçük panellerde görür.
 
+Modu **oda sahibi lobiden seçer** ve seçim herkese uygulanır. Teke tek seçildiğinde oda iki kişilik olur; iki kişiden fazlası bağlıyken bu mod seçilemez.
+
 Bağlantı tarayıcıdan tarayıcıya kurulur. Sorun yaşarsanız başlangıç ekranındaki **bağlantı testi** düğmesi nerede takıldığını söyler.
 
 ## Çalıştırma
