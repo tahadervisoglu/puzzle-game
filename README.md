@@ -24,17 +24,39 @@ Lobide kimlerin geldiğini görürsünüz, oda sahibi başlatır. Boş koltuklar
 
 Arkadaşlarının oyunu açabilmesi için sayfanın bir https adresinde durması gerekir (GitHub Pages ya da Netlify, ikisi de ücretsiz). Kendin test etmek için iki tarayıcı penceresi açıp birinde oda kurup diğerinde katılabilirsin.
 
+### TURN aktarıcısı ve ücretsiz plan
+
+Ev bağlantılarının çoğu (özellikle CGNAT kullananlar) iki bilgisayarın doğrudan birbirine bağlanmasına izin vermiyor. Bu durumda trafiği araya giren bir **TURN aktarıcısı** taşımak zorunda. Oda kodu üretilip bağlantı kurulamıyorsa sorun neredeyse her zaman budur.
+
+Proje **Metered** TURN servisini kullanıyor. Bilgiler [config.js](src/core/config.js) içindeki `net.turn` bloğunda:
+
+```
+turn: { host, apiKey, username, credential }
+```
+
+İki yol da destekleniyor: panelden alınan **sabit kullanıcı adı/şifre** (şu an kullanılan) ya da **API anahtarı** ile çalışma anında çekme. İkisi birden doluysa sabit bilgiler kullanılır.
+
+**Plan ve kota — önemli.** Ücretsiz plan aylık kotayla sınırlı ve TURN'den geçen her bayt kotadan düşer. Kota biterse aktarıcı çalışmayı durdurur, yani multiplayer bağlanmaz (tek kişilik oyun etkilenmez). Metered'ın "Free: 20GB" planı var; 500MB'lık deneme planında kalmayın, ikisi de ücretsiz.
+
+Kabaca tüketim: aktif oynarken oyuncu başına saatte **20-40 MB** civarı, masaya dokunmadan beklerken neredeyse sıfır. Oyun sadece tahta **değiştiğinde** özet gönderiyor, değişmediğinde 1,2 saniyede bir küçük bir nabız atıyor — bu kotayı ciddi ölçüde uzatıyor.
+
+**Kimlik bilgileri bu depoda açıkta.** Depo public olduğu için kotanızı başkası da kullanabilir. Rahatsız ediciyse sağlayıcı panelinden kimlik bilgisini silip yenisini üretin ve `config.js`'i güncelleyin.
+
 ### "Bağlanılıyor"da takılırsa
 
-Oda kodu üretiliyor ama bağlantı kurulmuyorsa sorun kod değil **ağ**. Ev bağlantılarının çoğu (özellikle CGNAT kullananlar) iki bilgisayarın doğrudan birbirine bağlanmasına izin vermiyor. Bunun için trafiği aktaran TURN sunucuları [config.js](src/core/config.js) içinde tanımlı.
+Başlangıç ekranındaki **"bağlantı testi"** düğmesine basın. Arkadaşınızı beklemeden, tek başınıza çalışır ve hangi katmanın çalışmadığını söyler:
 
-Oradaki aktarıcılar ücretsiz ve herkese açık — yoğunlukta yavaşlayabilir ya da tamamen kapanabilir. Hâlâ bağlanamıyorsanız yapılacaklar sırasıyla:
+```
+Kendi adresim (host)   : var
+Dış adresim (STUN)     : çalışıyor
+Aktarıcı (TURN)        : çalışıyor
+```
 
-1. Biriniz mobil veri / farklı bir ağ deneyin (sorunun ağ kaynaklı olduğunu doğrular)
-2. `config.js` içindeki `net.iceServers` listesine kendi TURN bilgilerinizi yazın
-3. Kalıcı çözüm: WebRTC yerine küçük bir WebSocket röle sunucusu — herkes sunucuya dışa doğru bağlandığı için NAT hiç devreye girmez
+TURN satırı "ÇALIŞMIYOR" diyorsa kimlik bilgileri ya da kota sorunludur — testin altında sebebi de yazar (örneğin `401 Invalid API Key`). TURN "çalışıyor" dediği hâlde bağlanamıyorsanız sorun başka yerdedir.
 
-Bağlantı 15 saniyede kurulamazsa oyun artık sonsuza kadar beklemek yerine hata veriyor.
+Bağlantı 15 saniyede kurulamazsa oyun sonsuza kadar beklemek yerine hata verir.
+
+Kalıcı ve kotasız çözüm isterseniz: WebRTC yerine küçük bir **WebSocket röle sunucusu**. Herkes sunucuya dışa doğru bağlandığı için NAT hiç devreye girmez ve istemcide hiçbir kimlik bilgisi durmaz — karşılığında sunucuyu bir yerde çalışır tutmak gerekir.
 
 **F5'te olanlar:** oda kurma/katılma, lobi, ortak seed ile senkron başlangıç, canlı ilerleme çubukları.
 **F6'da eklenenler:** rakiplerin tahtalarını canlı görmek, büyülerin karşı tarafa geçmesi, tur bitişi senkronu, düşen oyuncu bildirimi.
