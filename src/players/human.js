@@ -9,13 +9,20 @@ PP.Human = function (player, config) {
   const bus = player.bus;
   const input = PP.Input(canvas, bus);
 
+  function clearTargets() {
+    board.state.targets = [];
+    board.state.swapTarget = -1;
+  }
+
   function refreshTargets() {
     const held = input.held;
-    if (!held) { board.state.targets = []; return; }
+    if (!held) { clearTargets(); return; }
     const c = clusters.get(held.clusterId);
-    if (!c) { board.state.targets = []; return; }
+    if (!c) { clearTargets(); return; }
     const plan = table.seatPlan(c);
     board.state.targets = plan ? plan.map(function (e) { return e.cell; }) : [];
+    // Boş hücreye oturmuyorsa dolu hücreyle yer değiştirecek mi
+    board.state.swapTarget = plan ? -1 : table.swapCellUnder(c);
   }
 
   function setHeld(c, value) {
@@ -77,7 +84,7 @@ PP.Human = function (player, config) {
     if (!held) return;
     const c = clusters.get(held.clusterId);
     input.held = null;
-    board.state.targets = [];
+    clearTargets();
     canvas.classList.remove('grabbing');
     if (c) {
       setHeld(c, false);
@@ -104,7 +111,7 @@ PP.Human = function (player, config) {
       const c = clusters.get(input.held.clusterId);
       if (c) setHeld(c, false);
       input.held = null;
-      board.state.targets = [];
+      clearTargets();
       canvas.classList.remove('grabbing');
     }
   };

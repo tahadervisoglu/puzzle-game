@@ -306,6 +306,97 @@ PP.Table = function (bus, config, board, clusters) {
     return plan;
   }
 
+  // Kümeyi sıradaki saçılma slotuna atar; parça oraya uçarak gider.
+  function parkAtNextSlot(c) {
+    if (!state.slots.length) return;
+    const before = {};
+    for (let i = 0; i < c.members.length; i++) {
+      const p = byId(c.members[i]);
+      if (p) before[p.id] = { x: p.x, y: p.y };
+    }
+    const slot = state.slots[state.slotCursor % state.slots.length];
+    state.slotCursor++;
+    c.x = slot.x;
+    c.y = slot.y;
+    clampCluster(c);
+    syncCluster(c);
+    for (let i = 0; i < c.members.length; i++) {
+      const p = byId(c.members[i]);
+      const old = p && before[p.id];
+      if (!old) continue;
+      p.rx = old.x - p.x;
+      p.ry = old.y - p.y;
+    }
+  }
+
+  // Tek parçalık bir küme hangi dolu hücrenin üstünde duruyor? Yoksa -1.
+  function occupiedCellUnder(c) {
+    if (c.members.length !== 1) return -1;
+    const p = byId(c.members[0]);
+    if (!p) return -1;
+    const size = state.pieceSize;
+    const b = board.state;
+    const col = Math.round((p.x - b.x) / size);
+    const row = Math.round((p.y - b.y) / size);
+    if (!board.inBounds(col, row)) return -1;
+    const dx = b.x + col * size - p.x;
+    const dy = b.y + row * size - p.y;
+    const tol = size * config.snap.toleranceRatio;
+    if (dx * dx + dy * dy > tol * tol) return -1;
+    const cell = row * b.cols + col;
+    const occupantId = b.cells[cell];
+    if (occupantId === null || occupantId === p.id) return -1;
+    return cell;
+  }
+
+  // Dolu hücreye bırakılan parça: oradaki parçayla yer değiştirir. Sürüklenen
+  // parça ızgaradan geldiyse takas olur; masadan geldiyse oradaki parça masaya
+  // çıkar. Eskiden bu durumda hiçbir şey olmuyordu, parça üstte asılı kalıyordu.
+  function trySwap(c) {
+    const cell = occupiedCellUnder(c);
+    if (cell < 0) return false;
+
+    const p = byId(c.members[0]);
+    const occ = byId(board.state.cells[cell]);
+    if (!occ) return false;
+
+    const home = c.fromCell;
+    const ox = occ.x;
+    const oy = occ.y;
+
+    if (home !== undefined && home >= 0 && board.isFree(home, occ.id)) {
+      board.occupy(home, occ.id);
+      occ.cell = home;
+      occ.x = board.cellX(home);
+      occ.y = board.cellY(home);
+      occ.rx = ox - occ.x;          // yerine uçarak gitsin
+      occ.ry = oy - occ.y;
+      occ.pop = 1;
+    } else {
+      board.release(occ.id);
+      occ.cell = -1;
+      const nc = clusters.create(occ.x, occ.y);
+      clusters.add(nc, occ, 0, 0);
+      parkAtNextSlot(nc);
+    }
+
+    clusters.remove(c, p);
+    board.occupy(cell, p.id);
+    p.cell = cell;
+    p.x = board.cellX(cell);
+    p.y = board.cellY(cell);
+    p.rx = 0;
+    p.ry = 0;
+    p.pop = 1;
+
+    bus.emit('parca:oturdu', {
+      count: 1,
+      x: p.x + state.pieceSize / 2,
+      y: p.y + state.pieceSize / 2
+    });
+    return true;
+  }
+
   function seat(plan) {
     let cx = 0;
     let cy = 0;
@@ -408,6 +499,7 @@ PP.Table = function (bus, config, board, clusters) {
     },
 
     relayout: relayout,
+    swapCellUnder: occupiedCellUnder,
     prepare: prepare,
     receive: receive,
     dripNext: dripNext,
@@ -563,12 +655,15 @@ PP.Table = function (bus, config, board, clusters) {
       return null;
     },
 
-    // Izgaradaki parçayı söküp tek üyeli kümeye çevirir
+    // Izgaradaki parçayı söküp tek üyeli kümeye çevirir. Geldiği hücre
+    // saklanır ki dolu bir hücreye bırakılırsa takas yapılabilsin.
     liftFromBoard: function (p) {
+      const from = p.cell;
       board.release(p.id);
       p.cell = -1;
       const c = clusters.create(p.x, p.y);
       clusters.add(c, p, 0, 0);
+      c.fromCell = from;
       return c;
     },
 
@@ -619,6 +714,8 @@ PP.Table = function (bus, config, board, clusters) {
         seat(plan);
         return 'board';
       }
+      // Hedef hücre doluysa yer değiştir
+      if (trySwap(c)) return 'swap';
       if (!allowJoin) return 'free';
       let cur = c;
       let merged = false;

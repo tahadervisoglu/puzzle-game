@@ -7,7 +7,8 @@ PP.Board = function () {
     cols: 0, rows: 0, size: 0,
     x: 0, y: 0, w: 0, h: 0,
     cells: [],          // hücre başına parça id'si ya da null
-    targets: []         // sürüklenen kümenin oturacağı hücreler
+    targets: [],        // sürüklenen kümenin oturacağı hücreler
+    swapTarget: -1      // dolu hücre: bırakılırsa yer değiştirilecek
   };
 
   function reset() {

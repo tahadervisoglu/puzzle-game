@@ -52,6 +52,18 @@ PP.Renderer = function (canvas, table, config, owner) {
       ctx.lineWidth = 2;
       ctx.strokeRect(tx + 1, ty + 1, b.size - 2, b.size - 2);
     }
+
+    // Dolu hücre: bırakılırsa yer değiştirecek. Boş hücreden ayrılsın diye
+    // farklı renk.
+    if (b.swapTarget >= 0) {
+      const sx = table.board.cellX(b.swapTarget);
+      const sy = table.board.cellY(b.swapTarget);
+      ctx.strokeStyle = 'rgba(239,166,43,0.9)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      ctx.strokeRect(sx + 1, sy + 1, b.size - 2, b.size - 2);
+      ctx.setLineDash([]);
+    }
     ctx.restore();
   }
 

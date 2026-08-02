@@ -57,6 +57,7 @@ Ekran 4 panele bölünür: sol üstteki büyük panel senin, diğer üçü botla
 
 - **Sol tık sürükler.** Parçayı ızgara hücresine yakın bırakırsan cuk oturur. Doğru da olsa yanlış da olsa oturur — oyun hangisinin yanlış olduğunu söylemez.
 - **Izgara dışında parçalar birbirine yapışır.** İki parçayı hizalayıp bırakırsan birleşirler ve tek parça gibi taşınırlar. Birleşmiş kümeyi ızgaraya sürüklersen hepsi tek hamlede oturur.
+- **Dolu hücreye bırakırsan yer değiştirir.** Izgaradaki bir parçayı başka bir parçanın üstüne sürüklersen ikisi takas olur. Masadan gelen bir parçayı dolu hücreye bırakırsan oradaki parça masaya çıkar. Sürüklerken hedef hücre turuncu kesikli çerçeveyle işaretlenir.
 - **Sağ tık kümeden tek parça koparır.**
 - **Parçalar:** klasik modda 3 saniyede bir masana düşer; havuz modunda alttaki havuzdan tıklayarak kaparsın.
 - Panel başlıklarındaki çubuk doğru yerleşen parça oranını gösterir; lider turuncu yanar. Yapbozu ilk doğru tamamlayan turu kazanır.
