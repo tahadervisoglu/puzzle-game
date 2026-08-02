@@ -142,8 +142,8 @@ PP.config = {
   // Izgaradan parça çalmaya çalışan el. Üstüne tıklarsan tokadı yiyip çekilir.
   hand: {
     enabled: true,
-    intervalMs: 5000,
-    reachSec: 1.9,        // uzanma süresi = tepki verme sürenin tamamı
+    intervalMs: 7000,
+    reachSec: 3,          // uzanma süresi = tepki verme sürenin tamamı
     retreatSec: 0.45,
     radiusRatio: 0.42,    // tıklama yarıçapı (parça kenarına oranla)
     botReaction: [0.45, 1.5],

@@ -18,7 +18,7 @@ Yapbozun referans resmi ortada, herkesin ortak kullanımında durur. Parçalar k
 - Oyun **doğru mu yanlış mı söylemez**. Sadece kaç parçanızın doğru olduğunu görürsünüz, hangilerinin yanlış olduğunu değil.
 - Dolu bir hücreye bırakırsanız iki parça **yer değiştirir**.
 - Izgara dışında parçalar birbirine **yapışır** ve küme olarak birlikte taşınır. **Sağ tık** kümeden tek parça koparır.
-- Arada bir kenardan **bir el uzanır** ve ızgaraya yerleştirdiğiniz bir parçayı sökmeye çalışır. Üstüne tıklarsanız tokadı yiyip geri çekilir; yetişemezseniz parçayı alıp masaya fırlatır. Yapbozla uğraşırken bir gözünüz hep onda olmak zorunda.
+- Yedi saniyede bir kenardan **bir el uzanır** ve ızgaraya yerleştirdiğiniz bir parçayı sökmeye çalışır. Üstüne tıklarsanız tokadı yiyip geri çekilir; yetişemezseniz parçayı alıp masaya fırlatır. Yapbozla uğraşırken bir gözünüz hep onda olmak zorunda.
 
 Her yeni oyunda **başka bir manzara** çıkar; resim o turun tohumundan üretilir, çok oyunculuda ise herkes aynısını görür.
 
