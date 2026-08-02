@@ -9,7 +9,6 @@
   const winTitleEl = document.getElementById('win-title');
   const winListEl = document.getElementById('win-list');
 
-  const cardsEl = document.getElementById('cards');
   const referenceEl = document.getElementById('reference');
 
   const players = [];
@@ -413,10 +412,11 @@
     const hand = players[0].state.hand || [];
     handEl.innerHTML = '';
     for (let i = 0; i < hand.length; i++) {
-      const card = PP.gambleCards[hand[i]];
+      const card = PP.cardInfo(hand[i]);
       if (!card) continue;
       const btn = document.createElement('button');
-      btn.className = 'gcard' + (card.risk === 'high' ? ' high' : '');
+      // Renk kartın türünü söyler: ışık yeşil, karanlık mor, kumar turuncu
+      btn.className = 'gcard kind-' + card.kind;
       btn.type = 'button';
       const top = document.createElement('span');
       top.className = 'gcard-top';
@@ -517,17 +517,6 @@
     if (gamble.play(players[0], index)) audio.play('buyu');
   }
 
-  function showCards(offer) {
-    if (!offer) { cardsEl.hidden = true; return; }
-    const light = PP.skills[offer.light];
-    const dark = PP.skills[offer.dark];
-    document.getElementById('card-light-name').textContent = light.name;
-    document.getElementById('card-light-desc').textContent = light.desc;
-    document.getElementById('card-dark-name').textContent = dark.name;
-    document.getElementById('card-dark-desc').textContent = dark.desc;
-    cardsEl.hidden = false;
-  }
-
   function renderWarnings() {
     for (let i = 0; i < players.length; i++) {
       const el = document.getElementById('warn-' + i);
@@ -562,7 +551,6 @@
     over = false;
     finishedCount = 0;
     winEl.hidden = true;
-    cardsEl.hidden = true;
     announceEl.innerHTML = '';
     if (human) human.release();
 
@@ -851,22 +839,10 @@
     });
   });
 
-  document.getElementById('card-light').addEventListener('click', function () {
-    skills.choose(players[0], 'light');
-  });
-  document.getElementById('card-dark').addEventListener('click', function () {
-    skills.choose(players[0], 'dark');
-  });
-
   // Büyü kartı Q/E, kumar kartı rakamlar. İkisinde de aynı tuşun olması
   // karışıklık yaratıyordu, ayırdık.
   window.addEventListener('keydown', function (e) {
     if (over) return;
-    const k = e.key.toLowerCase();
-    if (players[0].state.pendingOffer && (k === 'q' || k === 'e')) {
-      skills.choose(players[0], k === 'q' ? 'light' : 'dark');
-      return;
-    }
     const n = Number(e.key);
     if (!n || n < 1 || n > 9) return;
     playCard(n - 1);
@@ -887,14 +863,6 @@
   });
 
   skills = PP.SkillSystem(players, cfg, PP.Rng(cfg.seed ^ 0x5f3a), pool, {
-    onOffer: function (player, offer) {
-      if (!player.state.isHuman) return;
-      showCards(offer);
-      audio.play('kart');
-    },
-    onChosen: function (player) {
-      if (player.state.isHuman) showCards(null);
-    },
     onWarn: function (player) {
       if (player.state.isHuman) audio.play('uyari');
     },
@@ -918,13 +886,11 @@
       if (player.state.isHuman || !player.state.remote) renderHands();
     },
     onPlayed: function (player, card) {
-      announceCard(player, card);
-      if (player.state.isHuman) audio.play('buyu');
-      else audio.play('darbe');
-    },
-    onDuelEnd: function (winner) {
-      if (winner) announceText((winner.state.isHuman ? 'Sen' : winner.state.name) + ' düelloyu kazandı');
-      else announceText('Düello berabere');
+      // Büyüler kendi duyurusunu zaten yapıyor (hedefiyle birlikte)
+      if (card && card.kind === 'kumar') {
+        announceCard(player, card);
+        audio.play(player.state.isHuman ? 'buyu' : 'darbe');
+      }
     },
     onLocalPlay: function (cardId, seat) {
       if (online && net) net.send({ t: 'kumar', card: cardId, seat: seat });
@@ -938,6 +904,9 @@
       done();
     }
   });
+
+  // Destedeki büyüler telegraf ve ağ senkronu için büyü sisteminden geçer
+  gamble.setSkills(skills);
 
   rebuild();
   PP.Tuner(game, cfg);

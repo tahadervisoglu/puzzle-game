@@ -161,28 +161,14 @@ PP.gambleCards = {
   atescemberi: {
     id: 'atescemberi',
     name: 'Ateş çemberi',
-    desc: 'Herkesin ızgarasından 1 parça sökülür — sen dahil',
+    desc: 'Atan hariç herkesin ızgarasından 1 parça sökülür',
     risk: 'mid',
     apply: function (ctx) {
-      const all = gOthers(ctx, true);
-      for (let i = 0; i < all.length; i++) {
-        ctx.fx(all[i], 'deprem');
-        if (ctx.owns(all[i])) gKnock(ctx, all[i], 1);
+      const rivals = gOthers(ctx, false);
+      for (let i = 0; i < rivals.length; i++) {
+        ctx.fx(rivals[i], 'deprem');
+        if (ctx.owns(rivals[i])) gKnock(ctx, rivals[i], 1);
       }
-    }
-  },
-
-  duello: {
-    id: 'duello',
-    name: 'Düello',
-    desc: 'Liderle 10 sn yarışırsın: daha çok parça koyan diğerinden 3 parça alır',
-    risk: 'mid',
-    apply: function (ctx) {
-      const rival = gLeader(ctx);
-      if (!rival) return;
-      ctx.startDuel(ctx.self, rival);
-      ctx.fx(ctx.self, 'isik');
-      ctx.fx(rival, 'kilit');
     }
   },
 
@@ -213,67 +199,79 @@ PP.gambleCards = {
         ctx.fx(rivals[i], 'kilit');
       }
     }
-  },
-
-  sigorta: {
-    id: 'sigorta',
-    name: 'Sigorta',
-    desc: 'Sana gelecek ilk saldırıyı yutar',
-    risk: 'low',
-    apply: function (ctx) {
-      ctx.self.addEffect('kalkan', 60);
-      ctx.fx(ctx.self, 'isik');
-    }
   }
 };
 
-// Deste: riskli kartlar daha nadir çıkar
-PP.gambleDeck = [
-  'eldegistir',
-  'cifteyadahic', 'cifteyadahic',
-  'rulet',
-  'atescemberi', 'atescemberi',
-  'duello', 'duello',
-  'yagma', 'yagma',
-  'dondur',
-  'sigorta', 'sigorta'
-];
+// --- Tek deste ---
+// Büyüler ve kumar kartları artık aynı desteden geliyor. Riskli olanlar
+// daha nadir; sert olanlar geride kalana daha sık çıkar (bkz. draw).
+PP.deck = {
+  normal: [
+    'cifte', 'cifte',
+    'kontrol', 'kontrol',
+    'sis',
+    'karartma',
+    'kilit',
+    'yapistir',
+    'takas', 'takas',
+    'sahte',
+    'yagma', 'yagma',
+    'atescemberi',
+    'cifteyadahic', 'cifteyadahic',
+    'dondur'
+  ],
+  // Geride kalanın destesine ekstra konan sert kartlar
+  strong: ['deprem', 'ruzgar', 'hirsiz', 'rulet', 'eldegistir']
+};
 
 // --- Sistem ---
 
+// Bir kartın bilgisi hangi tabloda olursa olsun aynı biçimde döner
+PP.cardInfo = function (id) {
+  const g = PP.gambleCards[id];
+  if (g) return { id: id, name: g.name, desc: g.desc, kind: 'kumar' };
+  const s = PP.skills[id];
+  if (s) return { id: id, name: s.name, desc: s.desc, kind: s.type };
+  return null;
+};
+
 PP.Gamble = function (players, config, rng, hooks) {
   const cfg = config.gamble;
-  const duels = [];
   let acc = 0;
+  let skills = null;
 
-  // Oyuncu sayısına uymayan kartlar desteden çıkarılır (ör. El değiştir
-  // teke tekte anlamsız kalıyor)
-  function deckFor() {
-    let count = 0;
-    for (let i = 0; i < players.length; i++) if (players[i].state.active) count++;
-    return PP.gambleDeck.filter(function (id) {
-      const card = PP.gambleCards[id];
-      return card && (!card.minPlayers || count >= card.minPlayers);
-    });
+  function activeCount() {
+    let n = 0;
+    for (let i = 0; i < players.length; i++) if (players[i].state.active) n++;
+    return n;
+  }
+
+  function allowed(id) {
+    const card = PP.gambleCards[id];
+    if (card && card.minPlayers && activeCount() < card.minPlayers) return false;
+    return !!(card || PP.skills[id]);
+  }
+
+  // Geride kalan oyuncunun destesine sert kartlar eklenir — yetişme mekaniği
+  // artık burada yaşıyor.
+  function deckFor(player) {
+    let best = -1;
+    for (let i = 0; i < players.length; i++) {
+      const st = players[i].state;
+      if (st.active && st.correct > best) best = st.correct;
+    }
+    const behind = best - player.state.correct >= 2;
+    const deck = PP.deck.normal.concat(behind ? PP.deck.strong : []);
+    return deck.filter(allowed);
   }
 
   function draw(player) {
     const st = player.state;
     if (st.hand.length >= cfg.handSize) return;
-    const deck = deckFor();
+    const deck = deckFor(player);
     if (!deck.length) return;
     st.hand.push(gRandom(rng, deck));
     if (hooks.onHandChange) hooks.onHandChange(player);
-  }
-
-  function startDuel(a, b) {
-    duels.push({
-      a: a, b: b,
-      aStart: a.state.correct,
-      bStart: b.state.correct,
-      left: cfg.duelSec
-    });
-    if (hooks.onDuel) hooks.onDuel(a, b);
   }
 
   function makeCtx(player) {
@@ -285,7 +283,6 @@ PP.Gamble = function (players, config, rng, hooks) {
       rng: rng,
       fx: PP.fxFor,
       owns: function (p) { return p.state.owned; },
-      startDuel: startDuel,
 
       // Sonucu açığa çıkaran animasyon. Sadece kartı oynayan insan görür;
       // bot ya da uzak oyuncuda etki anında uygulanır.
@@ -296,23 +293,33 @@ PP.Gamble = function (players, config, rng, hooks) {
     };
   }
 
+  // Kart iki tabloda da olabilir: büyüler telegraf/hedefleme/ağ senkronu için
+  // büyü sisteminden geçer, kumar kartları doğrudan uygulanır.
+  function resolve(player, id) {
+    if (PP.skills[id]) {
+      if (skills) skills.castById(player, id);
+      return;
+    }
+    const card = PP.gambleCards[id];
+    if (card) card.apply(makeCtx(player));
+  }
+
   function play(player, index) {
     const st = player.state;
     if (st.finished || player.hasEffect('donuk')) return false;
     const id = st.hand[index];
     if (!id) return false;
-    const card = PP.gambleCards[id];
-    if (!card) return false;
 
     st.hand.splice(index, 1);
     if (hooks.onHandChange) hooks.onHandChange(player);
-    if (hooks.onLocalPlay) hooks.onLocalPlay(id, player.state.seat);
-    card.apply(makeCtx(player));
-    if (hooks.onPlayed) hooks.onPlayed(player, card);
+    // Büyüler kendi sisteminde zaten ağa duyuruluyor; kumar kartları burada
+    if (!PP.skills[id] && hooks.onLocalPlay) hooks.onLocalPlay(id, st.seat);
+    resolve(player, id);
+    if (hooks.onPlayed) hooks.onPlayed(player, PP.cardInfo(id));
     return true;
   }
 
-  // Ağdan gelen kart: yeniden yayınlamadan uygulanır
+  // Ağdan gelen kumar kartı: yeniden yayınlamadan uygulanır
   function remotePlay(cardId, seat) {
     const card = PP.gambleCards[cardId];
     if (!card) return;
@@ -322,30 +329,14 @@ PP.Gamble = function (players, config, rng, hooks) {
     }
     if (!player) return;
     card.apply(makeCtx(player));
-    if (hooks.onPlayed) hooks.onPlayed(player, card);
-  }
-
-  function resolveDuel(d) {
-    const aGain = d.a.state.correct - d.aStart;
-    const bGain = d.b.state.correct - d.bStart;
-    if (aGain === bGain) {
-      if (hooks.onDuelEnd) hooks.onDuelEnd(null, null);
-      return;
-    }
-    const winner = aGain > bGain ? d.a : d.b;
-    const loser = aGain > bGain ? d.b : d.a;
-    const ctx = makeCtx(winner);
-    if (ctx.owns(loser)) gKnock(ctx, loser, 3);
-    if (ctx.owns(winner)) gGain(ctx, winner, 3);
-    PP.fxFor(winner, 'isik');
-    PP.fxFor(loser, 'hirsiz');
-    if (hooks.onDuelEnd) hooks.onDuelEnd(winner, loser);
+    if (hooks.onPlayed) hooks.onPlayed(player, PP.cardInfo(cardId));
   }
 
   return {
+    setSkills: function (s) { skills = s; },
+
     reset: function () {
       acc = 0;
-      duels.length = 0;
       for (let i = 0; i < players.length; i++) {
         players[i].state.hand = [];
         if (hooks.onHandChange) hooks.onHandChange(players[i]);
@@ -363,19 +354,10 @@ PP.Gamble = function (players, config, rng, hooks) {
         }
       }
 
-      for (let i = duels.length - 1; i >= 0; i--) {
-        duels[i].left -= dt;
-        if (duels[i].left <= 0) {
-          const d = duels[i];
-          duels.splice(i, 1);
-          resolveDuel(d);
-        }
-      }
     },
 
     play: play,
     remotePlay: remotePlay,
-    nextDrawIn: function () { return Math.max(0, cfg.drawMs - acc) / 1000; },
-    duelLeft: function () { return duels.length ? duels[0].left : 0; }
+    nextDrawIn: function () { return Math.max(0, cfg.drawMs - acc) / 1000; }
   };
 };

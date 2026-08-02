@@ -59,6 +59,18 @@ Amaç oyuna **sürekli bir dikkat baskısı** koymak: yapbozla uğraşırken bir
 
 Donmuşken el gelmez — tepki veremeyeceğiniz bir şeyle cezalandırmak haksız olurdu. Botlar da ele tepki verir; zorlukları tepki süresine ve ıskalama ihtimaline yansır.
 
+## Tek deste
+
+Bir dönem iki ayrı kart sistemi vardı: ilerlemeye bağlı **büyü seçimi** (iki karttan biri) ve zamana bağlı **kumar destesi** (kör çekiliş, elde birikir). İkisi birlikte hem ekranı hem kafayı kalabalıklaştırdı; aynı tuşlar çakıştı, oyuncu iki farklı ekonomiyi aynı anda takip etmek zorunda kaldı.
+
+Artık **tek deste** var: büyüler de kumar kartları da aynı desteden, zamana bağlı ve kör olarak gelir, elde birikir, istenildiği an oynanır. Kartın türü rengiyle okunur (ışık yeşil, karanlık mor, kumar turuncu).
+
+Yetişme mekaniği de buraya taşındı: **geride kalanın destesine sert kartlar eklenir** (Deprem, Rüzgar, Hırsız, Rulet, El değiştir). Önde gidenin destesinde bunlar hiç bulunmaz.
+
+Mimari not: büyüler `castById` üzerinden büyü sisteminden geçmeye devam eder — telegraf, hedefleme, spam freni ve ağ senkronu oradan gelir. Kumar kartları doğrudan uygulanır. Kart hangi tabloda olursa olsun `PP.cardInfo` aynı biçimde bilgi döner, arayüz ikisini ayırt etmek zorunda kalmaz.
+
+Elenen kartlar: **Poster** (referans zaten ızgarada duruyor, gereksizleşti), **Sigorta** (yutulacak tek bir saldırı oyunda fark yaratmıyordu), **Düello** (kurulumu ağır, ödülü belirsizdi). **Ateş çemberi** artık atanı yakmıyor.
+
 ## Büyü ekonomisi
 
 - İlerleme = doğru birleştirilmiş parça yüzdesi. Her **%10 eşiğinde** 2 kart belirir: biri ışık (kendine fayda), biri karanlık (rakibe sabotaj). **Seçilen büyü anında uygulanır** — cep/bekletme yoktur. Bu bilinçli bir sadeleştirme: "doğru anı bekleme" katmanı kalktı, oyun hızlandı ve kart geldiğinde anında karar verme baskısı arttı.

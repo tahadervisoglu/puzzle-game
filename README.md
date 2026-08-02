@@ -30,21 +30,17 @@ Her yeni oyunda **başka bir manzara** çıkar; resim o turun tohumundan üretil
 - **Teke tek** — iki kişi, iki büyük panel. Her saldırı doğrudan karşınızdakine gider, saklanacak kalabalık yoktur.
 - **Ortak havuz** — dört kişi, parçalar alttaki ortak havuza düşer ve hepiniz oradan kaparsınız. İhtiyacınız olanı rakipten önce almalısınız.
 
-## Büyüler
+## Kartlar
 
-İlerledikçe önünüze **iki kart** çıkar: biri size fayda sağlar, biri rakibe zarar verir. Birini seçersiniz, anında çalışır.
+Tek deste var. Belirli aralıklarla elinize **kör bir kart** gelir; ne geleceğini seçemezsiniz. Kartlar elinizde birikir, istediğiniz an oynarsınız — tıklayarak ya da rakamına basarak.
+
+Rakipler **kaç kartınız olduğunu görür, hangileri olduğunu göremez.** Geride kalana daha sert kartlar çıkar.
 
 Referansı herkesten gizleyen sis, tahtaları sarsıp parça söken deprem, masayı süpüren rüzgar, rakibin ekranını karartan büyüler, parça çalanlar, iki parçanın yerini sessizce değiştirip kimseye söylemeyenler…
 
 Saldırılar hedefin ekranında **bir saniye önceden uyarı verir** — yani gördüğünüz felakete hazırlanacak kadar vaktiniz olur, engelleyecek kadar değil.
 
-## Kumar destesi
-
-Büyülerden ayrı ikinci bir katman. Belirli aralıklarla elinize **kör bir kart** gelir; ne geleceğini seçemezsiniz. Kartlar elinizde birikir, istediğiniz an oynarsınız.
-
-Rakipler **kaç kartınız olduğunu görür, hangileri olduğunu göremez.**
-
-Deste oyuncu sayısına göre değişir; bazı kartlar teke tekte anlamını yitirdiği için o modda hiç dağıtılmaz.
+Deste oyuncu sayısına göre de değişir; bazı kartlar teke tekte anlamını yitirdiği için o modda hiç dağıtılmaz.
 
 Destede tahtanızı rastgele bir rakiple takas eden, yazı tura atıp parçalarınızı ya söken ya da yerine oturtan, herkesi birden vuran ve kendinizi de yakabileceğiniz kartlar var.
 
@@ -71,7 +67,7 @@ src/
   core/     oyun döngüsü, seeded rng, olay veri yolu, ayarlar
   puzzle/   resim üretimi, dilimleme, ızgara, kümeler, ortak havuz
   players/  oyuncu birimi, girdi, insan ve bot denetleyicileri
-  skills/   büyüler ve kumar destesi
+  skills/   büyüler ve tek kart destesi
   render/   canvas çizimi, efektler, prosedürel ses
   net/      çok oyunculu bağlantı ve lobi
   ui/       stil ve ayar paneli

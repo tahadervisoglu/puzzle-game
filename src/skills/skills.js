@@ -46,20 +46,6 @@ PP.skills = {
     }
   },
 
-  // Ortadaki madalyon küçük kalıyor; bu büyü tam resmi ızgaranın üstüne
-  // soluk olarak bindirir, böylece hangi parçanın nereye gittiği net görünür.
-  poster: {
-    id: 'poster',
-    name: 'Poster',
-    type: 'light',
-    desc: 'Tam resim 5 sn ızgaranın üstünde belirir, sonra söner',
-    visual: true,
-    apply: function (ctx) {
-      ctx.self.addEffect('poster', 5 * ctx.scale);
-      ctx.fx(ctx.self, 'isik');
-    }
-  },
-
   sis: {
     id: 'sis',
     name: 'Sis',
@@ -248,10 +234,11 @@ PP.skills = {
 
 // Kart havuzları. Geride kalan oyuncuya daha sert karanlık büyüler çıkar —
 // tasarımdaki yetişme mekaniği.
+// Büyüler artık ayrı bir sistemden dağıtılmıyor; hepsi tek destenin içinde
+// (bkz. PP.deck). Buradaki gruplama yalnızca hangi kartın sert olduğunu
+// bilmek için duruyor — geride kalana sert kart daha sık çıkar.
 PP.skillPools = {
-  light: ['cifte', 'kontrol', 'poster'],
-  // Ortam olayları (sis, deprem, rüzgar) herkesi vurduğu için güçlüdür;
-  // cerrahi olanlar lidere gider ve yetişme mekaniğini korur.
+  light: ['cifte', 'kontrol'],
   darkMild: ['sis', 'karartma', 'kilit', 'yapistir', 'takas', 'sahte'],
-  darkStrong: ['deprem', 'takas', 'ruzgar', 'hirsiz', 'sahte', 'yapistir', 'kilit']
+  darkStrong: ['deprem', 'ruzgar', 'hirsiz']
 };

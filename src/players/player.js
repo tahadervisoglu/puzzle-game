@@ -30,10 +30,7 @@ PP.Player = function (opts) {
     correct: 0,
     // Büyü sistemi (F3)
     effects: {},          // buyuId -> kalan saniye
-    pendingOffer: null,   // seçim bekleyen kart çifti (seçilince hemen uygulanır)
     hand: [],             // kumar kartları — elde birikir, sahibi kullanır
-    owed: 0,              // hak edilmiş ama henüz sunulmamış kart
-    nextThreshold: 0,
     warning: null,        // { text, remaining }
     pointer: { x: 0, y: 0 },
     fx: PP.Fx(config)
@@ -138,7 +135,7 @@ PP.Player = function (opts) {
       if (api.hand) api.hand.reset();
       collectReserved();
       table.prepare(scatterRng, arrivalRng);
-      if (config.mode === 'klasik') {
+      if (config.mode !== 'havuz') {
         for (let i = 0; i < config.drip.initial; i++) table.dripNext();
       }
       refreshProgress();

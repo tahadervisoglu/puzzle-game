@@ -8,22 +8,6 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
   const pending = [];      // gecikmeli saldırılar (uyarı süresi dolunca uygulanır)
   let clock = 0;
 
-  function total() { return config.puzzle.cols * config.puzzle.rows; }
-
-  function thresholdStep() {
-    const shrink = Math.floor(clock / cfg.shrinkEverySec) * cfg.shrinkStep;
-    return Math.max(cfg.thresholdMin, cfg.thresholdStart - shrink);
-  }
-
-  function ranking() {
-    return players.slice().sort(function (a, b) { return b.state.correct - a.state.correct; });
-  }
-
-  function isLastPlace(player) {
-    const r = ranking();
-    return r[r.length - 1] === player && r[0].state.correct > player.state.correct;
-  }
-
   // Karanlık büyüler varsayılan olarak lidere gider — aynı PC'de hedef seçme
   // derdini kaldırır ve doğal bir yetişme mekaniği olur.
   function pickTarget(caster) {
@@ -34,51 +18,6 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
       if (!best || p.state.correct > best.state.correct) best = p;
     }
     return best;
-  }
-
-  function pick(pool) { return pool[Math.floor(rng.next() * pool.length)]; }
-
-  // O an gerçekten bir işe yarayan kartlar. Tüm parçalar geldikten sonra
-  // "2 parça al" gibi kartlar ölü kalıyordu; artık hiç teklif edilmiyorlar.
-  function usable(pool, player) {
-    const rivals = [];
-    for (let i = 0; i < players.length; i++) {
-      const p = players[i];
-      if (p !== player && !p.state.finished && !p.state.dropped) rivals.push(p);
-    }
-    const out = pool.filter(function (id) {
-      const skill = PP.skills[id];
-      if (!skill) return false;
-      return !skill.useful || skill.useful(player, rivals);
-    });
-    return out.length ? out : pool;   // hiçbiri uygun değilse yine de bir şey sun
-  }
-
-  function makeOffer(player) {
-    const behind = isLastPlace(player);
-    return {
-      light: pick(usable(PP.skillPools.light, player)),
-      dark: pick(usable(behind ? PP.skillPools.darkStrong : PP.skillPools.darkMild, player))
-    };
-  }
-
-  function grant(player) {
-    const st = player.state;
-    if (st.pendingOffer || st.owed <= 0) return;
-    st.owed--;
-    st.pendingOffer = makeOffer(player);
-    if (hooks.onOffer) hooks.onOffer(player, st.pendingOffer);
-  }
-
-  // Kart seçmek büyüyü doğrudan uygular — cep yok, bekletme yok.
-  function choose(player, which) {
-    const st = player.state;
-    if (!st.pendingOffer) return null;
-    const id = which === 'dark' ? st.pendingOffer.dark : st.pendingOffer.light;
-    st.pendingOffer = null;
-    if (hooks.onChosen) hooks.onChosen(player);
-    castById(player, id);
-    return id;
   }
 
   function scaleFor(targetId, skillId) {
@@ -100,14 +39,6 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
     const skill = PP.skills[entry.skillId];
     const affected = entry.target || entry.caster;
 
-    // Sigorta kartı: gelen ilk saldırıyı yutar
-    if (skill.type === 'dark' && affected && affected !== entry.caster &&
-        affected.hasEffect('kalkan')) {
-      delete affected.state.effects.kalkan;
-      PP.fxFor(affected, 'isik');
-      if (hooks.onBlocked) hooks.onBlocked(affected, skill);
-      return;
-    }
 
     // Ağ oyununda her istemci sadece kendi simüle ettiği oyuncuların durumunu
     // değiştirir; başkasının tahtası zaten karşı taraftan gelir. Görsel etkiler
@@ -200,17 +131,15 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
       for (const k in lastHit) delete lastHit[k];
       for (let i = 0; i < players.length; i++) {
         const st = players[i].state;
-        st.pendingOffer = null;
-        st.owed = 0;
-        st.nextThreshold = cfg.thresholdStart;
         st.warning = null;
         st.effects = {};
       }
     },
 
+    // Artık kart dağıtmıyor; sadece atılan büyünün telegrafını, hedefini,
+    // spam frenini ve ağ senkronunu yönetiyor. Kartlar tek destede (PP.deck).
     update: function (dt) {
       clock += dt;
-
       for (let i = pending.length - 1; i >= 0; i--) {
         if (clock >= pending[i].at) {
           const entry = pending[i];
@@ -218,28 +147,11 @@ PP.SkillSystem = function (players, config, rng, pool, hooks) {
           if (!entry.caster.state.finished) fire(entry);
         }
       }
-
-      const t = total();
-      for (let i = 0; i < players.length; i++) {
-        const player = players[i];
-        const st = player.state;
-        if (st.finished) continue;
-
-        const ratio = st.correct / t;
-        while (ratio >= st.nextThreshold - 1e-6 && st.nextThreshold <= 1.0001) {
-          st.owed++;
-          const step = thresholdStep() * (isLastPlace(player) ? cfg.lastPlaceBonus : 1);
-          st.nextThreshold += step;
-        }
-        grant(player);
-      }
     },
 
-    choose: choose,
     castById: castById,
     remoteCast: remoteCast,
     bySeat: bySeat,
-    pickTarget: pickTarget,
-    thresholdStep: thresholdStep
+    pickTarget: pickTarget
   };
 };

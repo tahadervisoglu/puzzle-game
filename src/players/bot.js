@@ -158,30 +158,12 @@ PP.Bot = function (player, rng, cfg, skills, pool, gamble) {
     if (id >= 0) player.claim(id);
   }
 
-  // Kart seçimi: geride kaldıysa saldırıya, öndeyse kendi faydasına yönelir.
-  // Seçim anında uygulanır, cepte bekletme yok.
-  function handleSkills(dt, skillCfg) {
-    const st = player.state;
-    if (!st.pendingOffer) { pickDelay = -1; return; }
-
-    if (pickDelay < 0) pickDelay = rand(skillCfg.botPickDelay);
-    pickDelay -= dt;
-    if (pickDelay > 0) return;
-
-    const rival = skills.pickTarget(player);
-    const behind = rival && rival.state.correct > st.correct;
-    const wantDark = behind ? rng.next() < 0.75 : rng.next() < 0.35;
-    skills.choose(player, wantDark ? 'dark' : 'light');
-    pickDelay = -1;
-  }
-
   return {
     update: function (dt, skillCfg) {
       if (player.state.finished || player.hasEffect('donuk')) return;
       if (gamble) handleGamble(dt);
       handleHand(dt);
       if (pool && PP.config.mode === 'havuz') handleClaim(dt);
-      if (skills && skillCfg) handleSkills(dt, skillCfg);
 
       if (drag) {
         const c = clusters.get(drag.clusterId);
