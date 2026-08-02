@@ -10,12 +10,14 @@ Tarayıcıda çalışır, kurulum gerektirmez.
 
 Tricky Towers'ın büyü gerilimini yapboza taşıyan bir prototip. Ekran dört panele bölünür: soldaki büyük panel sizin, diğer üçü rakiplerinizin canlı görünümü. Kimin ne kadar ilerlediğini, kimin tahtasının dağıldığını anlık olarak görürsünüz.
 
-Yapbozun referans resmi ortada, herkesin ortak kullanımında durur. Parçalar kare kesilmiştir; ızgaraya oturur, ızgara dışında birbirine yapıştırılabilir.
+Yapbozun referans resmi hem ortada ortak bir madalyon olarak durur, hem de kendi ızgaranızın üstünde soluk bir hayalet olarak görünür. Parçalar kare kesilmiştir; ızgaraya oturur, ızgara dışında birbirine yapıştırılabilir.
 
 ## Nasıl oynanır
 
 - **Sol tık** parçayı sürükler. Izgara hücresine yakın bırakınca oturur.
 - Oyun **doğru mu yanlış mı söylemez**. Sadece kaç parçanızın doğru olduğunu görürsünüz, hangilerinin yanlış olduğunu değil.
+- Doğru hücrede birkaç saniye duran parça **kalıcılaşır**: altın çerçeveye bürünür ve artık ne deprem, ne hırsız, ne el onu sökebilir. İlerlemeniz böylece birikir.
+- Masanıza **sahte parçalar** karışabilir; hiçbir yere oturmazlar. Sağ tıkla yırtıp atarsınız — ama önce hangisinin sahte olduğunu anlamanız gerekir.
 - Dolu bir hücreye bırakırsanız iki parça **yer değiştirir**.
 - Izgara dışında parçalar birbirine **yapışır** ve küme olarak birlikte taşınır. **Sağ tık** kümeden tek parça koparır.
 - Yedi saniyede bir kenardan **bir el uzanır** ve ızgaraya yerleştirdiğiniz bir parçayı sökmeye çalışır. Üstüne tıklarsanız tokadı yiyip geri çekilir; yetişemezseniz parçayı alıp masaya fırlatır. Yapbozla uğraşırken bir gözünüz hep onda olmak zorunda.

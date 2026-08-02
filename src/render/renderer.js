@@ -92,12 +92,39 @@ PP.Renderer = function (canvas, table, config, owner) {
     // gibi okunsun diye.
     const cluster = p.cluster >= 0 ? table.clusters.get(p.cluster) : null;
     const bonded = p.cell >= 0 || p.netBonded || (cluster && cluster.members.length > 1);
-    ctx.strokeStyle = bonded ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.16)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0.5, 0.5, size - 1, size - 1);
-    if (!bonded) {
-      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-      ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
+
+    if (p.locked) {
+      // Kalıcı parça: artık sökülemez, altın çerçeveyle belli edilir
+      ctx.strokeStyle = 'rgba(239,196,90,0.75)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, size - 2, size - 2);
+    } else {
+      ctx.strokeStyle = bonded ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, 0.5, size - 1, size - 1);
+      if (!bonded) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
+      }
+      // Kalıcılaşmaya yaklaşan parçanın kenarı dolmaya başlar
+      if (p.lockT > 0) {
+        const k = Math.min(1, p.lockT / config.lock.sec);
+        ctx.strokeStyle = 'rgba(239,196,90,' + (0.85 * k).toFixed(3) + ')';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(1, 1);
+        ctx.lineTo(1 + (size - 2) * k, 1);
+        ctx.stroke();
+      }
+    }
+
+    if (p.fake) {
+      // Sahte parça hiçbir ipucu vermez; ancak Kontrol büyüsüyle görünür
+      if (owner && owner.effects.kontrol > 0) {
+        ctx.strokeStyle = 'rgba(226,75,74,0.95)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
+      }
     }
 
     ctx.restore();
@@ -105,12 +132,21 @@ PP.Renderer = function (canvas, table, config, owner) {
 
   // Poster büyüsü: tam resim ızgaranın tam üstüne soluk bindirilir. Parçalar
   // üstüne çizildiği için eksikler hayalet gibi görünür.
-  function drawGhost(remaining) {
+  // Referans oyun boyunca ızgaranın üstünde soluk durur; Poster büyüsü onu
+  // geçici olarak belirginleştirir, Sis tamamen gizler.
+  function drawGhost() {
+    if (owner && owner.effects.sis > 0) return;
+    const base = config.fx.ghostBase;
+    const poster = owner ? (owner.effects.poster || 0) : 0;
+    const boost = poster > 0
+      ? (config.fx.ghostAlpha - base) * Math.min(1, poster / config.fx.ghostFadeSec)
+      : 0;
+    const alpha = base + boost;
+    if (alpha <= 0.001) return;
+
     const b = table.board.state;
-    // Son saniyelerde sönerek kaybolur, birden yok olmaz
-    const fade = Math.min(1, remaining / config.fx.ghostFadeSec);
     ctx.save();
-    ctx.globalAlpha = config.fx.ghostAlpha * fade;
+    ctx.globalAlpha = alpha;
     ctx.drawImage(source, 0, 0, source.width, source.height, b.x, b.y, b.w, b.h);
     ctx.restore();
   }
@@ -261,7 +297,7 @@ PP.Renderer = function (canvas, table, config, owner) {
         ctx.translate(o.x, o.y);
       }
       drawBoard();
-      if (source && owner && owner.effects.poster > 0) drawGhost(owner.effects.poster);
+      if (source) drawGhost();
 
       if (source) {
         for (let i = 0; i < s.order.length; i++) {

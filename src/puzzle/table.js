@@ -15,6 +15,7 @@ PP.Table = function (bus, config, board, clusters) {
     reserved: [],       // HUD/referans gibi üst katman panellerinin kapladığı alanlar
     slots: [],          // saçılma konumları
     slotCursor: 0,      // bir sonraki parçanın konacağı slot
+    fakeSeq: 0,         // sahte parçalara benzersiz id vermek için
     arrivals: [],       // klasik modda parçaların geliş sırası
     arrived: 0
   };
@@ -158,6 +159,9 @@ PP.Table = function (bus, config, board, clusters) {
     board.reset();
     clusters.clear();
 
+    // Önceki turdan kalan sahte parçalar temizlenir
+    state.pieces = state.pieces.filter(function (p) { return !p.fake; });
+
     const count = state.pieces.length;
     for (let i = 0; i < count; i++) {
       const p = state.pieces[i];
@@ -166,6 +170,8 @@ PP.Table = function (bus, config, board, clusters) {
       p.cluster = -1;
       p.held = false;
       p.lift = 0;
+      p.locked = false;
+      p.lockT = 0;
     }
 
     // Band dar kalırsa parçaları ızgaraya taşırmak yerine kenarda
@@ -279,6 +285,12 @@ PP.Table = function (bus, config, board, clusters) {
     const b = board.state;
     const tol = size * config.snap.toleranceRatio;
 
+    // Sahte parça hiçbir hücreye oturmaz
+    for (let i = 0; i < c.members.length; i++) {
+      const m = byId(c.members[i]);
+      if (m && m.fake) return null;
+    }
+
     let anchor = null;
     for (let i = 0; i < c.members.length; i++) {
       const p = byId(c.members[i]);
@@ -346,6 +358,8 @@ PP.Table = function (bus, config, board, clusters) {
     const cell = row * b.cols + col;
     const occupantId = b.cells[cell];
     if (occupantId === null || occupantId === p.id) return -1;
+    const occ = byId(occupantId);
+    if (!occ || occ.locked) return -1;      // kalıcı parça yerinden oynatılamaz
     return cell;
   }
 
@@ -586,6 +600,55 @@ PP.Table = function (bus, config, board, clusters) {
       bus.emit('masa:degisti', {});
     },
 
+    // Sahte parça: resmin rastgele bir yerinden kesilir, gerçek gibi görünür
+    // ama hiçbir hücreye oturmaz. Sağ tıkla yırtılıp atılabilir.
+    addFakes: function (n, rng) {
+      const tpl = state.pieces[0];
+      if (!tpl) return 0;
+      const srcW = tpl.sw * config.puzzle.cols;
+      const srcH = tpl.sh * config.puzzle.rows;
+      let added = 0;
+
+      for (let i = 0; i < n; i++) {
+        const slot = state.slots.length
+          ? state.slots[state.slotCursor++ % state.slots.length]
+          : { x: state.width * 0.5, y: state.height * 0.5 };
+        const p = {
+          id: 10000 + state.fakeSeq++,
+          col: -1, row: -1,
+          sx: rng.range(0, Math.max(1, srcW - tpl.sw)),
+          sy: rng.range(0, Math.max(1, srcH - tpl.sh)),
+          sw: tpl.sw, sh: tpl.sh,
+          x: slot.x, y: slot.y,
+          cell: -1, cluster: -1, gx: 0, gy: 0,
+          arrived: true, fake: true, locked: false, lockT: 0,
+          netBonded: false, rx: 0, ry: 0, pop: 0.8, lift: 0, held: false
+        };
+        state.pieces.push(p);
+        const c = clusters.create(slot.x, slot.y);
+        clusters.add(c, p, 0, 0);
+        clampCluster(c);
+        syncCluster(c);
+        state.order.push(p.id);
+        added++;
+      }
+      return added;
+    },
+
+    // Sahte parçayı yırtıp atar
+    tearFake: function (pieceId) {
+      const p = byId(pieceId);
+      if (!p || !p.fake) return false;
+      const c = clusters.get(p.cluster);
+      if (c) clusters.remove(c, p);
+      const oi = state.order.indexOf(p.id);
+      if (oi >= 0) state.order.splice(oi, 1);
+      const pi = state.pieces.indexOf(p);
+      if (pi >= 0) state.pieces.splice(pi, 1);
+      bus.emit('parca:yirtildi', { x: p.x, y: p.y });
+      return true;
+    },
+
     // Parçayı doğrudan bir hücreye oturtur (kumar kartları için).
     // Hücre doluysa başarısız olur.
     seatPieceAt: function (pieceId, cell) {
@@ -611,12 +674,13 @@ PP.Table = function (bus, config, board, clusters) {
       return true;
     },
 
-    // Izgaraya oturmuş parçaların id'leri (Deprem ve Takas için)
+    // Izgaraya oturmuş ama henüz kalıcılaşmamış parçalar. Deprem, Hırsız,
+    // el ve kumar kartları buradan hedef seçer — kalıcı parçalar sökülemez.
     seatedPieces: function () {
       const out = [];
       for (let i = 0; i < state.pieces.length; i++) {
         const p = state.pieces[i];
-        if (p.cell >= 0 && !p.held) out.push(p.id);
+        if (p.cell >= 0 && !p.held && !p.locked) out.push(p.id);
       }
       return out;
     },
@@ -627,6 +691,7 @@ PP.Table = function (bus, config, board, clusters) {
       const a = byId(idA);
       const b = byId(idB);
       if (!a || !b || a.cell < 0 || b.cell < 0) return false;
+      if (a.locked || b.locked) return false;
       const ca = a.cell;
       const cb = b.cell;
       board.occupy(ca, b.id);
@@ -692,7 +757,7 @@ PP.Table = function (bus, config, board, clusters) {
       const size = state.pieceSize;
       for (let i = state.order.length - 1; i >= 0; i--) {
         const p = byId(state.order[i]);
-        if (!p || !p.arrived) continue;
+        if (!p || !p.arrived || p.locked) continue;   // kalıcı parça alınamaz
         if (x >= p.x && x <= p.x + size && y >= p.y && y <= p.y + size) return p;
       }
       return null;
@@ -773,6 +838,7 @@ PP.Table = function (bus, config, board, clusters) {
 
     update: function (dt) {
       const speed = config.feel.liftSpeed;
+      const cols = board.state.cols;
       const fly = Math.pow(config.fx.flyDecay, dt * 60);
       const pop = Math.pow(config.fx.popDecay, dt * 60);
       for (let i = 0; i < state.pieces.length; i++) {
@@ -789,6 +855,23 @@ PP.Table = function (bus, config, board, clusters) {
         if (p.pop) {
           p.pop *= pop;
           if (p.pop < 0.01) p.pop = 0;
+        }
+
+        // Doğru hücrede yeterince duran parça kalıcılaşır
+        if (p.locked || p.fake) continue;
+        if (p.cell >= 0 && p.cell === p.row * cols + p.col) {
+          p.lockT += dt;
+          if (p.lockT >= config.lock.sec) {
+            p.locked = true;
+            p.pop = 1;
+            bus.emit('parca:kalici', {
+              id: p.id,
+              x: p.x + state.pieceSize / 2,
+              y: p.y + state.pieceSize / 2
+            });
+          }
+        } else if (p.lockT) {
+          p.lockT = 0;
         }
       }
     }

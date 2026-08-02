@@ -25,6 +25,9 @@ PP.slicer = {
           gx: 0,          // küme çapasına göre kafes koordinatı
           gy: 0,
           arrived: false, // masaya geldi mi
+          fake: false,    // sahte parça: hiçbir hücreye oturmaz
+          locked: false,  // doğru yerde yeterince durdu, artık sökülemez
+          lockT: 0,       // kalıcılaşmaya kalan süre sayacı
           netBonded: false, // ağdan gelen tahtada bu parça bir kümenin üyesi
           rx: 0,          // savrulma sonrası çizim kayması (oyun mantığını etkilemez)
           ry: 0,

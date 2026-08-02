@@ -855,16 +855,17 @@
     skills.choose(players[0], 'dark');
   });
 
-  // Rakamlar: ışık/karanlık kartı ekrandaysa onu seçer, yoksa kumar kartı oynar
+  // Büyü kartı Q/E, kumar kartı rakamlar. İkisinde de aynı tuşun olması
+  // karışıklık yaratıyordu, ayırdık.
   window.addEventListener('keydown', function (e) {
     if (over) return;
-    const n = Number(e.key);
-    if (!n || n < 1 || n > 9) return;
-    if (players[0].state.pendingOffer) {
-      if (n === 1) skills.choose(players[0], 'light');
-      else if (n === 2) skills.choose(players[0], 'dark');
+    const k = e.key.toLowerCase();
+    if (players[0].state.pendingOffer && (k === 'q' || k === 'e')) {
+      skills.choose(players[0], k === 'q' ? 'light' : 'dark');
       return;
     }
+    const n = Number(e.key);
+    if (!n || n < 1 || n > 9) return;
     playCard(n - 1);
   });
 

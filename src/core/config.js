@@ -29,6 +29,13 @@ PP.config = {
 
   snap: { toleranceRatio: 0.55 },   // ızgara hücresine yapışma toleransı
 
+  // Doğru hücrede bu kadar kalan parça kalıcılaşır: artık ne el, ne deprem,
+  // ne hırsız onu söker. Yoksa ilerleme hiç birikmiyor, oyun yorucu oluyor.
+  lock: { sec: 5 },
+
+  // Hiçbir yere oturmayan sahte parçalar
+  fake: { count: 2 },
+
   // Izgara dışında parçaların birbirine yapışması. Tolerans ızgaradan dar:
   // yan yana park edilen parçalar kazara birleşmesin, isteyerek hizalansın.
   join: { toleranceRatio: 0.3, maxCascade: 4 },
@@ -106,8 +113,9 @@ PP.config = {
     flyDecay: 0.82,      // savrulan parçanın yerine oturma hızı
     popDecay: 0.86,      // yerleşme sıçramasının sönümü
     popScale: 0.13,      // yerleşince parçanın ne kadar şişeceği
-    ghostAlpha: 0.6,     // Poster büyüsünde tam resmin saydamlığı
-    ghostFadeSec: 1.4,   // son saniyelerde sönerek kaybolur
+    ghostBase: 0.3,      // referans oyun boyunca ızgarada bu saydamlıkta durur
+    ghostAlpha: 0.6,     // Poster büyüsü onu bu seviyeye çıkarır
+    ghostFadeSec: 1.4,   // Poster sönerek taban seviyesine iner
     quakeSec: 3,         // Deprem'de ızgaranın sallandığı süre
     quakeAmp: 26         // sallanma genliği (px) — nişan almayı zorlaştırır
   },

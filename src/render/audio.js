@@ -119,7 +119,15 @@ PP.Audio = function (config) {
       noise({ freq: 2600, to: 500, dur: 0.13, gain: 0.42 });
       tone({ freq: 170, to: 80, type: 'square', dur: 0.1, gain: 0.24 });
     },
-    calindi: function () { tone({ freq: 420, to: 120, type: 'sawtooth', dur: 0.34, gain: 0.3 }); }
+    calindi: function () { tone({ freq: 420, to: 120, type: 'sawtooth', dur: 0.34, gain: 0.3 }); },
+
+    // Parça kalıcılaştı: kısa, tatmin edici bir onay
+    kalici: function () {
+      tone({ freq: 780, type: 'sine', dur: 0.1, gain: 0.2 });
+      tone({ freq: 1170, type: 'sine', dur: 0.16, gain: 0.16, delay: 0.07 });
+    },
+
+    yirtildi: function () { noise({ freq: 3200, to: 900, dur: 0.2, gain: 0.3 }); }
   };
 
   return {

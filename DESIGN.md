@@ -31,6 +31,26 @@ Havuz modunun iki kuralı var:
 - **Döndürme yok** — parçalar hep doğru yönde gelir (ileride "zor mod" seçeneği olabilir).
 - **Zafer: Yarış modu** — yapbozu ilk doğru tamamlayan kazanır. (Süreli mod ileride eklenebilir.)
 
+## Kalıcılaşan parçalar
+
+Doğru hücrede **5 saniye** duran parça kalıcılaşır: kilitlenir, artık ne Deprem, ne Hırsız, ne el, ne Takas onu söker; oyuncunun kendisi de yerinden oynatamaz.
+
+Bunun sebebi somut bir sorundu: büyü sayısı arttıkça doğru yerleştirilen parçalar durmadan sökülüyordu ve **ilerleme hiç birikmiyordu**. Oyun yorucu hale gelmişti çünkü emek harcamanın karşılığı kalıcı değildi. Kilitlenme, saldırıların hâlâ acıtmasını ama yaptığınız işin bir kısmının güvenceye alınmasını sağlıyor. Yan etkisi: hızlı ve doğru oynamak artık iki kez ödüllendiriliyor — hem ilerliyorsunuz hem de o ilerlemeyi dondurmuş oluyorsunuz.
+
+Görsel dil: kilitlenmeye yaklaşan parçanın üst kenarı altın renkte dolar, kilitlenince parça altın çerçeveye bürünür ve bir halka darbesiyle ses verir.
+
+## Referans iki yerde
+
+Referans artık **oyun boyunca ızgaranın üstünde %30 saydamlıkla** durur; ortadaki ortak madalyon ise küçültüldü. Sebep: madalyon tek başına küçük kaldığı için hangi parçanın nereye gittiğini okumak zordu.
+
+Bu değişiklik iki büyünün anlamını da netleştirdi. **Poster** hayaleti geçici olarak %60'a çıkarır (sonra tabana geri söner), **Sis** ise hayaleti tamamen kapatır — yani Sis artık sadece madalyonu değil, asıl işinize yarayan katmanı da alıyor.
+
+## Sahte parçalar
+
+Resmin rastgele bir yerinden kesilen, hiçbir hücreye oturmayan parçalar. Gerçek gibi görünürler; asıl zararları kafa karışıklığıdır — elinizdeki parçanın gerçek olup olmadığından emin olamazsınız. **Sağ tıkla yırtılıp atılırlar**, ama önce hangisinin sahte olduğunu anlamanız gerekir. Kontrol büyüsü onları da kırmızıya boyar.
+
+Teknik not: sahte parçalar parça listesini şişirdiği için tamamlanma kontrolü artık `pieces.length`e değil ızgara boyutuna bakıyor; yoksa sahte parça gelen oyuncu yapbozu asla bitiremezdi.
+
 ## Uzanan el
 
 Belirli aralıklarla panelin bir kenarından bir el uzanır ve ızgaraya oturmuş rastgele bir parçayı hedefler. Uzanma süresi boyunca üstüne tıklanırsa tokadı yiyip titreyerek geri çekilir; tıklanmazsa parçayı söküp masaya fırlatır.

@@ -65,6 +65,16 @@ PP.Player = function (opts) {
     if (opts.audio && state.isHuman) opts.audio.play('calindi');
   });
 
+  bus.on('parca:kalici', function (info) {
+    state.fx.ring(info.x, info.y, table.state.pieceSize * 1.3);
+    if (opts.audio && state.isHuman) opts.audio.play('kalici');
+  });
+
+  bus.on('parca:yirtildi', function (info) {
+    state.fx.dust(info.x, info.y, 10, 0.8);
+    if (opts.audio && state.isHuman) opts.audio.play('yirtildi');
+  });
+
   const renderer = PP.Renderer(canvas, table, config, state);
 
   function collectReserved() {
@@ -92,7 +102,10 @@ PP.Player = function (opts) {
     for (let i = 0; i < pieces.length; i++) if (pieces[i].cell >= 0) seated++;
     state.seated = seated;
     state.correct = board.correctCount(pieces);
-    return state.correct === pieces.length && pieces.length > 0;
+    // Toplam ızgaradan gelir; sahte parçalar listeyi şişirdiği için
+    // pieces.length'e bakılamaz
+    const total = config.puzzle.cols * config.puzzle.rows;
+    return state.correct === total && total > 0;
   }
 
   const api = {

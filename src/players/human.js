@@ -53,6 +53,13 @@ PP.Human = function (player, config) {
     const p = table.pick(pt.x, pt.y);
     if (!p) return;
 
+    // Sahte parça sağ tıkla yırtılıp atılır
+    if (pt.detach && p.fake) {
+      table.tearFake(p.id);
+      player.refreshProgress();
+      return;
+    }
+
     let c;
     if (p.cell >= 0) {
       c = table.liftFromBoard(p);

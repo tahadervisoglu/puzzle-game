@@ -218,6 +218,19 @@ PP.skills = {
     }
   },
 
+  sahte: {
+    id: 'sahte',
+    name: 'Sahte parça',
+    type: 'dark',
+    desc: 'Hedefin masasına hiçbir yere oturmayan 2 parça karışır',
+    apply: function (ctx) {
+      if (!ctx.owns(ctx.target)) { ctx.fx(ctx.target, 'hirsiz'); return; }
+      const n = ctx.scale < 1 ? 1 : PP.config.fake.count;
+      ctx.target.table.addFakes(n, ctx.rng);
+      ctx.fx(ctx.target, 'hirsiz');
+    }
+  },
+
   yapistir: {
     id: 'yapistir',
     name: 'Yapıştır',
@@ -239,6 +252,6 @@ PP.skillPools = {
   light: ['cifte', 'kontrol', 'poster'],
   // Ortam olayları (sis, deprem, rüzgar) herkesi vurduğu için güçlüdür;
   // cerrahi olanlar lidere gider ve yetişme mekaniğini korur.
-  darkMild: ['sis', 'karartma', 'kilit', 'yapistir', 'takas'],
-  darkStrong: ['deprem', 'takas', 'ruzgar', 'hirsiz', 'yapistir', 'kilit']
+  darkMild: ['sis', 'karartma', 'kilit', 'yapistir', 'takas', 'sahte'],
+  darkStrong: ['deprem', 'takas', 'ruzgar', 'hirsiz', 'sahte', 'yapistir', 'kilit']
 };

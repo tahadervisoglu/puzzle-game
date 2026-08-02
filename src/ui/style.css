@@ -447,7 +447,7 @@ html, body {
    gerçekten okunabilir olur. */
 #ref-canvas {
   display: block;
-  width: clamp(190px, min(21vw, 30vh), 380px);
+  width: clamp(140px, min(14vw, 20vh), 240px);
   height: auto;
   border-radius: 6px;
 }
