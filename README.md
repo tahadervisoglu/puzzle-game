@@ -1,180 +1,84 @@
-# Puzzle Party — prototip
+# Puzzle Party
 
-Tricky Towers'ın büyü gerilimini yapboza taşıyan 4 kişilik rekabetçi yapboz. Tasarımın tamamı [DESIGN.md](DESIGN.md) içinde.
+Dört kişilik rekabetçi yapboz oyunu. Herkes aynı yapbozu aynı anda dizer, ilk bitiren kazanır — ve rakiplerinize büyü atarak işlerini bozabilirsiniz.
 
-**Şu anki durum: F4 — dört faz da tamam. Oyun oynanabilir ve cilalı.**
+**▶ Oyna: https://tahadervisoglu.github.io/puzzle-game/**
 
-Oyun açılınca bir mod seçersin:
+Tarayıcıda çalışır, kurulum gerektirmez.
 
-- **Klasik (ana mod)** — herkese kendi parçaları düşer (3 saniyede bir). Yarış tempo ve hatasızlık üzerine.
-- **Ortak havuz** — parçalar alttaki ortak havuza düşer, dördünüz de oradan kaparsınız. İhtiyacın olanı rakipten önce tıklaman gerekir. Masanda en fazla 6 parça bekleyebilir, dolunca yerleştirmeden yeni parça alamazsın.
+## Ne bu?
 
-Tur bitince "mod değiştir" ile diğerine geçebilirsin.
+Tricky Towers'ın büyü gerilimini yapboza taşıyan bir prototip. Ekran dört panele bölünür: soldaki büyük panel sizin, diğer üçü rakiplerinizin canlı görünümü. Kimin ne kadar ilerlediğini, kimin tahtasının dağıldığını anlık olarak görürsünüz.
 
-## Arkadaşlarla oynama (F5)
-
-Başlangıç ekranının altındaki **Arkadaşlarla oyna** bölümünden:
-
-- **Oda kur** → 4 karakterlik bir oda kodu çıkar, arkadaşlarına gönderirsin
-- **Katıl** → kodu yazıp odaya girersin
-
-Lobide kimlerin geldiğini görürsünüz, oda sahibi başlatır. Boş koltukları bot doldurur, yani 2 kişi de oynayabilirsiniz. Herkes kendini sol üstteki büyük panelde, diğerlerini küçük panellerde görür. İsimler otomatik: Oyuncu 1-4.
-
-**Kurulum gerekmiyor.** Sunucu kiralamıyorsun, hesap açmıyorsun. Oyuncular birbirine doğrudan bağlanıyor (WebRTC); araya sadece tarayıcıları tanıştıran ücretsiz bir servis giriyor. Bağlantı kütüphanesi de ancak "Oda kur" ya da "Katıl" tıklandığında indiriliyor — **tek kişilik oyun internetsiz de çalışmaya devam eder.**
-
-Arkadaşlarının oyunu açabilmesi için sayfanın bir https adresinde durması gerekir (GitHub Pages ya da Netlify, ikisi de ücretsiz). Kendin test etmek için iki tarayıcı penceresi açıp birinde oda kurup diğerinde katılabilirsin.
-
-### TURN aktarıcısı ve ücretsiz plan
-
-Ev bağlantılarının çoğu (özellikle CGNAT kullananlar) iki bilgisayarın doğrudan birbirine bağlanmasına izin vermiyor. Bu durumda trafiği araya giren bir **TURN aktarıcısı** taşımak zorunda. Oda kodu üretilip bağlantı kurulamıyorsa sorun neredeyse her zaman budur.
-
-Proje **Metered** TURN servisini kullanıyor. Bilgiler [config.js](src/core/config.js) içindeki `net.turn` bloğunda:
-
-```
-turn: { host, apiKey, username, credential }
-```
-
-Üç yol destekleniyor, bu sırayla denenir: panelden kopyalanan **hazır dizi** (`servers`), panelden alınan **sabit kullanıcı adı/şifre** (şu an kullanılan) ya da **API anahtarı** ile çalışma anında çekme.
-
-> **Tuzak:** TURN sunucusunun alan adı, panelin alan adıyla **aynı değildir**. Panel adresiniz `<uygulama>.metered.live` olsa bile TURN adresleri `...relay.metered.ca` üzerindedir. İkisini karıştırırsanız hiç `relay` adayı üretilmez ve bağlantı testi `701` verir — bu proje tam olarak bu hatayı yaşadı. Emin olmak için panelde kimlik bilgisinin yanındaki **"Show ICE Servers Array"** çıktısını `turn.servers` alanına olduğu gibi yapıştırın.
-
-**Plan ve kota — önemli.** Ücretsiz plan aylık kotayla sınırlı ve TURN'den geçen her bayt kotadan düşer. Kota biterse aktarıcı çalışmayı durdurur, yani multiplayer bağlanmaz (tek kişilik oyun etkilenmez). Metered'ın "Free: 20GB" planı var; 500MB'lık deneme planında kalmayın, ikisi de ücretsiz.
-
-Kabaca tüketim: aktif oynarken oyuncu başına saatte **20-40 MB** civarı, masaya dokunmadan beklerken neredeyse sıfır. Oyun sadece tahta **değiştiğinde** özet gönderiyor, değişmediğinde 1,2 saniyede bir küçük bir nabız atıyor — bu kotayı ciddi ölçüde uzatıyor.
-
-**Kimlik bilgileri bu depoda açıkta.** Depo public olduğu için kotanızı başkası da kullanabilir. Rahatsız ediciyse sağlayıcı panelinden kimlik bilgisini silip yenisini üretin ve `config.js`'i güncelleyin.
-
-### "Bağlanılıyor"da takılırsa
-
-Başlangıç ekranındaki **"bağlantı testi"** düğmesine basın. Arkadaşınızı beklemeden, tek başınıza çalışır ve hangi katmanın çalışmadığını söyler:
-
-```
-Kendi adresim (host)   : var
-Dış adresim (STUN)     : çalışıyor
-Aktarıcı (TURN)        : çalışıyor
-```
-
-TURN satırı "ÇALIŞMIYOR" diyorsa kimlik bilgileri ya da kota sorunludur — testin altında sebebi de yazar (örneğin `401 Invalid API Key`). TURN "çalışıyor" dediği hâlde bağlanamıyorsanız sorun başka yerdedir.
-
-Bağlantı 15 saniyede kurulamazsa oyun sonsuza kadar beklemek yerine hata verir.
-
-Kalıcı ve kotasız çözüm isterseniz: WebRTC yerine küçük bir **WebSocket röle sunucusu**. Herkes sunucuya dışa doğru bağlandığı için NAT hiç devreye girmez ve istemcide hiçbir kimlik bilgisi durmaz — karşılığında sunucuyu bir yerde çalışır tutmak gerekir.
-
-**F5'te olanlar:** oda kurma/katılma, lobi, ortak seed ile senkron başlangıç, canlı ilerleme çubukları.
-**F6'da eklenenler:** rakiplerin tahtalarını canlı görmek, büyülerin karşı tarafa geçmesi, tur bitişi senkronu, düşen oyuncu bildirimi.
-
-## Çalıştırma
-
-`index.html` dosyasına çift tıkla, o kadar. Kurulum, derleme, sunucu yok.
-
-Sunucu üzerinden açmayı tercih edersen:
-
-```bash
-python -m http.server 5300
-```
-
-Sonra tarayıcıda `http://localhost:5300` adresine git.
+Yapbozun referans resmi ortada, herkesin ortak kullanımında durur. Parçalar kare kesilmiştir; ızgaraya oturur, ızgara dışında birbirine yapıştırılabilir.
 
 ## Nasıl oynanır
 
-Ekran 4 panele bölünür: sol üstteki büyük panel senin, diğer üçü botların canlı görünümü. Ortada, dört panelin kesiştiği yerde ortak referans resmi durur (F3'te Sis büyüsü bunu gizleyecek).
+- **Sol tık** parçayı sürükler. Izgara hücresine yakın bırakınca oturur.
+- Oyun **doğru mu yanlış mı söylemez**. Sadece kaç parçanızın doğru olduğunu görürsünüz, hangilerinin yanlış olduğunu değil.
+- Dolu bir hücreye bırakırsanız iki parça **yer değiştirir**.
+- Izgara dışında parçalar birbirine **yapışır** ve küme olarak birlikte taşınır. **Sağ tık** kümeden tek parça koparır.
 
-- **Sol tık sürükler.** Parçayı ızgara hücresine yakın bırakırsan cuk oturur. Doğru da olsa yanlış da olsa oturur — oyun hangisinin yanlış olduğunu söylemez.
-- **Izgara dışında parçalar birbirine yapışır.** İki parçayı hizalayıp bırakırsan birleşirler ve tek parça gibi taşınırlar. Birleşmiş kümeyi ızgaraya sürüklersen hepsi tek hamlede oturur.
-- **Dolu hücreye bırakırsan yer değiştirir.** Izgaradaki bir parçayı başka bir parçanın üstüne sürüklersen ikisi takas olur. Masadan gelen bir parçayı dolu hücreye bırakırsan oradaki parça masaya çıkar. Sürüklerken hedef hücre turuncu kesikli çerçeveyle işaretlenir.
-- **Sağ tık kümeden tek parça koparır.**
-- **Parçalar:** klasik modda 3 saniyede bir masana düşer; havuz modunda alttaki havuzdan tıklayarak kaparsın.
-- Panel başlıklarındaki çubuk doğru yerleşen parça oranını gösterir; lider turuncu yanar. Yapbozu ilk doğru tamamlayan turu kazanır.
+İki mod var, oyun başında seçilir:
 
-### Büyüler
+- **Klasik** — herkese kendi parçaları düşer, birkaç saniyede bir yenisi gelir.
+- **Ortak havuz** — parçalar alttaki ortak havuza düşer, dördünüz de oradan kaparsınız. İhtiyacınız olanı rakipten önce almalısınız.
 
-Her %10 doğru parçada önüne **iki kart** çıkar: biri ışık (kendine fayda), biri karanlık (rakibe sabotaj). Birini seçersin ve **büyü anında çalışır** — cepte bekletme yok. Fare ile tıklayabilir ya da **1** (ışık) / **2** (karanlık) tuşlarını kullanabilirsin. Karanlık büyüler otomatik olarak **lidere** gider.
+## Büyüler
 
-| Büyü | Tür | Etki |
-|---|---|---|
-| Çifte teslimat | ışık | Anında 2 parça alırsın (havuzda kaparsın, klasikte düşer) |
-| Kontrol | ışık | Yanlış oturan parçaların 3 sn kırmızı yanar |
-| Poster | ışık | Tam resim 5 sn ızgaranın üstünde belirir, sonra sönerek kaybolur |
-| Sis | karanlık | Ortak referans 5 sn gizlenir — atan hariç herkese |
-| Rüzgar | karanlık | **Atan hariç herkesin** tek duran parçaları savrulur (birleşmiş kümeler korunur) |
-| Karartma | karanlık | Hedefin paneli 6 sn kararır, imleç çevresi fener gibi kalır |
-| Hırsız | karanlık | Hedefin masasından 2 parça çalarsın (klasikte parça hedefe sonra geri gelir) |
-| Kilit | karanlık | Hedefin parça akışı 5 sn durur |
-| Deprem | karanlık | **Atan hariç herkesin** ızgarasından 2 parça sökülüp masaya savrulur |
-| Takas | karanlık | Hedefin ızgarasında iki parçanın yeri değişir — nerede olduğunu bilmez |
-| Yapıştır | karanlık | Hedefin masadaki parçaları tek yığına yapışır, sağ tıkla ayırması gerekir |
+İlerledikçe önünüze **iki kart** çıkar: biri size fayda sağlar, biri rakibe zarar verir. Birini seçersiniz, anında çalışır.
 
-Deprem, Takas ve Yapıştır rakibin **kazandığı ilerlemeyi geri alan** büyüler. Takas en sinsisi: tahtası dolu görünmeye devam eder ama doğru sayısı düşer — nerede bozulduğunu bulmak için Kontrol büyüsüne ihtiyacı olur.
+Referansı herkesten gizleyen sis, tahtaları sarsıp parça söken deprem, masayı süpüren rüzgar, rakibin ekranını karartan büyüler, parça çalanlar, iki parçanın yerini sessizce değiştirip kimseye söylemeyenler…
 
-### Kumar destesi
+Saldırılar hedefin ekranında **bir saniye önceden uyarı verir** — yani gördüğünüz felakete hazırlanacak kadar vaktiniz olur, engelleyecek kadar değil.
 
-Büyülerden ayrı, ikinci bir sistem. **10 saniyede bir elinize kör bir kart gelir** — ne geleceğini seçemezsiniz. Kartlar elinizde birikir (en fazla 5), ekranın altında **1, 2, 3...** diye numaralanır. Tıklayarak ya da rakamına basarak oynarsınız. İstediğiniz an kullanabilirsiniz, hemen oynamak zorunda değilsiniz.
+## Kumar destesi
 
-Rakipler **kaç kartınız olduğunu görür ama hangileri olduğunu göremez** — baskı buradan doğar.
+Büyülerden ayrı ikinci bir katman. Belirli aralıklarla elinize **kör bir kart** gelir; ne geleceğini seçemezsiniz. Kartlar elinizde birikir, istediğiniz an oynarsınız.
 
-| Kart | Etki |
-|---|---|
-| **El değiştir** | Tahtanı rastgele bir rakiple değiştirirsin — kim olduğunu bilmezsin |
-| **Çifte ya da hiç** | Yazı tura: ya 2 parçan ızgaradan sökülür ya da 2 parçan doğru yerine oturur |
-| **Rulet** | Rastgele birine deprem düşer — sen de dahilsin |
-| **Ateş çemberi** | Herkesin ızgarasından 1 parça sökülür, sen dahil |
-| **Düello** | Liderle 10 sn yarışırsın; daha çok parça koyan diğerinden 3 parça alır |
-| **Yağma** | Liderin ızgarasından 3 parça sökülür, sen 2 parça alırsın |
-| **Dondur** | Herkes 4 sn donar, sen oynamaya devam edersin |
-| **Sigorta** | Sana gelecek ilk saldırıyı yutar |
+Rakipler **kaç kartınız olduğunu görür, hangileri olduğunu göremez.**
 
-İki sistem bilerek farklı: **büyüler beceriye** bağlıdır (ilerledikçe kazanırsın, iki karttan seçersin, anında çalışır), **kumar şansa** bağlıdır (zamanla birikir, kör gelir, istediğin an oynarsın).
+Destede tahtanızı rastgele bir rakiple takas eden, yazı tura atıp parçalarınızı ya söken ya da yerine oturtan, herkesi birden vuran ve kendinizi de yakabileceğiniz kartlar var.
 
-Saldırılar hedefin ekranında **1 saniye önceden uyarı verir** — Tricky Towers'ı adil hissettiren şey saldırıların okunabilir olması. Aynı hedefe 20 saniye içinde aynı büyü ikinci kez gelirse etkisi yarıya iner. Son sıradaki oyuncunun kart sayacı daha hızlı dolar ve ona daha sert karanlık kartlar çıkar.
+## Arkadaşlarla oynama
 
-Ses varsayılan olarak açık; başlıktaki **ses açık / ses kapalı** düğmesiyle kapatabilirsin. Tüm sesler kodda üretiliyor, indirilen dosya yok.
+Başlangıç ekranından **oda kurun**, çıkan kısa kodu arkadaşlarınıza gönderin, onlar da o kodla katılsın. Boş koltukları bot doldurur, yani iki kişiyle de oynanır. Herkes kendini büyük panelde, diğerlerini küçük panellerde görür.
 
-## Neyi test etmelisin
+Bağlantı tarayıcıdan tarayıcıya kurulur. Sorun yaşarsanız başlangıç ekranındaki **bağlantı testi** düğmesi nerede takıldığını söyler.
 
-- **Büyüler eğlenceli mi?** Hangisi tatmin edici, hangisi sönük kalıyor?
-- Kart temposu doğru mu — çok sık mı geliyor?
-- 1 saniyelik uyarı yeterli mi, saldırıya tepki verebiliyor musun?
-- Bot zorluğu dengeli mi — kazanabiliyor musun?
-- 15 parça makul mü, yoksa 24-30 mu olmalı?
+## Çalıştırma
 
-**Bilinen iki denge notu:**
+Derleme, paket yöneticisi, sunucu yok. Depoyu indirip `index.html` dosyasına çift tıklamanız yeterli. (Arkadaşlarla oynamak için sayfanın bir https adresinden açılması gerekir.)
 
-1. 15 parçada %10 eşiği çok sık kart veriyor (~1,5 parçada bir). Parça sayısını artırınca kendiliğinden düzelir.
-2. Tüm parçalar ~42 saniyede geldiği için o andan sonra Çifte Teslimat ve Hırsız hiçbir şey yapmıyor. Parça sayısı artarsa sorun kalmaz.
-
-## Ayarlar paneli
-
-`T` tuşuna bas (ya da başlıktaki "ayarlar" düğmesine tıkla). Sütun, satır, parça aralığı, ızgara toleransı, yapışma toleransı, **bot hızı** ve **bot hatası** canlı ayarlanır. "hepsini getir" beklemeden tüm parçaları masaya döker.
-
-Beğendiğin değerleri kalıcı yapmak için [src/core/config.js](src/core/config.js) dosyasına yaz — tüm denge sayıları orada.
-
-**Dikkat:** parça aralığı × parça sayısı turun teorik alt sınırıdır (3 sn × 15 ≈ 39 sn). Bot düşünme süresi bu aralığın altına inerse bot parçayı gelir gelmez yerleştirir ve onu geçmen imkânsız olur. Damlama aralığını değiştirirsen bot hızını da ayarla.
+Zorluk ve denge ayarlarının tamamı [src/core/config.js](src/core/config.js) içinde tek yerde toplanmıştır: parça sayısı, parça geliş hızı, yapışma toleransı, bot zorluğu, büyü sıklığı. Kod bilmeden değiştirip oynayabilirsiniz.
 
 ## Yapı
 
+Bağımlılığı olmayan düz JavaScript ve Canvas.
+
 ```
 src/
-  core/     döngü, seeded rng, event bus, config
-  puzzle/   prosedürel resim, dilimleme, ızgara, kümeler, masa
-  players/  oyuncu birimi, girdi, insan denetleyicisi, bot
-  skills/   büyü tanımları, kart dağıtımı ve efekt sistemi
-  net/      bağlantı katmanı ve lobi (sadece multiplayer'da yüklenir)
-  render/   canvas çizimi, efekt katmanı, prosedürel ses
-  ui/       stil, ayar paneli
+  core/     oyun döngüsü, seeded rng, olay veri yolu, ayarlar
+  puzzle/   resim üretimi, dilimleme, ızgara, kümeler, ortak havuz
+  players/  oyuncu birimi, girdi, insan ve bot denetleyicileri
+  skills/   büyüler ve kumar destesi
+  render/   canvas çizimi, efektler, prosedürel ses
+  net/      çok oyunculu bağlantı ve lobi
+  ui/       stil ve ayar paneli
 ```
 
-Yeni büyü eklemek [src/skills/skills.js](src/skills/skills.js) içine tek bir nesne yazmaktan ibaret: `{id, name, type, desc, apply(ctx)}`. Oyun mantığının büyülerden, büyülerin de birbirinden haberi yok — kart dağıtımı, hedefleme, uyarı gecikmesi ve spam freni [skillsystem.js](src/skills/skillsystem.js) tarafında hallediliyor.
+Birkaç tasarım tercihi:
 
-Her oyuncu bağımsız bir `Player`: kendi masası, ızgarası, kümeleri ve canvas'ı var. İnsan ile bot arasındaki tek fark onu süren denetleyicidir — ikisi de aynı masa API'sini kullanır. Bu yüzden ileride gerçek çok oyunculuya geçmek denetleyiciyi ağdan beslemekten ibaret olacak.
+- Simülasyon ile çizim tamamen ayrı; simülasyon sabit adımda ilerler.
+- İnsan ve bot **aynı oyuncu birimini** kullanır, aradaki tek fark onu süren denetleyicidir. Ağ oyuncusu da üçüncü bir denetleyici olarak eklenmiştir.
+- Büyüler ne görüneceğini ve nasıl duyulacağını bilmez; görsel ve ses eşlemeleri ayrı katmandadır. Yeni bir büyü eklemek tek bir nesne yazmaktır.
+- Tüm sesler kodda üretilir, indirilen ses dosyası yoktur.
+- Yapbozun resmi de kodda çizilir; projede hiçbir görsel dosya yoktur.
 
-Girdi katmanı doğrudan oyun durumu değiştirmez, `niyet:tut` / `niyet:tasi` / `niyet:birak` olayları yayar. Simülasyon sabit adımda ilerler, çizim ondan bağımsızdır; rakip panelleri her 3 karede bir çizilir.
+Ayrıntılı tasarım notları ve oynanış kararlarının gerekçeleri [DESIGN.md](DESIGN.md) içinde.
 
-## Sonraki adım
+## Durum
 
-Dört faz da tamamlandı. Buradan sonrası oynayıp karar vermeye bağlı. Sıradaki adaylar:
+Oynanabilir prototip. Tek kişilik oyun botlara karşı tamamen çalışır; çok oyunculu kısım oda kurma, senkron başlangıç, canlı tahta paylaşımı ve büyülerin karşıya geçmesini kapsar.
 
-- **Parça sayısı** 15'ten 24-30'a — kart temposu ve ölü büyü sorunlarını çözer
-- Gerçek görsel seti (şu an resim koda çiziliyor)
-- Ses
-- Gamepad ile 4 gerçek oyuncu (girdi katmanı buna hazır)
-- Kalan tasarlanmış büyüler: İpucu, Mıknatıs, Kalkan, Turbo, Ayna, Sahte parça
+Bundan sonrası için düşünülenler: parça sayısını artırmak, gerçek bir görsel seti, oyun içi ses ayarları ve aynı bilgisayarda dört kişilik kumanda desteği.
