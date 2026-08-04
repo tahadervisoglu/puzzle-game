@@ -1,245 +1,81 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="utf-8">
+<title>Minigames — Tank Düellosu</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Puzzle Party — F4</title>
-<link rel="stylesheet" href="src/ui/style.css">
+<link rel="stylesheet" href="src/ui/stil.css">
 </head>
 <body>
 
-<div id="app">
-  <div id="stage">
-
-    <section class="panel panel-main" id="panel-0">
-      <canvas id="canvas-0"></canvas>
-      <div class="head head-main" id="head-0">
-        <span class="tag">sen</span>
-        <div class="bar"><i id="bar-0"></i></div>
-        <span class="head-num" id="prog-0">0/15</span>
-        <span class="head-sep"></span>
-        <span class="head-num" id="timer">0:00</span>
-        <span class="head-num" id="tray-info"></span>
-        <button id="mute" type="button">ses açık</button>
-        <button id="tuner-toggle" type="button">ayarlar (T)</button>
-      </div>
-      <div class="warn" id="warn-0" hidden></div>
-
-      <div class="roulette" id="roulette" hidden>
-        <span class="rl-title">çifte ya da hiç</span>
-        <div class="rl-slots">
-          <span class="rl-slot lose" id="rl-lose">2 parça sökülür</span>
-          <span class="rl-slot win" id="rl-win">2 parça oturur</span>
-        </div>
-      </div>
-
-      <div class="hand" id="hand"></div>
-
-      <div class="hint" id="hint">sol tık sürükler · sağ tık koparır / sahteyi yırtar · kartı tıkla ya da rakamına bas</div>
-    </section>
-
-    <section class="panel" id="panel-1">
-      <canvas id="canvas-1"></canvas>
-      <div class="head" id="head-1">
-        <span class="head-name" id="name-1">Bot 1</span>
-        <div class="bar"><i id="bar-1"></i></div>
-        <span class="head-num" id="prog-1">0/15</span>
-        <span class="cards-badge" id="cards-1" hidden></span>
-      </div>
-      <div class="warn" id="warn-1" hidden></div>
-    </section>
-
-    <section class="panel" id="panel-2">
-      <canvas id="canvas-2"></canvas>
-      <div class="head" id="head-2">
-        <span class="head-name" id="name-2">Bot 2</span>
-        <div class="bar"><i id="bar-2"></i></div>
-        <span class="head-num" id="prog-2">0/15</span>
-        <span class="cards-badge" id="cards-2" hidden></span>
-      </div>
-      <div class="warn" id="warn-2" hidden></div>
-    </section>
-
-    <section class="panel" id="panel-3">
-      <canvas id="canvas-3"></canvas>
-      <div class="head" id="head-3">
-        <span class="head-name" id="name-3">Bot 3</span>
-        <div class="bar"><i id="bar-3"></i></div>
-        <span class="head-num" id="prog-3">0/15</span>
-        <span class="cards-badge" id="cards-3" hidden></span>
-      </div>
-      <div class="warn" id="warn-3" hidden></div>
-    </section>
-
-    <section id="pool">
-      <div class="pool-head">
-        <span class="pool-title">ortak havuz</span>
-        <span class="pool-note" id="pool-note">ihtiyacın olan parçayı tıkla — rakipler de aynı havuzdan alıyor</span>
-      </div>
-      <canvas id="pool-canvas"></canvas>
-    </section>
-
-    <div id="announce"></div>
-
-    <div id="reference" title="Ortak referans resim — Sis büyüsü bunu gizler">
-      <canvas id="ref-canvas"></canvas>
-      <span class="ref-label">referans</span>
-    </div>
-
+<div id="ekranGiris" class="ekran">
+  <h1>Minigames</h1>
+  <p class="alt">Tank Düellosu · 5 kişiye kadar · tarayıcıda</p>
+  <input id="girisAd" maxlength="12" placeholder="Adın" autocomplete="off">
+  <button id="btnOdaKur" class="ana">Oda Kur</button>
+  <div class="sira">
+    <input id="girisKod" maxlength="4" placeholder="KOD" autocomplete="off">
+    <button id="btnKatil">Katıl</button>
   </div>
-
-  <div id="tuner" hidden>
-    <div class="tuner-row">
-      <label for="t-cols">sütun</label>
-      <input type="range" id="t-cols" min="3" max="12" step="1">
-      <output id="t-cols-out"></output>
-    </div>
-    <div class="tuner-row">
-      <label for="t-rows">satır</label>
-      <input type="range" id="t-rows" min="2" max="10" step="1">
-      <output id="t-rows-out"></output>
-    </div>
-    <div class="tuner-row">
-      <label for="t-drip">havuz akışı</label>
-      <input type="range" id="t-drip" min="0.3" max="4" step="0.1">
-      <output id="t-drip-out"></output>
-    </div>
-    <div class="tuner-row">
-      <label for="t-tray">tepsi sınırı</label>
-      <input type="range" id="t-tray" min="2" max="15" step="1">
-      <output id="t-tray-out"></output>
-    </div>
-    <div class="tuner-row">
-      <label for="t-snap">ızgara toleransı</label>
-      <input type="range" id="t-snap" min="10" max="90" step="5">
-      <output id="t-snap-out"></output>
-    </div>
-    <div class="tuner-row">
-      <label for="t-join">yapışma toleransı</label>
-      <input type="range" id="t-join" min="5" max="60" step="5">
-      <output id="t-join-out"></output>
-    </div>
-    <div class="tuner-row">
-      <label for="t-botspeed">bot hızı</label>
-      <input type="range" id="t-botspeed" min="20" max="300" step="10">
-      <output id="t-botspeed-out"></output>
-    </div>
-    <div class="tuner-row">
-      <label for="t-boterr">bot hatası</label>
-      <input type="range" id="t-boterr" min="0" max="60" step="2">
-      <output id="t-boterr-out"></output>
-    </div>
-    <div class="tuner-actions">
-      <button id="t-reveal" type="button">hepsini getir</button>
-      <button id="t-restart" type="button">yeniden</button>
-      <button id="t-newart" type="button">yeni resim</button>
-    </div>
-  </div>
-
-  <div id="start">
-    <div class="start-card">
-      <p class="start-title">Puzzle Party</p>
-      <p class="start-sub">Bir mod seç</p>
-      <div class="modes">
-        <button class="mode primary" id="mode-klasik" type="button">
-          <span class="mode-badge">ana mod</span>
-          <span class="mode-name">Klasik</span>
-          <span class="mode-desc">Herkese kendi parçaları düşer. 3 saniyede bir yeni parça. Yarış tempo ve hatasızlık üzerine.</span>
-        </button>
-        <button class="mode" id="mode-teketek" type="button">
-          <span class="mode-badge alt">2 kişi</span>
-          <span class="mode-name">Teke tek</span>
-          <span class="mode-desc">Tek rakip, iki büyük panel. Her saldırı doğrudan karşındakine gider — saklanacak kalabalık yok.</span>
-        </button>
-        <button class="mode" id="mode-havuz" type="button">
-          <span class="mode-badge alt">deneysel</span>
-          <span class="mode-name">Ortak havuz</span>
-          <span class="mode-desc">Parçalar ortadaki ortak havuza düşer, dördünüz de oradan kaparsınız. İhtiyacın olanı rakipten önce almalısın.</span>
-        </button>
-      </div>
-
-      <div class="online">
-        <p class="online-title">Arkadaşlarla oyna</p>
-        <div class="online-row">
-          <button id="btn-host" type="button">Oda kur</button>
-          <span class="online-or">ya da</span>
-          <input id="join-code" type="text" maxlength="4" placeholder="KOD" autocomplete="off" spellcheck="false">
-          <button id="btn-join" type="button">Katıl</button>
-        </div>
-        <p class="online-note">
-          Bağlantı sadece buraya tıklayınca kurulur — tek kişilik oyun internetsiz de çalışır.
-          <button id="btn-diag" type="button">bağlantı testi</button>
-        </p>
-        <p class="net-error" id="net-error" hidden></p>
-        <pre class="diag" id="diag" hidden></pre>
-      </div>
-    </div>
-  </div>
-
-  <div id="lobby" hidden>
-    <div class="lobby-card">
-      <p class="lobby-title">Oda kodu</p>
-      <p class="lobby-code" id="lobby-code">----</p>
-      <div class="invite" id="invite" hidden>
-        <input class="invite-link" id="invite-link" type="text" readonly>
-        <button id="invite-copy" type="button">kopyala</button>
-      </div>
-      <p class="lobby-hint">Linki gönder — tıklayan doğrudan odaya girer</p>
-      <div class="lobby-modes" id="lobby-modes" hidden>
-        <button class="lmode" type="button" data-mode="klasik">Klasik</button>
-        <button class="lmode" type="button" data-mode="teketek">Teke tek</button>
-        <button class="lmode" type="button" data-mode="havuz">Havuz</button>
-      </div>
-      <p class="lobby-mode-label" id="lobby-mode-label"></p>
-      <ol class="lobby-list" id="lobby-list"></ol>
-      <p class="lobby-status" id="lobby-status"></p>
-      <div class="lobby-actions">
-        <button id="lobby-start" type="button">Başlat</button>
-        <button id="lobby-leave" type="button">Ayrıl</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="win" hidden>
-    <div class="win-card">
-      <p class="win-title" id="win-title">Tamamlandı</p>
-      <ol class="win-list" id="win-list"></ol>
-      <div class="win-actions">
-        <button id="win-again" type="button">yeniden oyna</button>
-        <button id="win-mode" type="button">mod değiştir</button>
-      </div>
-    </div>
-  </div>
+  <p id="girisHata" class="hata"></p>
+  <button id="btnBagTest" class="kucuk">Bağlantı testi</button>
+  <pre id="bagTestSonuc" class="gizli"></pre>
 </div>
 
-<script src="src/core/config.js"></script>
-<script src="src/core/rng.js"></script>
-<script src="src/core/events.js"></script>
-<script src="src/core/loop.js"></script>
-<script src="src/puzzle/artwork.js"></script>
-<script src="src/puzzle/slicer.js"></script>
-<script src="src/puzzle/board.js"></script>
-<script src="src/puzzle/cluster.js"></script>
-<script src="src/puzzle/pool.js"></script>
-<script src="src/puzzle/table.js"></script>
-<script src="src/players/input.js"></script>
-<script src="src/players/hand.js"></script>
-<script src="src/players/player.js"></script>
-<script src="src/players/human.js"></script>
-<script src="src/players/bot.js"></script>
-<script src="src/skills/skills.js"></script>
-<script src="src/skills/skillsystem.js"></script>
-<script src="src/skills/gamble.js"></script>
-<script src="src/render/audio.js"></script>
-<script src="src/render/fx.js"></script>
-<script src="src/render/renderer.js"></script>
-<script src="src/render/poolview.js"></script>
-<script src="src/net/ice.js"></script>
-<script src="src/net/diag.js"></script>
-<script src="src/net/net.js"></script>
-<script src="src/net/lobby.js"></script>
-<script src="src/ui/tuner.js"></script>
-<script src="src/main.js"></script>
+<div id="ekranLobi" class="ekran gizli">
+  <h2>Oda: <span id="lobiKod"></span></h2>
+  <button id="btnDavet" class="kucuk">Davet linkini kopyala</button>
+  <div id="oyunSecici"></div>
+  <ul id="lobiListe"></ul>
+  <button id="btnBotEkle" class="kucuk gizli">+ Bot ekle (test için)</button>
+  <button id="btnBaslat" class="ana gizli">Başlat</button>
+  <p id="lobiBilgi" class="alt"></p>
+  <button id="btnAyril" class="kucuk">Ayrıl</button>
+</div>
 
+<div id="ekranOyun" class="ekran gizli">
+  <div id="ustBar">
+    <div id="ustBilgi"></div>
+    <button id="btnLobiyeDon" class="kucuk gizli">Lobiye dön</button>
+  </div>
+  <canvas id="oyunCv"></canvas>
+  <div id="perde" class="gizli"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="src/core/rng.js"></script>
+<script src="src/core/ses.js"></script>
+<script src="src/core/geo.js"></script>
+<script src="src/net/net.js"></script>
+<script src="src/net/bagtest.js"></script>
+<script src="src/games/tank.js"></script>
+<script src="src/games/forklift.js"></script>
+<script src="src/games/forklift.bot.js"></script>
+<script src="src/games/forklift.cizim.js"></script>
+<script src="src/games/refleks.js"></script>
+<script src="src/games/refleks.cizim.js"></script>
+<script src="src/games/yaris.pist.js"></script>
+<script src="src/games/yaris.js"></script>
+<script src="src/games/yaris.bot.js"></script>
+<script src="src/games/yaris.cizim.js"></script>
+<script src="src/games/cember.js"></script>
+<script src="src/games/cember.bot.js"></script>
+<script src="src/games/cember.cizim.js"></script>
+<script src="src/games/yokus.yamac.js"></script>
+<script src="src/games/yokus.js"></script>
+<script src="src/games/yokus.bot.js"></script>
+<script src="src/games/yokus.cizim.js"></script>
+<script src="src/games/orumcek.harita.js"></script>
+<script src="src/games/orumcek.yol.js"></script>
+<script src="src/games/orumcek.js"></script>
+<script src="src/games/orumcek.bot.js"></script>
+<script src="src/games/orumcek.cizim.js"></script>
+<script src="src/games/sumo.js"></script>
+<script src="src/games/sumo.bot.js"></script>
+<script src="src/games/sumo.cizim.js"></script>
+<script src="src/shell/oturum.js"></script>
+<script src="src/shell/ui.js"></script>
+<script src="src/shell/lobi.js"></script>
+<script src="src/shell/tur.js"></script>
 </body>
 </html>

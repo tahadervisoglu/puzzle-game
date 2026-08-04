@@ -1,244 +1,224 @@
-window.PP = window.PP || {};
+// Ağ katmanı — yıldız topoloji: herkes oda sahibine bağlanır, o dağıtır.
+// Koltuk atama ve oyun mantığı burada YOK; bu dosya sadece bağlantı,
+// mesaj taşıma, nabız ve kopma tespitiyle ilgilenir.
+MG.net = (function () {
+  var A = MG.ayar;
+  var peer = null;
+  var hostMu = false;
+  var kod = null;
+  var baglar = {};      // host: koltuk -> DataConnection
+  var hostBag = null;   // misafir: oda sahibine giden bağlantı
+  var sonGelen = {};    // koltuk -> son mesaj zamanı (misafirde 'host' anahtarı)
+  var nabizId = null, bekciId = null;
 
-// Bağlantı katmanı. Oyunun geri kalanı bu dosyadan habersizdir; sadece mesaj
-// gönderir ve alır.
-//
-// Yıldız topolojisi: herkes oda sahibine bağlanır, oda sahibi mesajları
-// dağıtır. Herkesin herkese bağlandığı düzenden çok daha az şey ters gider.
-//
-// PeerJS tembel yüklenir — tek kişilik oyun oynanırken ağ kodu hiç indirilmez.
-PP.Net = function (config) {
-  const PEERJS_URL = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
-  const PREFIX = 'puzzleparty-';
-  // Birbirine benzeyen harf/rakamlar (0/O, 1/I) kod okurken hata çıkarıyor
-  const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  // Kabuk bu nesneye işleyici atar:
+  //   girisIstegi(conn, ad)  — host: yeni oyuncu katılmak istiyor
+  //   mesaj(koltuk, veri)    — oyun/lobi mesajı geldi (misafirde koltuk=0, hep hosttan)
+  //   koptu(koltuk)          — host: bir misafir düştü
+  //   hostKoptu()            — misafir: oda sahibi düştü
+  var olay = {};
 
-  const handlers = {};
-  const state = {
-    role: null,        // 'host' | 'guest'
-    code: null,
-    selfId: null,
-    peer: null,
-    conns: [],         // oda sahibinde: misafir bağlantıları
-    hostConn: null,    // misafirde: oda sahibine bağlantı
-    ready: false,
-    iceState: null,
-    ice: null
-  };
-
-  function emit(type, payload, from) {
-    const list = handlers[type];
-    if (!list) return;
-    for (let i = 0; i < list.length; i++) list[i](payload, from);
-  }
-
-  function loadLib() {
-    if (window.Peer) return Promise.resolve();
-    return new Promise(function (resolve, reject) {
-      const s = document.createElement('script');
-      s.src = PEERJS_URL;
-      s.onload = function () { resolve(); };
-      s.onerror = function () {
-        reject(new Error('Bağlantı kütüphanesi yüklenemedi. İnternet bağlantını kontrol et.'));
-      };
-      document.head.appendChild(s);
+  function iceServersAl() {
+    var t = A.net.turn;
+    var srv = A.net.stun.map(function (u) { return { urls: u }; });
+    // Bazı ağlar sadece 443/TCP'ye izin verir — adresleri hep birlikte dene.
+    srv.push({
+      urls: [
+        'turn:' + t.host + ':80',
+        'turn:' + t.host + ':80?transport=tcp',
+        'turn:' + t.host + ':443',
+        'turns:' + t.host + ':443?transport=tcp'
+      ],
+      username: t.username,
+      credential: t.credential
     });
+    return srv;
   }
 
-  function randomCode() {
-    let out = '';
-    for (let i = 0; i < 4; i++) {
-      out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  // PeerJS tembel yüklenir — "Oda kur"a basılana kadar indirilmez,
+  // böylece sayfa internetsiz de açılır.
+  function peerjsYukle(tamam, hata) {
+    if (window.Peer) return tamam();
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+    s.onload = function () { tamam(); };
+    s.onerror = function () { hata('PeerJS yüklenemedi — internet bağlantısı var mı?'); };
+    document.head.appendChild(s);
+  }
+
+  function kodUret() {
+    var s = '';
+    for (var i = 0; i < 4; i++) {
+      s += A.net.alfabe[Math.floor(Math.random() * A.net.alfabe.length)];
     }
-    return out;
+    return s;
   }
 
-  // TURN aktarıcıları olmadan CGNAT arkasındaki ev bağlantıları birbirini
-  // bulamıyor; bağlantı sonsuza kadar kurulmayı bekliyor. Kimlik bilgileri
-  // sağlayıcıdan çekildiği için önce onu bekleriz.
-  function prepare() {
-    return PP.Ice.get(config).then(function (iceServers) {
-      state.ice = iceServers;
-      return loadLib();
+  // Her denemeden önce eski peer yok edilir — önce "Oda kur"a sonra
+  // "Katıl"a basılırsa eski peer ayakta kalır ve bağlantı katmanı bozulur.
+  function sifirla() {
+    if (nabizId) { clearInterval(nabizId); nabizId = null; }
+    if (bekciId) { clearInterval(bekciId); bekciId = null; }
+    if (peer) { try { peer.destroy(); } catch (e) {} }
+    peer = null; hostBag = null; baglar = {}; sonGelen = {}; kod = null;
+  }
+
+  function odaKur(bitti) {
+    sifirla();
+    hostMu = true;
+    peerjsYukle(function () { odaDene(0, bitti); }, function (m) { bitti(m); });
+  }
+
+  function odaDene(deneme, bitti) {
+    if (deneme > 8) return bitti('Boş oda kodu bulunamadı, tekrar dene.');
+    var k = kodUret();
+    var p = new Peer(A.net.onek + k, { config: { iceServers: iceServersAl() } });
+    var acildi = false;
+    p.on('open', function () {
+      acildi = true;
+      peer = p; kod = k;
+      p.on('connection', yeniBaglanti);
+      nabizBaslat(); bekciBaslat();
+      bitti(null, k);
+    });
+    p.on('error', function (e) {
+      if (acildi) return; // oda kurulduktan sonraki hatalar bağlantı bazında ele alınır
+      try { p.destroy(); } catch (err) {}
+      if (e.type === 'unavailable-id') odaDene(deneme + 1, bitti); // kod tutulmuş, yenisini dene
+      else bitti('Bağlantı hatası: ' + e.type);
     });
   }
 
-  function peerOptions() {
-    return { config: { iceServers: state.ice || config.net.iceServers } };
-  }
-
-  // Bağlantı neden kurulamadı sorusunu cevaplayabilmek için ICE durumunu izle
-  function watchIce(conn) {
-    const pc = conn.peerConnection;
-    if (!pc) return;
-    pc.oniceconnectionstatechange = function () {
-      state.iceState = pc.iceConnectionState;
-      if (pc.iceConnectionState === 'failed') {
-        emit('hata', { error: new Error('Doğrudan bağlantı kurulamadı (ağ engeli).') });
+  function yeniBaglanti(conn) {
+    conn.on('data', function (d) {
+      if (!d || !d.t) return;
+      var koltuk = conn._mgKoltuk;
+      if (koltuk != null) sonGelen[koltuk] = Date.now();
+      if (d.t === 'giris' && koltuk == null) {
+        if (olay.girisIstegi) olay.girisIstegi(conn, ('' + (d.ad || 'Oyuncu')).slice(0, 12));
+      } else if (koltuk != null && d.t !== 'nabiz') {
+        if (olay.mesaj) olay.mesaj(koltuk, d);
       }
-    };
-  }
-
-  function wireIncoming(conn) {
-    conn.on('data', function (msg) {
-      if (!msg || !msg.t) return;
-      // Oda sahibi aldığı mesajı diğer misafirlere de dağıtır
-      if (state.role === 'host') relay(msg, conn.peer);
-      emit(msg.t, msg, conn.peer);
     });
-    conn.on('close', function () {
-      const i = state.conns.indexOf(conn);
-      if (i >= 0) state.conns.splice(i, 1);
-      emit('ayrildi', { id: conn.peer }, conn.peer);
-    });
+    conn.on('close', function () { dusur(conn); });
+    conn.on('error', function () { dusur(conn); });
   }
 
-  // Önce oda kurup sonra katılmaya çalışınca eski oda ayakta kalıyor ve
-  // durum bozuluyordu; her yeni denemeden önce temizle.
-  function reset() {
-    if (state.peer) {
-      try { state.peer.destroy(); } catch (e) { /* yoksay */ }
-    }
-    state.peer = null;
-    state.conns = [];
-    state.hostConn = null;
-    state.role = null;
-    state.code = null;
-    state.selfId = null;
-    state.ready = false;
-    state.iceState = null;
+  // Kabuk koltuk atadıktan sonra bağlantıyı koltuğa bağlar.
+  function koltukBagla(conn, koltuk) {
+    conn._mgKoltuk = koltuk;
+    baglar[koltuk] = conn;
+    sonGelen[koltuk] = Date.now();
   }
 
-  function relay(msg, exceptId) {
-    for (let i = 0; i < state.conns.length; i++) {
-      const c = state.conns[i];
-      if (c.peer === exceptId || !c.open) continue;
-      c.send(msg);
+  function dusur(conn) {
+    var koltuk = conn._mgKoltuk;
+    if (koltuk == null) return;
+    conn._mgKoltuk = null;
+    delete baglar[koltuk];
+    delete sonGelen[koltuk];
+    try { conn.close(); } catch (e) {}
+    if (olay.koptu) olay.koptu(koltuk);
+  }
+
+  function katil(girilenKod, ad, bitti) {
+    sifirla();
+    hostMu = false;
+    var k = ('' + girilenKod).toUpperCase().trim();
+    peerjsYukle(function () {
+      var p = new Peer({ config: { iceServers: iceServersAl() } });
+      peer = p;
+      var bittiMi = false;
+      function birKez(hata, veri) {
+        if (bittiMi) return;
+        bittiMi = true;
+        clearTimeout(zamanlayici);
+        if (hata) sifirla();
+        bitti(hata, veri);
+      }
+      // conn.on('open') hiç tetiklenmeyebilir — süre dolunca anlamlı hata ver.
+      var zamanlayici = setTimeout(function () {
+        birKez('Bağlanılamadı (15 sn doldu). Kod doğru mu? Bağlantı testini dene.');
+      }, A.agZamanAsimiMs);
+      p.on('error', function (e) {
+        birKez(e.type === 'peer-unavailable'
+          ? 'Oda bulunamadı: ' + k
+          : 'Bağlantı hatası: ' + e.type);
+      });
+      p.on('open', function () {
+        var c = p.connect(A.net.onek + k, { reliable: true });
+        hostBag = c;
+        c.on('open', function () { c.send({ t: 'giris', ad: ad }); });
+        c.on('data', function (d) {
+          if (!d || !d.t) return;
+          sonGelen.host = Date.now();
+          if (d.t === 'hosgeldin') {
+            kod = k;
+            nabizBaslat(); bekciBaslat();
+            birKez(null, d);
+          } else if (d.t === 'dolu') {
+            birKez(d.sebep || 'Oda dolu.');
+          } else if (d.t !== 'nabiz') {
+            if (olay.mesaj) olay.mesaj(0, d);
+          }
+        });
+        c.on('close', function () { if (olay.hostKoptu) olay.hostKoptu(); });
+        c.on('error', function () { if (olay.hostKoptu) olay.hostKoptu(); });
+      });
+    }, function (m) { bitti(m); });
+  }
+
+  // --- nabız ve kopma tespiti ---------------------------------------------
+  // WebRTC sekme kapandığını bildirmez; conn.on('close') çoğu zaman gelmez.
+  // Akan mesajları nabız sayıp sessizlikte düşmüş kabul ediyoruz.
+
+  function nabizBaslat() {
+    nabizId = setInterval(function () { gonder({ t: 'nabiz' }); }, A.yayin.nabizMs);
+  }
+
+  function bekciBaslat() {
+    bekciId = setInterval(function () {
+      var simdi = Date.now();
+      if (hostMu) {
+        for (var k in baglar) {
+          if (simdi - (sonGelen[k] || 0) > A.yayin.kopmaMs) dusur(baglar[k]);
+        }
+      } else if (sonGelen.host && simdi - sonGelen.host > A.yayin.kopmaMs) {
+        if (olay.hostKoptu) olay.hostKoptu();
+      }
+    }, 1000);
+  }
+
+  // --- gönderim ------------------------------------------------------------
+
+  function yayinla(o) { // host: tüm misafirlere
+    for (var k in baglar) {
+      var c = baglar[k];
+      if (c.open) c.send(o);
     }
+  }
+
+  function gonderKoltuga(koltuk, o) {
+    var c = baglar[koltuk];
+    if (c && c.open) c.send(o);
+  }
+
+  function gonder(o) { // misafir: hosta; hostta yayına düşer
+    if (hostMu) yayinla(o);
+    else if (hostBag && hostBag.open) hostBag.send(o);
   }
 
   return {
-    state: state,
-
-    on: function (type, fn) {
-      (handlers[type] || (handlers[type] = [])).push(fn);
-    },
-
-    // Oda kurar, kısa oda kodunu döndürür
-    host: function () {
-      reset();
-      return prepare().then(function () {
-        return new Promise(function (resolve, reject) {
-          let attempt = 0;
-
-          function tryCode() {
-            const code = randomCode();
-            const peer = new Peer(PREFIX + code, peerOptions());
-
-            peer.on('open', function (id) {
-              state.peer = peer;
-              state.role = 'host';
-              state.code = code;
-              state.selfId = id;
-              state.ready = true;
-              peer.on('connection', function (conn) {
-                watchIce(conn);
-                conn.on('open', function () {
-                  state.conns.push(conn);
-                  emit('katildi', { id: conn.peer }, conn.peer);
-                });
-                wireIncoming(conn);
-              });
-              resolve(code);
-            });
-
-            peer.on('error', function (err) {
-              // Kod tutulmuşsa başka bir kod dene
-              if (err && err.type === 'unavailable-id' && attempt < 6) {
-                attempt++;
-                peer.destroy();
-                tryCode();
-                return;
-              }
-              if (!state.ready) reject(err);
-              else emit('hata', { error: err });
-            });
-          }
-
-          tryCode();
-        });
-      });
-    },
-
-    // Koda göre odaya katılır
-    join: function (code) {
-      const clean = String(code || '').trim().toUpperCase();
-      if (clean.length !== 4) return Promise.reject(new Error('Oda kodu 4 karakter olmalı.'));
-
-      reset();
-      return prepare().then(function () {
-        return new Promise(function (resolve, reject) {
-          const peer = new Peer(undefined, peerOptions());
-          let settled = false;
-
-          // Sonsuza kadar "Bağlanılıyor" yazmasın
-          const timer = setTimeout(function () {
-            if (settled) return;
-            settled = true;
-            peer.destroy();
-            reject(new Error(
-              'Bağlantı kurulamadı. Oda kodu doğruysa ağınız doğrudan ' +
-              'bağlantıya izin vermiyor olabilir.'
-            ));
-          }, config.net.connectTimeoutMs);
-
-          peer.on('open', function (id) {
-            state.peer = peer;
-            state.role = 'guest';
-            state.code = clean;
-            state.selfId = id;
-
-            const conn = peer.connect(PREFIX + clean, { reliable: true });
-            watchIce(conn);
-            conn.on('open', function () {
-              if (settled) return;
-              settled = true;
-              clearTimeout(timer);
-              state.hostConn = conn;
-              state.ready = true;
-              resolve(conn);
-            });
-            wireIncoming(conn);
-            conn.on('close', function () {
-              state.hostConn = null;
-              emit('kopdu', {});
-            });
-          });
-
-          peer.on('error', function (err) {
-            if (settled) { emit('hata', { error: err }); return; }
-            settled = true;
-            clearTimeout(timer);
-            if (err && err.type === 'peer-unavailable') {
-              reject(new Error('Böyle bir oda bulunamadı: ' + clean));
-            } else {
-              reject(err);
-            }
-          });
-        });
-      });
-    },
-
-    // Oda sahibinde herkese, misafirde oda sahibine gider
-    send: function (msg) {
-      if (state.role === 'host') relay(msg, null);
-      else if (state.hostConn && state.hostConn.open) state.hostConn.send(msg);
-    },
-
-    peerCount: function () {
-      return state.role === 'host' ? state.conns.length : (state.hostConn ? 1 : 0);
-    },
-
-    close: reset
+    olay: olay,
+    odaKur: odaKur,
+    katil: katil,
+    ayril: sifirla,
+    yayinla: yayinla,
+    gonder: gonder,
+    gonderKoltuga: gonderKoltuga,
+    koltukBagla: koltukBagla,
+    iceServersAl: iceServersAl,
+    hostMu: function () { return hostMu; },
+    kodAl: function () { return kod; }
   };
-};
+})();

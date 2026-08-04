@@ -1,12 +1,11 @@
 {
   "version": "0.0.1",
-  "autoPort": false,
   "configurations": [
     {
-      "name": "puzzle",
-      "runtimeExecutable": "python",
-      "runtimeArgs": [".claude/devserver.py"],
-      "port": 5300
+      "name": "minigames",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["sunucu.js"],
+      "port": 8080
     }
   ]
 }
