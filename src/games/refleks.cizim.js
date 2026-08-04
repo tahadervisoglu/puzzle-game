@@ -6,18 +6,17 @@ MG.refleksCizim = (function () {
   var KUTU = 150;
   var KART = { w: 140, h: 78, y: 386, ara: 10 };
 
-  function ciz(d, cv, c, koltuklar) {
+  function ciz(d, cv, c, koltuklar, benKoltuk) {
     var olcek = cv.width / W;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, cv.width, cv.height);
     c.save();
     c.scale(olcek, olcek);
-    c.fillStyle = '#ffffff';
-    c.fillRect(0, 0, W, H);
+    MG.cizimYardim.zeminDoku(c, W, H, '#eef1f6', '#dfe4ec', 'rgba(0,0,0,0.035)');
     c.textAlign = 'center';
 
     nesneCiz(c, d);
-    kartlariCiz(c, d, koltuklar);
+    kartlariCiz(c, d, koltuklar, benKoltuk);
     balonlariCiz(c, d, koltuklar);
 
     c.restore();
@@ -112,7 +111,7 @@ MG.refleksCizim = (function () {
 
   // --- oyuncu kartları -----------------------------------------------------
 
-  function kartlariCiz(c, d, koltuklar) {
+  function kartlariCiz(c, d, koltuklar, benKoltuk) {
     var ks = Object.keys(d.oyuncular);
     var toplam = ks.length * KART.w + (ks.length - 1) * KART.ara;
     var x0 = (W - toplam) / 2;
@@ -120,20 +119,23 @@ MG.refleksCizim = (function () {
     ks.forEach(function (k, i) {
       var x = x0 + i * (KART.w + KART.ara);
       kartCiz(c, x, d.oyuncular[k], A.renkler[k],
-              koltuklar[k] ? koltuklar[k].ad : '');
+              koltuklar[k] ? koltuklar[k].ad : '', +k === benKoltuk);
+      if (+k === benKoltuk) {
+        MG.cizimYardim.benIsareti(c, x + KART.w / 2, KART.y - 14, A.renkler[k]);
+      }
     });
   }
 
-  function kartCiz(c, x, o, renk, ad) {
+  function kartCiz(c, x, o, renk, ad, benMi) {
     var y = KART.y, donuk = o.donma > 0;
 
     c.save();
     yuvarlakKare(c, x, y, KART.w, KART.h, 12);
     c.fillStyle = donuk ? '#eaf6fc' : '#fafafa';
     c.fill();
-    c.lineWidth = o.parlama > 0 ? 5 : 3;
+    c.lineWidth = benMi ? 5 : (o.parlama > 0 ? 5 : 3);
     c.strokeStyle = donuk ? '#3aa6d8' : renk;
-    c.globalAlpha = o.parlama > 0 ? 1 : 0.8;
+    c.globalAlpha = (benMi || o.parlama > 0) ? 1 : 0.75;
     c.stroke();
     c.globalAlpha = 1;
 

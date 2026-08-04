@@ -84,6 +84,7 @@ MG.oyunlar.tank = (function () {
       parcalar: [],
       botDurum: {},
       oyuncuSayisi: 0,
+      elenenler: [],   // elenme sırası — tur sonu sıralaması bundan çıkar
       kalan: A.tank.turSureSn
     };
 
@@ -201,7 +202,7 @@ MG.oyunlar.tank = (function () {
           var dx = t.x - m.x, dy = t.y - m.y;
           var rr = A.tank.yaricap + R;
           if (dx * dx + dy * dy < rr * rr) {
-            tankOldur(d, t);
+            tankOldur(d, +k, t);
             oldu = true;
             break;
           }
@@ -211,10 +212,20 @@ MG.oyunlar.tank = (function () {
     }
   }
 
-  function tankOldur(d, t) {
+  function tankOldur(d, koltuk, t) {
     t.canli = false;
+    if (d.elenenler.indexOf(koltuk) < 0) d.elenenler.push(koltuk);
     patlamaEfekti(d, t.x, t.y);
     MG.ses.patlama();
+  }
+
+  // Hayatta kalanlar önde, elenenler geç elenenden erkene doğru.
+  function siralama(d) {
+    var canli = [];
+    for (var k in d.tanklar) {
+      if (d.tanklar[k].canli) canli.push(+k);
+    }
+    return canli.concat(d.elenenler.slice().reverse());
   }
 
   // --- bot yapay zekâsı (sadece hostta çalışır — sahiplik kuralı) ---------
@@ -296,14 +307,21 @@ MG.oyunlar.tank = (function () {
     }
     return {
       ta: ta,
-      me: d.mermiler.map(function (m) { return [Math.round(m.x), Math.round(m.y)]; }),
+      // Mermi hızı da gider: misafir paketler arasında onu ileri taşır,
+      // yoksa mermiler ekranda kesik kesik zıplar.
+      me: d.mermiler.map(function (m) {
+        return [Math.round(m.x), Math.round(m.y), Math.round(m.vx), Math.round(m.vy)];
+      }),
       ka: Math.round(d.kalan * 10) / 10
     };
   }
 
   // Misafir hiçbir şeyi simüle etmez; gelen durumu uygular, ölüm ve ateş
   // anlarını farktan yakalayıp efekt/ses üretir.
+  // Misafir: gelen değerler hedef olarak saklanır, efekt() onlara doğru
+  // yumuşatır. Doğrudan yazmak nesneleri sıçratıyordu.
   function uygula(d, s) {
+    d.uzak = true;
     var oncekiMermi = d.mermiler.length;
     if (s.ka != null) d.kalan = s.ka;
     for (var i = 0; i < s.ta.length; i++) {
@@ -311,16 +329,36 @@ MG.oyunlar.tank = (function () {
       var t = d.tanklar[v[0]];
       if (!t) continue;
       var oncedenCanli = t.canli;
-      t.x = v[1]; t.y = v[2]; t.aci = v[3]; t.canli = v[4] === 1;
+      t.hx = v[1]; t.hy = v[2]; t.haci = v[3];
+      if (t.ilkPaket == null) { t.x = t.hx; t.y = t.hy; t.aci = t.haci; t.ilkPaket = 1; }
+      t.canli = v[4] === 1;
       if (oncedenCanli && !t.canli) {
         patlamaEfekti(d, t.x, t.y);
         MG.ses.patlama();
       }
     }
     d.mermiler = s.me.map(function (m) {
-      return { x: m[0], y: m[1], vx: 0, vy: 0, sahip: -1, yas: 1, sekme: 0 };
+      return { x: m[0], y: m[1], vx: m[2] || 0, vy: m[3] || 0,
+               sahip: -1, yas: 1, sekme: 0 };
     });
     if (d.mermiler.length > oncekiMermi) MG.ses.ates();
+  }
+
+  function uzakYumusat(d, dt) {
+    var A2 = A.yayin;
+    for (var k in d.tanklar) {
+      var t = d.tanklar[k];
+      if (t.hx == null) continue;
+      MG.yumusat.nokta(t, dt, A2.yumusatmaHizi);
+      t.aci = MG.yumusat.aci(t.aci, t.haci, dt, A2.yumusatmaHizi);
+    }
+    // Mermiler kimlik taşımadığı için eşleştirilemez; gelen hızla ileri
+    // taşınırlar, sonraki paket konumu düzeltir.
+    for (var i = 0; i < d.mermiler.length; i++) {
+      var m = d.mermiler[i];
+      m.x += m.vx * dt;
+      m.y += m.vy * dt;
+    }
   }
 
   // --- efektler (her istemcide) -------------------------------------------
@@ -340,6 +378,7 @@ MG.oyunlar.tank = (function () {
   }
 
   function efekt(d, dt) {
+    if (d.uzak) uzakYumusat(d, dt);
     for (var i = d.parcalar.length - 1; i >= 0; i--) {
       var p = d.parcalar[i];
       p.omur -= dt;
@@ -352,7 +391,7 @@ MG.oyunlar.tank = (function () {
 
   // --- çizim ---------------------------------------------------------------
 
-  function ciz(d, cv, c, koltuklar) {
+  function ciz(d, cv, c, koltuklar, benKoltuk) {
     var olcek = cv.width / W;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, cv.width, cv.height);
@@ -363,10 +402,9 @@ MG.oyunlar.tank = (function () {
                   (Math.random() - 0.5) * d.sarsinti * 14);
     }
 
-    c.fillStyle = '#ffffff';
-    c.fillRect(0, 0, W, H);
+    MG.cizimYardim.zeminDoku(c, W, H, '#e9eef2', '#d3dde4', 'rgba(0,0,0,0.04)');
 
-    c.fillStyle = '#3b3b3b';
+    c.fillStyle = '#44515c';
     for (var i = 0; i < d.duvarlar.length; i++) {
       var dv = d.duvarlar[i];
       c.fillRect(dv.x, dv.y, dv.w, dv.h);
@@ -383,6 +421,11 @@ MG.oyunlar.tank = (function () {
     for (var k in d.tanklar) {
       tankCiz(c, d.tanklar[k], A.renkler[+k],
               koltuklar[+k] ? koltuklar[+k].ad : '');
+    }
+
+    var ben = d.tanklar[benKoltuk];
+    if (ben && ben.canli) {
+      MG.cizimYardim.benIsareti(c, ben.x, ben.y - 34, A.renkler[benKoltuk]);
     }
 
     for (i = 0; i < d.parcalar.length; i++) {
@@ -469,8 +512,9 @@ MG.oyunlar.tank = (function () {
   return {
     id: 'tank',
     ad: 'Tank Düellosu',
-    kurallar: 'WASD: hareket · Boşluk: ateş · Son kalan kazanır',
+    kurallar: 'WASD ya da ok tuşları: hareket · Boşluk: ateş · Son kalan kazanır',
     kur: kur,
+    siralama: siralama,
     oyuncuDustu: oyuncuDustu,
     oyuncuOlu: oyuncuOlu,
     girdi: girdi,
@@ -479,6 +523,7 @@ MG.oyunlar.tank = (function () {
     uygula: uygula,
     efekt: efekt,
     ciz: ciz,
-    bitti: bitti
+    bitti: bitti,
+    ozet: null
   };
 })();

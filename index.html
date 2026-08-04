@@ -10,23 +10,21 @@
 
 <div id="ekranGiris" class="ekran">
   <h1>Minigames</h1>
-  <p class="alt">Tank Düellosu · 5 kişiye kadar · tarayıcıda</p>
+  <p class="alt">8 parti oyunu · 5 kişiye kadar · tarayıcıda</p>
   <input id="girisAd" maxlength="12" placeholder="Adın" autocomplete="off">
-  <button id="btnOdaKur" class="ana">Oda Kur</button>
-  <div class="sira">
-    <input id="girisKod" maxlength="4" placeholder="KOD" autocomplete="off">
-    <button id="btnKatil">Katıl</button>
-  </div>
+  <button id="btnOyna" class="ana">Oyna</button>
   <p id="girisHata" class="hata"></p>
   <button id="btnBagTest" class="kucuk">Bağlantı testi</button>
   <pre id="bagTestSonuc" class="gizli"></pre>
 </div>
 
 <div id="ekranLobi" class="ekran gizli">
-  <h2>Oda: <span id="lobiKod"></span></h2>
-  <button id="btnDavet" class="kucuk">Davet linkini kopyala</button>
-  <div id="oyunSecici"></div>
+  <h2 id="lobiBaslik">Oyuncular</h2>
   <ul id="lobiListe"></ul>
+  <div id="turSecici" class="gizli">
+    <span class="etiket">Kaç tur?</span>
+    <div class="sira" id="turDugmeleri"></div>
+  </div>
   <button id="btnBotEkle" class="kucuk gizli">+ Bot ekle (test için)</button>
   <button id="btnBaslat" class="ana gizli">Başlat</button>
   <p id="lobiBilgi" class="alt"></p>
@@ -46,6 +44,8 @@
 <script src="src/core/rng.js"></script>
 <script src="src/core/ses.js"></script>
 <script src="src/core/geo.js"></script>
+<script src="src/core/yumusat.js"></script>
+<script src="src/core/cizimYardim.js"></script>
 <script src="src/net/net.js"></script>
 <script src="src/net/bagtest.js"></script>
 <script src="src/games/tank.js"></script>

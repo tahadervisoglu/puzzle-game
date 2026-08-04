@@ -8,14 +8,17 @@ MG.cemberCizim = (function () {
   var TAU = Math.PI * 2;
   var DIS = 460; // ışınların uzandığı mesafe
 
-  function ciz(d, cv, c, koltuklar, zorluk) {
+  function ciz(d, cv, c, koltuklar, zorluk, benKoltuk) {
     var olcek = cv.width / W;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, cv.width, cv.height);
     c.save();
     c.scale(olcek, olcek);
 
-    c.fillStyle = '#f7f4fb';
+    var gr = c.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.62);
+    gr.addColorStop(0, '#4a2f6d');
+    gr.addColorStop(1, '#2b1a44');
+    c.fillStyle = gr;
     c.fillRect(0, 0, W, H);
 
     c.save();
@@ -27,6 +30,12 @@ MG.cemberCizim = (function () {
     canavarCiz(c, d);
     for (var k in d.oyuncular) {
       oyuncuCiz(c, d.oyuncular[k], A.renkler[k], koltuklar[k] ? koltuklar[k].ad : '');
+    }
+
+    var ben = d.oyuncular[benKoltuk];
+    if (ben && ben.canli) {
+      var bx = Math.cos(ben.aci) * C.yaricap, by = Math.sin(ben.aci) * C.yaricap;
+      MG.cizimYardim.benIsareti(c, bx, by - C.oyuncuYaricap - 14, A.renkler[benKoltuk]);
     }
     parcalariCiz(c, d);
 
@@ -223,7 +232,7 @@ MG.cemberCizim = (function () {
       c.save();
       c.font = 'bold 11px system-ui, sans-serif';
       c.textAlign = 'center';
-      c.fillStyle = 'rgba(0,0,0,0.6)';
+      c.fillStyle = 'rgba(255,255,255,0.9)';
       c.fillText(ad, x * 1.14, y * 1.14 + 4);
       c.restore();
     }
@@ -242,7 +251,7 @@ MG.cemberCizim = (function () {
     c.save();
     c.font = 'bold 15px system-ui, sans-serif';
     c.textAlign = 'left';
-    c.fillStyle = 'rgba(0,0,0,0.45)';
+    c.fillStyle = 'rgba(255,255,255,0.6)';
     // İçeride 5'ten başlıyor ama oyuncuya 1'den saymak daha anlaşılır
     c.fillText('Zorluk ' + Math.floor(zorluk - C.baslangicZorluk + 1), 18, 30);
     c.restore();

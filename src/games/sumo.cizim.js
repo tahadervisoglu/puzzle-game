@@ -6,14 +6,17 @@ MG.sumoCizim = (function () {
   var W = A.dunya.w, H = A.dunya.h;
   var TAU = Math.PI * 2;
 
-  function ciz(d, cv, c, koltuklar) {
+  function ciz(d, cv, c, koltuklar, benKoltuk) {
     var olcek = cv.width / W;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, cv.width, cv.height);
     c.save();
     c.scale(olcek, olcek);
 
-    c.fillStyle = '#20303a'; // arena dışı: boşluk
+    var gr = c.createLinearGradient(0, 0, 0, H);   // arena dışı: derin su
+    gr.addColorStop(0, '#20404f');
+    gr.addColorStop(1, '#132a35');
+    c.fillStyle = gr;
     c.fillRect(0, 0, W, H);
 
     arenaCiz(c, d);
@@ -29,6 +32,14 @@ MG.sumoCizim = (function () {
         oyuncuCiz(c, d.oyuncular[k], A.renkler[k],
                   koltuklar[k] ? koltuklar[k].ad : '', d);
       }
+    }
+
+    // Kendi karakterin: üstünde ok. Herkes aynı yuvarlak olduğu için
+    // sumo'da hangisi olduğunu ayırt etmek imkânsızdı.
+    var ben = d.oyuncular[benKoltuk];
+    if (ben && ben.canli) {
+      MG.cizimYardim.benIsareti(c, ben.x, ben.y - S.oyuncuYaricap - 16,
+                                A.renkler[benKoltuk]);
     }
 
     parcalariCiz(c, d);

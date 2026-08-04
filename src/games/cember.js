@@ -19,6 +19,7 @@ MG.oyunlar.cember = (function () {
       botDurum: {},
       saldirilar: [],     // isin | bosluk
       mermiler: [],
+      elenenler: [],      // elenme sırası — tur sonu sıralaması bundan çıkar
       parcalar: [],
       sonraki: C.ilkBekleme,
       gecen: 0,
@@ -154,8 +155,18 @@ MG.oyunlar.cember = (function () {
   function vuruldu(d, koltuk, o) {
     o.canli = false;
     o.dusme = 0;
+    if (d.elenenler.indexOf(koltuk) < 0) d.elenenler.push(koltuk);
     patlama(d, o.aci);
     MG.ses.patlama();
+  }
+
+  // Hayatta kalanlar önde, elenenler geç elenenden erkene doğru.
+  function siralama(d) {
+    var canli = [];
+    for (var k in d.oyuncular) {
+      if (d.oyuncular[k].canli) canli.push(+k);
+    }
+    return canli.concat(d.elenenler.slice().reverse());
   }
 
   function patlama(d, aci) {
@@ -193,6 +204,7 @@ MG.oyunlar.cember = (function () {
   }
 
   function uygula(d, s) {
+    d.uzak = true;
     if (s.ka != null) d.kalan = s.ka;
     if (s.ge != null) d.gecen = s.ge;
     for (var i = 0; i < s.oy.length; i++) {
@@ -200,7 +212,8 @@ MG.oyunlar.cember = (function () {
       var o = d.oyuncular[v[0]];
       if (!o) continue;
       var oncedenCanli = o.canli;
-      o.aci = v[1];
+      o.haci = v[1];                     // hedef açı; efekt() ona yaklaşır
+      if (o.ilkPaket == null) { o.aci = o.haci; o.ilkPaket = 1; }
       o.canli = v[2] === 1;
       if (oncedenCanli && !o.canli) { o.dusme = 0; patlama(d, o.aci); MG.ses.patlama(); }
     }
@@ -215,7 +228,17 @@ MG.oyunlar.cember = (function () {
   }
 
   function efekt(d, dt) {
-    for (var i = d.parcalar.length - 1; i >= 0; i--) {
+    if (d.uzak) {
+      var h = A.yayin.yumusatmaHizi;
+      for (var k in d.oyuncular) {
+        var o = d.oyuncular[k];
+        if (o.haci != null) o.aci = MG.yumusat.aci(o.aci, o.haci, dt, h);
+      }
+      // Mermiler merkezden dışa sabit hızla gider; paket aralarında
+      // ilerlemeye devam etsinler.
+      for (var i = 0; i < d.mermiler.length; i++) d.mermiler[i].r += C.mermiHiz * dt;
+    }
+    for (i = d.parcalar.length - 1; i >= 0; i--) {
       var p = d.parcalar[i];
       p.omur -= dt;
       if (p.omur <= 0) { d.parcalar.splice(i, 1); continue; }
@@ -261,15 +284,16 @@ MG.oyunlar.cember = (function () {
   return {
     id: 'cember',
     ad: 'Çember Kaçış',
-    kurallar: 'A / D: çemberde kaç · Lazerlerden ve açılan boşluktan sakın · Son kalan kazanır',
+    kurallar: 'A / D ya da ← →: çemberde kaç · Lazerlerden ve boşluktan sakın · Son kalan kazanır',
     kur: kur,
+    siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,
-    ciz: function (d, cv, c, koltuklar) {
-      MG.cemberCizim.ciz(d, cv, c, koltuklar, zorluk(d));
+    ciz: function (d, cv, c, koltuklar, benKoltuk) {
+      MG.cemberCizim.ciz(d, cv, c, koltuklar, zorluk(d), benKoltuk);
     },
     bitti: bitti,
     ozet: ozet,

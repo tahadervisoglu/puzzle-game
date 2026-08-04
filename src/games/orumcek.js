@@ -32,6 +32,7 @@ MG.oyunlar.orumcek = (function () {
       },
       fitil: R.fitilSn,
       fitilBoyu: R.fitilSn,
+      elenenler: [],   // elenme sırası — tur sonu sıralaması bundan çıkar
       // Izgara payı örümcek yarıçapından biraz dar: duvara sürtünen örümcek
       // kendi yol haritasının dışına düşmesin.
       izgara: MG.orumcekYol.izgaraYap(h.duvarlar, R.orumcekYaricap * 0.8),
@@ -271,8 +272,15 @@ MG.oyunlar.orumcek = (function () {
     var p = d.oyuncular[koltuk];
     if (!p || !p.canli) return;
     p.canli = false;
+    if (d.elenenler.indexOf(koltuk) < 0) d.elenenler.push(koltuk);
     patlama(d, p.x, p.y);
     MG.ses.patlama();
+  }
+
+  // Hayatta kalanlar önde, elenenler geç elenenden erkene doğru.
+  function siralama(d) {
+    var canli = canlilar(d);
+    return canli.concat(d.elenenler.slice().reverse());
   }
 
   function patlama(d, x, y) {
@@ -311,6 +319,7 @@ MG.oyunlar.orumcek = (function () {
   }
 
   function uygula(d, s) {
+    d.uzak = true;
     if (s.ka != null) d.kalan = s.ka;
     d.fitil = s.fi;
     d.fitilBoyu = s.fb;
@@ -319,12 +328,15 @@ MG.oyunlar.orumcek = (function () {
       var p = d.oyuncular[v[0]];
       if (!p) continue;
       var oncedenCanli = p.canli;
-      p.x = v[1]; p.y = v[2]; p.aci = v[3]; p.canli = v[4] === 1;
+      p.hx = v[1]; p.hy = v[2]; p.haci = v[3];
+      if (p.ilkPaket == null) { p.x = p.hx; p.y = p.hy; p.aci = p.haci; p.ilkPaket = 1; }
+      p.canli = v[4] === 1;
       if (oncedenCanli && !p.canli) { patlama(d, p.x, p.y); MG.ses.patlama(); }
     }
     var o = d.orumcek;
     var oncekiDurum = o.durum;
-    o.x = s.or[0]; o.y = s.or[1]; o.aci = s.or[2];
+    o.hx = s.or[0]; o.hy = s.or[1]; o.haci = s.or[2];
+    if (o.ilkPaket == null) { o.x = o.hx; o.y = o.hy; o.aci = o.haci; o.ilkPaket = 1; }
     o.durum = DURUMLAR[s.or[3]] || 'yuruyor';
     o.sahip = s.or[4]; o.hedef = s.or[5];
     if (oncekiDurum !== 'yapisik' && o.durum === 'yapisik') MG.ses.yapis();
@@ -333,6 +345,17 @@ MG.oyunlar.orumcek = (function () {
 
   function efekt(d, dt) {
     d.orumcek.bacak += dt;
+    if (d.uzak) {
+      var h = A.yayin.yumusatmaHizi;
+      for (var k in d.oyuncular) {
+        var p = d.oyuncular[k];
+        MG.yumusat.nokta(p, dt, h);
+        if (p.haci != null) p.aci = MG.yumusat.aci(p.aci, p.haci, dt, h);
+      }
+      var o = d.orumcek;
+      MG.yumusat.nokta(o, dt, h);
+      if (o.haci != null) o.aci = MG.yumusat.aci(o.aci, o.haci, dt, h);
+    }
     for (var i = d.parcalar.length - 1; i >= 0; i--) {
       var p = d.parcalar[i];
       p.omur -= dt;
@@ -377,14 +400,17 @@ MG.oyunlar.orumcek = (function () {
   return {
     id: 'orumcek',
     ad: 'Örümcek Kaç',
-    kurallar: 'WASD: kaç · Boşluk: sırtındaki örümceği fırlat · Fitil bitince üstündeki patlar',
+    kurallar: 'WASD ya da oklar: kaç · Boşluk: örümceği fırlat · Fitil bitince üstündeki patlar',
     kur: kur,
+    siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,
-    ciz: function (d, cv, c, koltuklar) { MG.orumcekCizim.ciz(d, cv, c, koltuklar); },
+    ciz: function (d, cv, c, koltuklar, benKoltuk) {
+      MG.orumcekCizim.ciz(d, cv, c, koltuklar, benKoltuk);
+    },
     bitti: bitti,
     ozet: ozet,
     oyuncuOlu: oyuncuOlu,

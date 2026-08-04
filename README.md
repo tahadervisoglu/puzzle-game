@@ -1,25 +1,35 @@
 # Minigames — 5 kişilik parti oyunları
 
-Tarayıcıda oynanan, 5 kişiye kadar kısa minigame'ler. Oda kur, davet linkini
-gönder, arkadaşların katılsın. Her tur birkaç dakika sürer, kazanan puan alır.
+Tarayıcıda oynanan, 5 kişiye kadar kısa minigame'ler. **Kod yok, davet yok:**
+adını yaz, "Oyna"ya bas. Açık bir oda varsa oraya düşersin, yoksa odayı sen
+kurarsın. Herkes gelince oda sahibi kaç tur oynanacağını seçip başlatır.
 
 **▶ Oyna: https://tahadervisoglu.github.io/puzzle-game/**
+
+## Nasıl oynanır
+
+Bir seri 3, 5 ya da 8 turdan oluşur. Her tur **farklı** bir minigame gelir —
+oyunlar karıştırılmış bir havuzdan çekildiği için aynısı tekrar etmez. Her
+turun sonunda sıralamaya göre puan dağıtılır (1. üç, 2. iki, 3. bir puan),
+seri bitince toplam puanı en yüksek olan şampiyon olur.
+
+Hareket **WASD ya da ok tuşlarıyla**, her oyunun özel eylemi **Boşluk** ile.
+Kendi karakterinin üstünde kendi renginde bir ok durur, kalabalıkta kaybolmazsın.
+
+Test için oda sahibi boş koltuklara bot ekleyebilir; kimse eklemezse bot yoktur.
 
 ## Oyunlar
 
 | Oyun | Kontrol | Kazanma |
 |---|---|---|
-| **Tank Düellosu** | WASD + Boşluk: ateş | Son kalan |
-| **Kutu Kapmaca** | WASD: forklift · Boşluk: kaldır/bırak | 30 sn'de en çok kutu |
+| **Tank Düellosu** | WASD/oklar + Boşluk: ateş | Son kalan |
+| **Kutu Kapmaca** | WASD/oklar: forklift · Boşluk: kaldır/bırak | 30 sn'de en çok kutu |
 | **Şimşek Refleks** | Boşluk: kap | En çok puan (bombaya ve eksiye dokunma) |
-| **Araba Yarışı** | WASD: sür | 2 turu ilk bitiren |
-| **Çember Kaçış** | A / D: çemberde kaç | Lazerlerden son kurtulan |
+| **Araba Yarışı** | WASD/oklar: sür | 2 turu ilk bitiren |
+| **Çember Kaçış** | A / D ya da ← → | Lazerlerden son kurtulan |
 | **Yokuş Aşağı** | Boşluk: zıpla | 30 sn sonunda en öndeki |
-| **Örümcek Kaç** | WASD + Boşluk: örümceği fırlat | Fitil patlamadan kaçan son kişi |
+| **Örümcek Kaç** | WASD/oklar + Boşluk: örümceği fırlat | Fitil patlamadan kaçan son kişi |
 | **Buz Sumo** | Boşluk basılı: güç topla, bırak: fırla | Arenada kalan son kişi |
-
-Odayı kuran kişi hangi oyunun oynanacağını seçer. Test için boş koltuklara bot
-eklenebilir; kimse eklemezse bot yoktur.
 
 ## Çalıştırma
 
@@ -76,12 +86,21 @@ PeerJS, CDN'den ve **tembel** yüklenir — "Oda kur"a basılana kadar indirilme
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 ```
 
-### Oda kodu ve davet linki
+### Otomatik eşleşme (oda kodu yok)
 
-- Peer id = sabit önek + 4 karakterlik kod (`minigames-3FLM`)
-- Alfabede **birbirine benzeyen karakter olmasın**: `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (0/O ve 1/I yok)
-- Kod tutulmuşsa (`unavailable-id`) yeni kod üretip tekrar dene
-- Davet linki: `...?oda=3FLM` → sayfa açılır açılmaz odaya bağlan. Kod yazdırmaktan çok daha iyi çalışıyor.
+Önce 4 karakterlik oda kodu ve davet linki vardı; kod okumak/yazmak parti
+oyununun önüne geçtiği için kaldırıldı. Yerine **sabit bir kimlik havuzu**
+kullanılıyor:
+
+- Peer id = `minigames-oda-1` … `minigames-oda-4`
+- "Oyna"ya basan sırayla bu odalara bağlanmayı dener
+- Bağlanabilirse katılır; `peer-unavailable` gelirse o kimliği alıp **kendisi
+  oda sahibi olur**; oda doluysa sıradakini dener
+- İki kişi aynı anda basarsa biri `unavailable-id` alır — o da sıradaki odaya
+  geçer, yarış durumu böyle çözülür
+
+Cevap gelmezse oda boş sayılır (`odaDenemeMs`); `conn.on('open')` hiç
+tetiklenmeyebildiği için bu zaman aşımı şart.
 
 ### Zorunlu: bağlantı zaman aşımı
 

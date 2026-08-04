@@ -2,8 +2,15 @@
 
 body {
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background: #f2f2f2;
-  color: #222;
+  /* Hastane beyazı yerine derin bir gece maviye mor geçiş */
+  background: #1b1440;
+  background-image:
+    radial-gradient(circle at 18% 20%, rgba(97, 78, 214, 0.55), transparent 55%),
+    radial-gradient(circle at 82% 12%, rgba(226, 85, 130, 0.40), transparent 50%),
+    radial-gradient(circle at 65% 88%, rgba(48, 168, 196, 0.42), transparent 55%),
+    linear-gradient(160deg, #241a52 0%, #16113a 60%, #120e2e 100%);
+  background-attachment: fixed;
+  color: #f2f0ff;
   min-height: 100vh;
 }
 
@@ -19,96 +26,131 @@ body {
   padding: 20px;
 }
 
-h1 { font-size: 42px; letter-spacing: 1px; }
+h1 {
+  font-size: 58px;
+  letter-spacing: -1px;
+  background: linear-gradient(95deg, #ffd166 0%, #ff6b9d 45%, #7ee8fa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.35));
+}
 h2 { font-size: 26px; }
-.alt { color: #777; }
+.alt { color: rgba(240, 238, 255, 0.6); }
 
 input {
   font-size: 18px;
-  padding: 10px 14px;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  width: 220px;
+  padding: 12px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  width: 240px;
   text-align: center;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
-input:focus { outline: none; border-color: #2f6df6; }
-#girisKod { width: 110px; text-transform: uppercase; letter-spacing: 3px; }
+input::placeholder { color: rgba(255, 255, 255, 0.45); }
+input:focus {
+  outline: none;
+  border-color: #7ee8fa;
+  background: rgba(255, 255, 255, 0.14);
+}
 
 button {
   font-size: 18px;
   padding: 10px 22px;
   border: none;
-  border-radius: 8px;
-  background: #ddd;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f0eeff;
   cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
 }
-button:hover { filter: brightness(0.95); }
+button:hover { filter: brightness(1.15); }
+button:active { transform: scale(0.97); }
 button.ana {
-  background: #2f6df6;
+  background: linear-gradient(135deg, #ff6b9d, #c14bd8 55%, #6a5bff);
   color: #fff;
-  font-weight: 600;
-  padding: 12px 34px;
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: 0.5px;
+  padding: 15px 56px;
+  box-shadow: 0 8px 26px rgba(160, 70, 220, 0.45);
 }
-button.kucuk { font-size: 14px; padding: 6px 14px; color: #555; }
+button.ana:disabled { filter: grayscale(0.6) brightness(0.8); cursor: default; }
+button.kucuk {
+  font-size: 14px;
+  padding: 7px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(240, 238, 255, 0.75);
+}
 button.sil {
   font-size: 13px;
   padding: 2px 8px;
   margin-left: auto;
-  background: #eee;
-  color: #b33;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ff8a8a;
 }
 
 .sira { display: flex; gap: 8px; align-items: center; }
 
-.hata { color: #c0392b; min-height: 1.2em; }
+.hata { color: #ff9db0; min-height: 1.2em; }
 
 #bagTestSonuc {
   font-family: Consolas, monospace;
   font-size: 14px;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
   padding: 12px 16px;
   white-space: pre;
+  color: #d8f5ff;
 }
 
-#lobiKod { letter-spacing: 4px; color: #2f6df6; }
-
-#oyunSecici { display: flex; gap: 8px; }
-.oyunDugme {
-  font-size: 14px;
-  padding: 8px 16px;
-  background: #fff;
-  border: 2px solid #ddd;
-  color: #666;
+#turSecici {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
-.oyunDugme.secili {
-  border-color: #2f6df6;
-  color: #2f6df6;
-  font-weight: 600;
+#turSecici .etiket { font-size: 14px; color: rgba(255, 255, 255, 0.6); }
+.turDugme {
+  font-size: 17px;
+  font-weight: 700;
+  padding: 9px 22px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
 }
-.oyunDugme:disabled { cursor: default; opacity: 0.75; }
+.turDugme.secili {
+  border-color: #7ee8fa;
+  color: #7ee8fa;
+  background: rgba(126, 232, 250, 0.14);
+}
 
 #lobiListe {
   list-style: none;
-  width: 280px;
-  background: #fff;
-  border-radius: 10px;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px);
 }
 #lobiListe li {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 11px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 16px;
 }
 #lobiListe li:last-child { border-bottom: none; }
-#lobiListe .bos { color: #bbb; }
-#lobiListe em { font-style: normal; color: #999; font-size: 13px; }
+#lobiListe .bos { color: rgba(255, 255, 255, 0.3); font-style: italic; }
+#lobiListe em {
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+}
 
 .nokta {
   display: inline-block;
@@ -132,19 +174,23 @@ button.sil {
 #ustBilgi { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .kodEtiket {
   font-family: Consolas, monospace;
-  letter-spacing: 2px;
-  color: #999;
+  letter-spacing: 1px;
+  color: #7ee8fa;
   font-size: 14px;
+  font-weight: 700;
+  background: rgba(126, 232, 250, 0.12);
+  padding: 4px 10px;
+  border-radius: 20px;
 }
 .cip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 4px 12px;
   font-size: 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  color: #f0eeff;
 }
 .cip.olu { opacity: 0.45; text-decoration: line-through; }
 .cip b { font-size: 15px; }
@@ -153,16 +199,16 @@ button.sil {
   font-family: Consolas, monospace;
   font-size: 16px;
   font-weight: 600;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
   min-width: 44px;
   text-align: center;
 }
-.sure.az { color: #c0392b; }
+.sure.az { color: #ff8a8a; }
 
 #oyunCv {
   background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 3px 14px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
 }
 
 #perde {
@@ -173,19 +219,28 @@ button.sil {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background: rgba(255,255,255,0.88);
+  background: rgba(18, 14, 46, 0.9);
+  backdrop-filter: blur(4px);
   text-align: center;
+  color: #f2f0ff;
 }
 #perde h2 { font-size: 34px; }
-#perde .kural { font-size: 18px; color: #555; }
-#perde .sayim { font-size: 90px; font-weight: 700; color: #2f6df6; }
+#perde .kural { font-size: 18px; color: rgba(255, 255, 255, 0.7); }
+#perde .sayim {
+  font-size: 96px;
+  font-weight: 800;
+  background: linear-gradient(120deg, #ffd166, #ff6b9d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
 .skorTablo {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
   padding: 10px 0;
-  min-width: 240px;
+  min-width: 280px;
 }
 .skorSatir {
   display: flex;
@@ -195,4 +250,13 @@ button.sil {
   font-size: 17px;
 }
 .skorSatir b { margin-left: auto; }
-.skorSatir .ozet { color: #999; font-size: 14px; margin-left: 8px; }
+.skorSatir .ozet { color: rgba(255,255,255,0.5); font-size: 14px; margin-left: 8px; }
+.skorSatir .sira { color: rgba(255,255,255,0.4); font-size: 14px; width: 18px; }
+
+#perde .turEtiket {
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+#perde h2.sampiyon { font-size: 40px; }

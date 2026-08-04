@@ -46,13 +46,7 @@ MG.net = (function () {
     document.head.appendChild(s);
   }
 
-  function kodUret() {
-    var s = '';
-    for (var i = 0; i < 4; i++) {
-      s += A.net.alfabe[Math.floor(Math.random() * A.net.alfabe.length)];
-    }
-    return s;
-  }
+  function odaAdi(no) { return A.net.onek + no; }
 
   // Her denemeden önce eski peer yok edilir — önce "Oda kur"a sonra
   // "Katıl"a basılırsa eski peer ayakta kalır ve bağlantı katmanı bozulur.
@@ -63,28 +57,91 @@ MG.net = (function () {
     peer = null; hostBag = null; baglar = {}; sonGelen = {}; kod = null;
   }
 
-  function odaKur(bitti) {
+  // --- otomatik eşleşme ----------------------------------------------------
+  // Kullanıcı kod girmez. Sırayla odalara bağlanmayı deneriz: biri açıksa
+  // ona katılırız, boşsa o kimliği alıp oda sahibi oluruz.
+
+  function otomatikBaglan(ad, bitti, ilerleme) {
     sifirla();
-    hostMu = true;
-    peerjsYukle(function () { odaDene(0, bitti); }, function (m) { bitti(m); });
+    peerjsYukle(function () { odaSirasi(1, ad, bitti, ilerleme); },
+                function (m) { bitti(m); });
   }
 
-  function odaDene(deneme, bitti) {
-    if (deneme > 8) return bitti('Boş oda kodu bulunamadı, tekrar dene.');
-    var k = kodUret();
-    var p = new Peer(A.net.onek + k, { config: { iceServers: iceServersAl() } });
+  function odaSirasi(no, ad, bitti, ilerleme) {
+    if (no > A.net.odaSayisi) {
+      return bitti('Bütün odalar dolu. Biraz sonra tekrar dene.');
+    }
+    if (ilerleme) ilerleme(no === 1 ? 'Oda aranıyor…' : 'Sıradaki oda deneniyor…');
+
+    katilDene(no, ad, function (sonuc, veri) {
+      if (sonuc === 'TAMAM') return bitti(null, veri);
+      if (sonuc === 'BOS') {
+        if (ilerleme) ilerleme('Boş oda bulundu, kuruluyor…');
+        return odaKur(no, bitti, function () {
+          // Kimliği araya biri kaptıysa sıradakine geç
+          odaSirasi(no + 1, ad, bitti, ilerleme);
+        });
+      }
+      if (sonuc === 'DOLU') return odaSirasi(no + 1, ad, bitti, ilerleme);
+      bitti(sonuc); // gerçek hata
+    });
+  }
+
+  // Tek bir odaya katılmayı dener. Sonuç: TAMAM | BOS | DOLU | hata metni
+  function katilDene(no, ad, bitti) {
+    var p = new Peer({ config: { iceServers: iceServersAl() } });
+    var bittiMi = false;
+    function birKez(sonuc, veri) {
+      if (bittiMi) return;
+      bittiMi = true;
+      clearTimeout(zam);
+      if (sonuc === 'TAMAM') { peer = p; hostMu = false; kod = odaAdi(no); }
+      else { try { p.destroy(); } catch (e) {} }
+      bitti(sonuc, veri);
+    }
+    // Cevap gelmezse odayı boş say — conn.on('open') hiç tetiklenmeyebilir
+    var zam = setTimeout(function () { birKez('BOS'); }, A.net.odaDenemeMs);
+
+    p.on('error', function (e) {
+      if (e.type === 'peer-unavailable') birKez('BOS');
+      else if (!bittiMi) birKez('Bağlantı hatası: ' + e.type);
+    });
+    p.on('open', function () {
+      var c = p.connect(odaAdi(no), { reliable: true });
+      hostBag = c;
+      c.on('open', function () { c.send({ t: 'giris', ad: ad }); });
+      c.on('data', function (d) {
+        if (!d || !d.t) return;
+        sonGelen.host = Date.now();
+        if (d.t === 'hosgeldin') {
+          nabizBaslat(); bekciBaslat();
+          birKez('TAMAM', d);
+        } else if (d.t === 'dolu') {
+          birKez('DOLU');
+        } else if (d.t !== 'nabiz') {
+          if (olay.mesaj) olay.mesaj(0, d);
+        }
+      });
+      c.on('close', function () { if (olay.hostKoptu) olay.hostKoptu(); });
+      c.on('error', function () { if (olay.hostKoptu) olay.hostKoptu(); });
+    });
+  }
+
+  function odaKur(no, bitti, kimlikKapildi) {
+    var p = new Peer(odaAdi(no), { config: { iceServers: iceServersAl() } });
     var acildi = false;
     p.on('open', function () {
       acildi = true;
-      peer = p; kod = k;
+      peer = p; hostMu = true; kod = odaAdi(no);
       p.on('connection', yeniBaglanti);
       nabizBaslat(); bekciBaslat();
-      bitti(null, k);
+      bitti(null, { host: true, oda: no });
     });
     p.on('error', function (e) {
-      if (acildi) return; // oda kurulduktan sonraki hatalar bağlantı bazında ele alınır
+      if (acildi) return; // kurulduktan sonraki hatalar bağlantı bazında ele alınır
       try { p.destroy(); } catch (err) {}
-      if (e.type === 'unavailable-id') odaDene(deneme + 1, bitti); // kod tutulmuş, yenisini dene
+      // İki kişi aynı anda "Oyna"ya bastıysa kimliği biri kapmıştır
+      if (e.type === 'unavailable-id') kimlikKapildi();
       else bitti('Bağlantı hatası: ' + e.type);
     });
   }
@@ -119,53 +176,6 @@ MG.net = (function () {
     delete sonGelen[koltuk];
     try { conn.close(); } catch (e) {}
     if (olay.koptu) olay.koptu(koltuk);
-  }
-
-  function katil(girilenKod, ad, bitti) {
-    sifirla();
-    hostMu = false;
-    var k = ('' + girilenKod).toUpperCase().trim();
-    peerjsYukle(function () {
-      var p = new Peer({ config: { iceServers: iceServersAl() } });
-      peer = p;
-      var bittiMi = false;
-      function birKez(hata, veri) {
-        if (bittiMi) return;
-        bittiMi = true;
-        clearTimeout(zamanlayici);
-        if (hata) sifirla();
-        bitti(hata, veri);
-      }
-      // conn.on('open') hiç tetiklenmeyebilir — süre dolunca anlamlı hata ver.
-      var zamanlayici = setTimeout(function () {
-        birKez('Bağlanılamadı (15 sn doldu). Kod doğru mu? Bağlantı testini dene.');
-      }, A.agZamanAsimiMs);
-      p.on('error', function (e) {
-        birKez(e.type === 'peer-unavailable'
-          ? 'Oda bulunamadı: ' + k
-          : 'Bağlantı hatası: ' + e.type);
-      });
-      p.on('open', function () {
-        var c = p.connect(A.net.onek + k, { reliable: true });
-        hostBag = c;
-        c.on('open', function () { c.send({ t: 'giris', ad: ad }); });
-        c.on('data', function (d) {
-          if (!d || !d.t) return;
-          sonGelen.host = Date.now();
-          if (d.t === 'hosgeldin') {
-            kod = k;
-            nabizBaslat(); bekciBaslat();
-            birKez(null, d);
-          } else if (d.t === 'dolu') {
-            birKez(d.sebep || 'Oda dolu.');
-          } else if (d.t !== 'nabiz') {
-            if (olay.mesaj) olay.mesaj(0, d);
-          }
-        });
-        c.on('close', function () { if (olay.hostKoptu) olay.hostKoptu(); });
-        c.on('error', function () { if (olay.hostKoptu) olay.hostKoptu(); });
-      });
-    }, function (m) { bitti(m); });
   }
 
   // --- nabız ve kopma tespiti ---------------------------------------------
@@ -210,8 +220,7 @@ MG.net = (function () {
 
   return {
     olay: olay,
-    odaKur: odaKur,
-    katil: katil,
+    otomatikBaglan: otomatikBaglan,
     ayril: sifirla,
     yayinla: yayinla,
     gonder: gonder,

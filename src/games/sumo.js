@@ -24,6 +24,7 @@ MG.oyunlar.sumo = (function () {
       botDurum: {},
       izler: [],
       parcalar: [],
+      elenenler: [],   // düşme sırası — tur sonu sıralaması bundan çıkar
       kalan: S.turSureSn
     };
 
@@ -90,12 +91,14 @@ MG.oyunlar.sumo = (function () {
     }
 
     if (g.space) {
-      // Odaklanma: güç birikir, ayaklar kilitlenir. Yalnızca ivmeyi kesmek
-      // yetmiyor — buzda atalet kaydırmaya devam ediyordu, o yüzden
-      // odaklanan oyuncu ayrıca sert fren yapar.
+      // Odaklanma: güç birikir, ayaklar yere basar. Fren ŞARJLA ORANTILI
+      // artar — sabit sert fren, tam kayarken tuşa basınca oyuncuyu havada
+      // çakıyor ve buz hissini tamamen öldürüyordu. Böylece kayışın
+      // momentumu korunur, güç topladıkça yavaşça durursun.
       o.sarj = Math.min(1, o.sarj + S.sarjHizi * dt);
-      o.vx -= o.vx * S.sarjFren * dt;
-      o.vy -= o.vy * S.sarjFren * dt;
+      var fren = S.sarjFren * o.sarj;
+      o.vx -= o.vx * fren * dt;
+      o.vy -= o.vy * fren * dt;
     } else {
       if (o.sarj > S.sarjEnAz) firla(d, o);
       o.sarj = 0;
@@ -165,6 +168,7 @@ MG.oyunlar.sumo = (function () {
       if (Math.sqrt(dx * dx + dy * dy) > d.yaricap) {
         o.canli = false;
         o.dusme = 0;
+        if (d.elenenler.indexOf(+k) < 0) d.elenenler.push(+k);
         toz(d, o);
         MG.ses.dusme();
       }
@@ -203,6 +207,7 @@ MG.oyunlar.sumo = (function () {
   }
 
   function uygula(d, s) {
+    d.uzak = true;
     if (s.ka != null) d.kalan = s.ka;
     if (s.ya != null) d.yaricap = s.ya;
     for (var i = 0; i < s.oy.length; i++) {
@@ -211,13 +216,26 @@ MG.oyunlar.sumo = (function () {
       if (!o) continue;
       var oncedenCanli = o.canli;
       var oncekiSarj = o.sarj;
-      o.x = v[1]; o.y = v[2]; o.aci = v[3]; o.sarj = v[4]; o.canli = v[5] === 1;
+      o.hx = v[1]; o.hy = v[2]; o.haci = v[3];
+      if (o.ilkPaket == null) { o.x = o.hx; o.y = o.hy; o.aci = o.haci; o.ilkPaket = 1; }
+      o.sarj = v[4]; o.canli = v[5] === 1;
       if (oncedenCanli && !o.canli) { o.dusme = 0; toz(d, o); MG.ses.dusme(); }
       if (oncekiSarj > S.sarjEnAz && o.sarj === 0 && o.canli) MG.ses.firlat();
     }
   }
 
+  function uzakYumusat(d, dt) {
+    var h = A.yayin.yumusatmaHizi;
+    for (var k in d.oyuncular) {
+      var o = d.oyuncular[k];
+      if (!o.canli) continue;     // düşenler kendi hızlarıyla kayıyor
+      MG.yumusat.nokta(o, dt, h);
+      if (o.haci != null) o.aci = MG.yumusat.aci(o.aci, o.haci, dt, h);
+    }
+  }
+
   function efekt(d, dt) {
+    if (d.uzak) uzakYumusat(d, dt);
     for (var i = d.izler.length - 1; i >= 0; i--) {
       d.izler[i].omur -= dt;
       if (d.izler[i].omur <= 0) d.izler.splice(i, 1);
@@ -253,6 +271,11 @@ MG.oyunlar.sumo = (function () {
     return null;
   }
 
+  // Ayakta kalanlar önde, düşenler geç düşenden erkene doğru.
+  function siralama(d) {
+    return canlilar(d).concat(d.elenenler.slice().reverse());
+  }
+
   function ozet(d) {
     var o = {};
     for (var k in d.oyuncular) {
@@ -273,14 +296,17 @@ MG.oyunlar.sumo = (function () {
   return {
     id: 'sumo',
     ad: 'Buz Sumo',
-    kurallar: 'Boşluk basılı: güç topla (yürüyemezsin) · Bırak: fırla · WASD: nişan ve yön · Arenadan düşen elenir',
+    kurallar: 'Boşluk basılı: güç topla · Bırak: fırla · WASD ya da oklar: nişan ve yön · Düşen elenir',
     kur: kur,
+    siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,
-    ciz: function (d, cv, c, koltuklar) { MG.sumoCizim.ciz(d, cv, c, koltuklar); },
+    ciz: function (d, cv, c, koltuklar, benKoltuk) {
+      MG.sumoCizim.ciz(d, cv, c, koltuklar, benKoltuk);
+    },
     bitti: bitti,
     ozet: ozet,
     oyuncuOlu: oyuncuOlu,

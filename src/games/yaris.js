@@ -246,21 +246,35 @@ MG.oyunlar.yaris = (function () {
     return { ar: ar, bi: d.bitirenler, ka: Math.round(d.kalan * 10) / 10 };
   }
 
+  // Misafir: bu oyunun sıçraması en belirgin olanıydı (700 px/sn hızda her
+  // pakette ~23 px ışınlanma). Gelen değerler hedef, efekt() yumuşatıyor.
   function uygula(d, s) {
+    d.uzak = true;
     if (s.ka != null) d.kalan = s.ka;
     d.bitirenler = s.bi || [];
     for (var i = 0; i < s.ar.length; i++) {
       var v = s.ar[i];
       var a = d.araclar[v[0]];
       if (!a) continue;
-      a.x = v[1]; a.y = v[2]; a.aci = v[3];
+      a.hx = v[1]; a.hy = v[2]; a.haci = v[3];
+      if (a.ilkPaket == null) { a.x = a.hx; a.y = a.hy; a.aci = a.haci; a.ilkPaket = 1; }
       a.ilerleme = v[4]; a.kayma = v[5]; a.cimde = v[6] === 1;
       a.bitti = d.bitirenler.indexOf(v[0]) >= 0;
       izBirak(d, a);
     }
   }
 
+  function uzakYumusat(d, dt) {
+    var h = A.yayin.yumusatmaHizi;
+    for (var k in d.araclar) {
+      var a = d.araclar[k];
+      MG.yumusat.nokta(a, dt, h, 200);
+      if (a.haci != null) a.aci = MG.yumusat.aci(a.aci, a.haci, dt, h);
+    }
+  }
+
   function efekt(d, dt) {
+    if (d.uzak) uzakYumusat(d, dt);
     for (var i = d.izler.length - 1; i >= 0; i--) {
       d.izler[i].omur -= dt;
       if (d.izler[i].omur <= 0) d.izler.splice(i, 1);
@@ -270,8 +284,9 @@ MG.oyunlar.yaris = (function () {
   return {
     id: 'yaris',
     ad: 'Araba Yarışı',
-    kurallar: 'WASD: sür · 2 turu ilk tamamlayan kazanır · Çimde yavaşlarsın',
+    kurallar: 'WASD ya da ok tuşları: sür · 2 turu ilk tamamlayan kazanır · Çimde yavaşlarsın',
     kur: kur,
+    siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
     anlik: anlik,

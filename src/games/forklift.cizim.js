@@ -4,15 +4,14 @@ MG.forkliftCizim = (function () {
   var F = A.forklift;
   var W = A.dunya.w, H = A.dunya.h;
 
-  function ciz(d, cv, c, koltuklar, sayilar) {
+  function ciz(d, cv, c, koltuklar, sayilar, benKoltuk) {
     var olcek = cv.width / W;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, cv.width, cv.height);
     c.save();
     c.scale(olcek, olcek);
 
-    c.fillStyle = '#ffffff';
-    c.fillRect(0, 0, W, H);
+    MG.cizimYardim.zeminDoku(c, W, H, '#eceff1', '#d8dee3', 'rgba(0,0,0,0.045)');
 
     for (var k in d.alanlar) alanCiz(c, d.alanlar[k], A.renkler[k],
                                      koltuklar[k] ? koltuklar[k].ad : '',
@@ -33,6 +32,11 @@ MG.forkliftCizim = (function () {
     }
     for (i = 0; i < d.kutular.length; i++) {
       if (d.kutular[i].tasiyan >= 0) kutuCiz(c, d.kutular[i]);
+    }
+
+    var ben = d.araclar[benKoltuk];
+    if (ben) {
+      MG.cizimYardim.benIsareti(c, ben.x, ben.y - 32, A.renkler[benKoltuk]);
     }
 
     c.restore();

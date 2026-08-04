@@ -33,6 +33,12 @@ MG.yokusCizim = (function () {
       oyuncuCiz(c, d, d.oyuncular[k], A.renkler[k],
                 koltuklar[k] ? koltuklar[k].ad : '', k === benKoltuk);
     }
+
+    var ben = d.oyuncular[benKoltuk];
+    if (ben) {
+      var bp = Y.yuzeyUstu(d.noktalar, ben.s, ben.h + K.boy);
+      MG.cizimYardim.benIsareti(c, bp.x, bp.y - 28, A.renkler[benKoltuk]);
+    }
     c.restore();
 
     gostergeler(c, d, sirali, benKoltuk, O);

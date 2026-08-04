@@ -5,7 +5,7 @@ MG.orumcekCizim = (function () {
   var R = A.orumcek;
   var W = A.dunya.w, H = A.dunya.h;
 
-  function ciz(d, cv, c, koltuklar) {
+  function ciz(d, cv, c, koltuklar, benKoltuk) {
     var olcek = cv.width / W;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, cv.width, cv.height);
@@ -16,10 +16,9 @@ MG.orumcekCizim = (function () {
                   (Math.random() - 0.5) * d.sarsinti * 15);
     }
 
-    c.fillStyle = '#ffffff';
-    c.fillRect(0, 0, W, H);
+    MG.cizimYardim.zeminDoku(c, W, H, '#f6eee4', '#e6d9c8', 'rgba(0,0,0,0.035)');
 
-    c.fillStyle = '#3b3b3b';
+    c.fillStyle = '#4a4038';
     for (var i = 0; i < d.duvarlar.length; i++) {
       var dv = d.duvarlar[i];
       c.fillRect(dv.x, dv.y, dv.w, dv.h);
@@ -32,6 +31,12 @@ MG.orumcekCizim = (function () {
                koltuklar[k] ? koltuklar[k].ad : '');
     }
     orumcekCiz(c, d);
+
+    var ben = d.oyuncular[benKoltuk];
+    if (ben && ben.canli) {
+      MG.cizimYardim.benIsareti(c, ben.x, ben.y - R.insanYaricap - 22,
+                                A.renkler[benKoltuk]);
+    }
 
     for (i = 0; i < d.parcalar.length; i++) {
       var p = d.parcalar[i];

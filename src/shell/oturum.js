@@ -3,10 +3,13 @@ MG.oturum = {
   benKoltuk: 0,
   koltuklar: [],        // dizin = koltuk; null | { ad, bot }
   skorlar: {},          // koltuk -> kazanılan tur
-  evre: 'giris',        // giris | lobi | sayim | oyun | son
+  evre: 'giris',        // giris | lobi | sayim | oyun | son | final
   oyunDurum: null,
   oyun: null,           // aktif minigame nesnesi
-  secilenOyun: 'tank',  // lobide oda sahibinin seçtiği
+  turSayisi: MG.ayar.tur.varsayilanTur, // seride kaç tur oynanacak
+  turNo: 0,             // kaçıncı tur (1'den başlar)
+  oyunHavuzu: [],       // karıştırılmış oyun sırası — tekrar etmesin diye
+  sonOyun: null,
 
   oturanSayisi: function () {
     var n = 0;
@@ -34,5 +37,8 @@ MG.oturum = {
     this.evre = 'giris';
     this.oyunDurum = null;
     this.oyun = null;
+    this.turNo = 0;
+    this.oyunHavuzu = [];
+    this.sonOyun = null;
   }
 };

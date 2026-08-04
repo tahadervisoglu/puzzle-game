@@ -222,6 +222,12 @@ MG.oyunlar.refleks = (function () {
     return o;
   }
 
+  function siralama(d) {
+    return Object.keys(d.oyuncular).map(Number).sort(function (a, b) {
+      return d.oyuncular[b].puan - d.oyuncular[a].puan;
+    });
+  }
+
   function oyuncuDustu(d, koltuk) {
     delete d.oyuncular[koltuk];
     delete d.botDurum[koltuk];
@@ -233,12 +239,15 @@ MG.oyunlar.refleks = (function () {
     kurallar: 'Boşluk: kap · Eksiye ve bombaya dokunma · Boşa basarsan elin donar',
     tipler: TIPLER,
     kur: kur,
+    siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,
-    ciz: function (d, cv, c, koltuklar) { MG.refleksCizim.ciz(d, cv, c, koltuklar); },
+    ciz: function (d, cv, c, koltuklar, benKoltuk) {
+      MG.refleksCizim.ciz(d, cv, c, koltuklar, benKoltuk);
+    },
     bitti: bitti,
     ozet: ozet,
     oyuncuDustu: oyuncuDustu

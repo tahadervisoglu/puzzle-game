@@ -228,6 +228,11 @@ MG.oyunlar.forklift = (function () {
     return o;
   }
 
+  function siralama(d) {
+    var s = kutuSayilari(d);
+    return Object.keys(s).map(Number).sort(function (a, b) { return s[b] - s[a]; });
+  }
+
   function oyuncuDustu(d, koltuk) {
     var f = d.araclar[koltuk];
     if (f && f.tasidigi >= 0) d.kutular[f.tasidigi].tasiyan = -1; // kutuyu serbest bırak
@@ -255,13 +260,16 @@ MG.oyunlar.forklift = (function () {
     };
   }
 
+  // Misafir: gelen değerler hedeftir, efekt() onlara doğru yumuşatır.
   function uygula(d, s) {
+    d.uzak = true;
     if (s.ka != null) d.kalan = s.ka;
     for (var i = 0; i < s.ar.length; i++) {
       var v = s.ar[i];
       var f = d.araclar[v[0]];
       if (!f) continue;
-      f.x = v[1]; f.y = v[2]; f.aci = v[3];
+      f.hx = v[1]; f.hy = v[2]; f.haci = v[3];
+      if (f.ilkPaket == null) { f.x = f.hx; f.y = f.hy; f.aci = f.haci; f.ilkPaket = 1; }
       if (f.tasidigi !== v[4]) {
         // Kaldırma/bırakma anını farktan yakala, sesi burada çal.
         if (v[4] >= 0) MG.ses.kaldir(); else MG.ses.birak();
@@ -270,11 +278,27 @@ MG.oyunlar.forklift = (function () {
     }
     for (i = 0; i < s.ku.length && i < d.kutular.length; i++) {
       var kt = d.kutular[i], w = s.ku[i];
-      kt.x = w[0]; kt.y = w[1]; kt.aci = w[2]; kt.tasiyan = w[3];
+      kt.hx = w[0]; kt.hy = w[1]; kt.haci = w[2]; kt.tasiyan = w[3];
+      if (kt.ilkPaket == null) { kt.x = kt.hx; kt.y = kt.hy; kt.aci = kt.haci; kt.ilkPaket = 1; }
+    }
+  }
+
+  function uzakYumusat(d, dt) {
+    var h = A.yayin.yumusatmaHizi;
+    for (var k in d.araclar) {
+      var f = d.araclar[k];
+      MG.yumusat.nokta(f, dt, h);
+      if (f.haci != null) f.aci = MG.yumusat.aci(f.aci, f.haci, dt, h);
+    }
+    for (var i = 0; i < d.kutular.length; i++) {
+      var kt = d.kutular[i];
+      MG.yumusat.nokta(kt, dt, h);
+      if (kt.haci != null) kt.aci = MG.yumusat.aci(kt.aci, kt.haci, dt, h);
     }
   }
 
   function efekt(d, dt) {
+    if (d.uzak) uzakYumusat(d, dt);
     for (var i = d.parcalar.length - 1; i >= 0; i--) {
       var p = d.parcalar[i];
       p.omur -= dt;
@@ -287,15 +311,16 @@ MG.oyunlar.forklift = (function () {
   return {
     id: 'forklift',
     ad: 'Kutu Kapmaca',
-    kurallar: 'WASD: sür · Boşluk: kaldır/bırak · 30 sn’de en çok kutu kazanır',
+    kurallar: 'WASD ya da oklar: sür · Boşluk: kaldır/bırak · 30 sn’de en çok kutu kazanır',
     kur: kur,
+    siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,
-    ciz: function (d, cv, c, koltuklar) {
-      MG.forkliftCizim.ciz(d, cv, c, koltuklar, kutuSayilari(d));
+    ciz: function (d, cv, c, koltuklar, benKoltuk) {
+      MG.forkliftCizim.ciz(d, cv, c, koltuklar, kutuSayilari(d), benKoltuk);
     },
     bitti: bitti,
     ozet: ozet,

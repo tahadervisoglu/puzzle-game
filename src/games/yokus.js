@@ -233,19 +233,31 @@ MG.oyunlar.yokus = (function () {
   }
 
   function uygula(d, s) {
+    d.uzak = true;
     if (s.ka != null) d.kalan = s.ka;
     for (var i = 0; i < s.oy.length; i++) {
       var v = s.oy[i];
       var o = d.oyuncular[v[0]];
       if (!o) continue;
       var oncekiYerde = o.yerde;
-      o.s = v[1]; o.h = v[2]; o.vs = v[3]; o.yerde = v[4] === 1;
+      o.hs = v[1]; o.hh = v[2]; o.vs = v[3]; o.yerde = v[4] === 1;
+      if (o.ilkPaket == null) { o.s = o.hs; o.h = o.hh; o.ilkPaket = 1; }
       if (oncekiYerde && !o.yerde) MG.ses.zipla();
       if (!oncekiYerde && o.yerde) toz(d, o);
     }
   }
 
+  function uzakYumusat(d, dt) {
+    var h = A.yayin.yumusatmaHizi;
+    for (var k in d.oyuncular) {
+      var o = d.oyuncular[k];
+      MG.yumusat.eksen(o, 's', 'hs', dt, h, 260);
+      MG.yumusat.eksen(o, 'h', 'hh', dt, h, 260);
+    }
+  }
+
   function efekt(d, dt) {
+    if (d.uzak) uzakYumusat(d, dt);
     for (var i = d.tozlar.length - 1; i >= 0; i--) {
       var t = d.tozlar[i];
       t.omur -= dt;

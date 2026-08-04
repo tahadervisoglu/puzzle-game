@@ -1,4 +1,8 @@
-// Giriş ekranı, oda kurma/katılma, lobi listesi ve oyun seçimi.
+// Giriş ekranı, otomatik eşleşme ve lobi.
+//
+// Oda kodu yoktur: "Oyna"ya basan sırayla odalara bağlanmayı dener. Açık bir
+// oda bulursa katılır, bulamazsa kendisi oda sahibi olur. Kullanıcı bunların
+// hiçbirini görmez.
 MG.lobi = (function () {
   var A = MG.ayar;
   var O = MG.oturum;
@@ -11,40 +15,35 @@ MG.lobi = (function () {
     return ad;
   }
 
-  // --- giriş ekranı --------------------------------------------------------
+  // --- giriş ---------------------------------------------------------------
 
-  $('btnOdaKur').onclick = function () {
+  $('btnOyna').onclick = function () {
     MG.ses.ac();
     U.girisHata('');
     var ad = adAl();
-    $('btnOdaKur').disabled = true;
-    MG.net.odaKur(function (hata) {
-      $('btnOdaKur').disabled = false;
-      if (hata) return U.girisHata(hata);
-      O.benKoltuk = 0;
-      O.koltuklar = [];
-      O.koltuklar[0] = { ad: ad, bot: false };
-      O.skorlar = {};
-      goster();
-    });
-  };
+    $('btnOyna').disabled = true;
+    $('btnOyna').textContent = 'Bağlanılıyor…';
 
-  $('btnKatil').onclick = function () {
-    MG.ses.ac();
-    U.girisHata('');
-    var kod = $('girisKod').value.trim();
-    if (kod.length !== 4) return U.girisHata('4 karakterlik oda kodunu gir.');
-    $('btnKatil').disabled = true;
-    U.girisHata('Bağlanılıyor…');
-    MG.net.katil(kod, adAl(), function (hata, d) {
-      $('btnKatil').disabled = false;
+    MG.net.otomatikBaglan(ad, function (hata, d) {
+      $('btnOyna').disabled = false;
+      $('btnOyna').textContent = 'Oyna';
       if (hata) return U.girisHata(hata);
       U.girisHata('');
-      O.benKoltuk = d.koltuk;
-      O.koltuklar = d.koltuklar;
-      O.skorlar = d.skorlar || {};
-      O.secilenOyun = d.oyun || 'tank';
+
+      if (d && d.host) {          // boş oda bulundu, sahibi biziz
+        O.benKoltuk = 0;
+        O.koltuklar = [];
+        O.koltuklar[0] = { ad: ad, bot: false };
+        O.skorlar = {};
+      } else {                    // açık odaya katıldık
+        O.benKoltuk = d.koltuk;
+        O.koltuklar = d.koltuklar;
+        O.skorlar = d.skorlar || {};
+        if (d.turSayisi) O.turSayisi = d.turSayisi;
+      }
       goster();
+    }, function (durum) {
+      U.girisHata(durum);
     });
   };
 
@@ -64,32 +63,32 @@ MG.lobi = (function () {
     });
   };
 
-  // Davet linkiyle gelindiyse kodu doldur
-  (function () {
-    var oda = new URLSearchParams(location.search).get('oda');
-    if (oda) $('girisKod').value = oda.toUpperCase();
-    try { $('girisAd').value = localStorage.getItem('mg_ad') || ''; } catch (e) {}
-  })();
+  try { $('girisAd').value = localStorage.getItem('mg_ad') || ''; } catch (e) {}
+  $('girisAd').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('btnOyna').click();
+  });
 
   // --- lobi ----------------------------------------------------------------
 
   function goster() {
     O.evre = 'lobi';
     O.oyunDurum = null;
+    O.turNo = 0;
     MG.tur.durdur();
     U.ekranGoster('ekranLobi');
-    $('lobiKod').textContent = MG.net.kodAl() || '';
+
     var host = MG.net.hostMu();
     $('btnBaslat').classList.toggle('gizli', !host);
     $('btnBotEkle').classList.toggle('gizli', !host);
+    $('turSecici').classList.toggle('gizli', !host);
     $('lobiBilgi').textContent = host
-      ? 'Davet linkini gönder, herkes gelince Başlat.'
+      ? 'Arkadaşların "Oyna" deyince buraya düşecek.'
       : 'Oda sahibinin başlatması bekleniyor…';
     ciz();
   }
 
   function ciz() {
-    oyunSeciciCiz();
+    turSeciciCiz();
     var ul = $('lobiListe');
     ul.innerHTML = '';
     var host = MG.net.hostMu();
@@ -102,9 +101,14 @@ MG.lobi = (function () {
           (i === O.benKoltuk && !k.bot ? ' <em>(sen)</em>' : '') + '</span>';
         if (host && k.bot) li.appendChild(botSilDugmesi(i));
       } else {
-        li.innerHTML = U.nokta(i) + '<span class="bos">Boş</span>';
+        li.innerHTML = U.nokta(i) + '<span class="bos">Bekleniyor…</span>';
       }
       ul.appendChild(li);
+    }
+    if (!MG.net.hostMu()) {
+      $('lobiBaslik').textContent = 'Oyuncular · ' + O.turSayisi + ' tur';
+    } else {
+      $('lobiBaslik').textContent = 'Oyuncular';
     }
   }
 
@@ -116,23 +120,22 @@ MG.lobi = (function () {
     return b;
   }
 
-  function oyunSeciciCiz() {
-    var kutu = $('oyunSecici');
+  // Tur sayısı seçimi: seri boyunca her tur rastgele bir oyun gelir.
+  function turSeciciCiz() {
+    var kutu = $('turDugmeleri');
     kutu.innerHTML = '';
-    var host = MG.net.hostMu();
-    Object.keys(MG.oyunlar).forEach(function (id) {
+    A.tur.turSecenekleri.forEach(function (n) {
       var b = document.createElement('button');
-      b.textContent = MG.oyunlar[id].ad;
-      b.className = 'oyunDugme' + (id === O.secilenOyun ? ' secili' : '');
-      b.disabled = !host;
-      b.onclick = function () { O.secilenOyun = id; degisti(); };
+      b.textContent = n;
+      b.className = 'turDugme' + (n === O.turSayisi ? ' secili' : '');
+      b.onclick = function () { O.turSayisi = n; degisti(); };
       kutu.appendChild(b);
     });
   }
 
   // Oda sahibi lobide bir şey değiştirdi — herkese bildir.
   function degisti() {
-    MG.net.yayinla({ t: 'lobiDurum', koltuklar: O.koltukOzet(), oyun: O.secilenOyun });
+    MG.net.yayinla({ t: 'lobiDurum', koltuklar: O.koltukOzet(), turSayisi: O.turSayisi });
     ciz();
   }
 
@@ -145,26 +148,12 @@ MG.lobi = (function () {
     }
   };
 
-  $('btnDavet').onclick = function () {
-    var url = location.origin + location.pathname + '?oda=' + MG.net.kodAl();
-    var dugme = $('btnDavet');
-    var eski = dugme.textContent;
-    function bitti() {
-      dugme.textContent = 'Kopyalandı ✓';
-      setTimeout(function () { dugme.textContent = eski; }, 1500);
-    }
-    if (navigator.clipboard) navigator.clipboard.writeText(url).then(bitti, function () {
-      window.prompt('Davet linki:', url);
-    });
-    else window.prompt('Davet linki:', url);
-  };
-
   $('btnBaslat').onclick = function () {
     if (O.oturanSayisi() < 2) {
       $('lobiBilgi').textContent = 'En az 2 oyuncu gerek — arkadaş bekle ya da bot ekle.';
       return;
     }
-    MG.tur.baslat();
+    MG.tur.seriBaslat();
   };
 
   $('btnAyril').onclick = ayril;

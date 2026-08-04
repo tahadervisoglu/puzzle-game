@@ -92,7 +92,7 @@ MG.ayar = {
     ivme: 340,
     surtunme: 1.15,
     sarjHizi: 0.85,          // saniyede biriken güç (0..1)
-    sarjFren: 7,             // odaklanınca ayaklar kilitlenir: kayış kesilir
+    sarjFren: 5,             // tam şarjdaki fren gücü; şarjla orantılı artar
     sarjEnAz: 0.12,          // bunun altında bırakırsan atılma olmaz
     atilmaEnAz: 230,         // en küçük şarjla atılma hızı
     atilmaEnCok: 700,        // tam şarjla
@@ -170,11 +170,19 @@ MG.ayar = {
 
   tur: {
     geriSayimSn: 3,
-    sonPerdeSn: 3.5     // "X kazandı" perdesinin süresi, sonra yeni tur
+    sonPerdeSn: 3.5,    // "X kazandı" perdesinin süresi, sonra yeni tur
+    finalPerdeSn: 9,    // seri sonu şampiyon ekranı
+    turSecenekleri: [3, 5, 8],
+    varsayilanTur: 5,
+    // Her tur sıralamaya göre puan dağıtılır. Yalnızca kazanana puan
+    // vermek, berabere biten turları tamamen boşa çıkarıyordu.
+    siraPuanlari: [3, 2, 1]
   },
 
   yayin: {
-    durumMs: 50,        // host durum yayını (~20 Hz)
+    durumMs: 33,        // host durum yayını (~30 Hz)
+    yumusatmaHizi: 22,  // misafirde gelen konuma yaklaşma hızı
+    benYumusatma: 30,   // kendi karakterin daha çabuk toparlansın
     nabizMs: 1200,
     kopmaMs: 4000       // bu kadar sessizlik = koptu
   },
@@ -184,9 +192,11 @@ MG.ayar = {
   renkler: ['#2ecc40', '#e63946', '#2f6df6', '#ff9f1c', '#9b5de5'],
 
   net: {
-    onek: 'minigames-',
-    // 0/O ve 1/I yok — birbirine benzeyen karakter olmasın
-    alfabe: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+    // Oda kodu yok: sabit bir kimlik havuzu var. "Oyna"ya basan sırayla
+    // bu odalara bağlanmayı dener; boş olanı bulursa kendisi kurar.
+    onek: 'minigames-oda-',
+    odaSayisi: 4,
+    odaDenemeMs: 4000,   // bir odanın cevabı bu sürede gelmezse boş sayılır
     // Metered deneme hesabı (README'deki çalışan yapılandırma).
     // DİKKAT: TURN alan adı panel alan adıyla AYNI DEĞİL.
     turn: {
