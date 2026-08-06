@@ -42,7 +42,7 @@ MG.oyunlar.yokus = (function () {
         h: 0,
         vs: 50, vh: 0,
         yerde: true, ustumde: false,
-        carpma: 0, oncekiSpace: false
+        carpma: 0, oncekiZipla: false
       };
       d.girdiler[s] = { w: false, a: false, s: false, d: false, space: false };
       if (koltuklar[s].bot) d.botDurum[s] = { tepki: 0.02 + rng() * 0.12 };
@@ -82,13 +82,15 @@ MG.oyunlar.yokus = (function () {
     var g = d.girdiler[koltuk];
     var aci = egimAci(d, o.s);
 
-    // 1) Tek kontrol: zıplama. Yerdeyken ya da birinin üstündeyken geçerli.
-    if (g.space && !o.oncekiSpace && o.yerde) {
+    // 1) Tek kontrol: zıplama. W / yukarı ok da Boşluk kadar geçerli —
+    //    zıplamak yukarı bir hareket, parmak orayı arıyor.
+    var ziplaTus = g.w || g.space;
+    if (ziplaTus && !o.oncekiZipla && o.yerde) {
       o.vh = K.zipKuvvet;
       o.yerde = false;
       MG.ses.zipla();
     }
-    o.oncekiSpace = g.space;
+    o.oncekiZipla = ziplaTus;
 
     // 2) Yerçekiminin yamaca dik bileşeni yükseklikten düşürür
     o.vh -= K.yercekimi * Math.cos(aci) * dt;
@@ -271,7 +273,7 @@ MG.oyunlar.yokus = (function () {
   return {
     id: 'yokus',
     ad: 'Yokuş Aşağı',
-    kurallar: 'Boşluk: zıpla · Rakibin üstüne bin, önünü kes · 30 sn sonunda en öndeki kazanır',
+    kurallar: 'W / ↑ / Boşluk: zıpla · Rakibin üstüne bin, önünü kes · 30 sn sonunda en öndeki kazanır',
     egimAci: egimAci,
     lider: lider,
     siralama: siralama,

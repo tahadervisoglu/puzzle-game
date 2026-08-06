@@ -59,6 +59,20 @@ MG.oyunlar.cember = (function () {
 
   function aciFarki(a, b) { return Math.abs(G.aciNormalle(a - b)); }
 
+  // Tuş yönünü çembere teğet açısal yöne çevirir. Doğrudan "D = açı artışı"
+  // demek çemberin alt yarısında ters çalışıyordu: sağa basınca ekranda sola
+  // gidiyordun. Artık bastığın yön ekranda gittiğin yön.
+  function ekranYonu(o, g) {
+    var ix = (g.d ? 1 : 0) - (g.a ? 1 : 0);
+    var iy = (g.s ? 1 : 0) - (g.w ? 1 : 0);
+    if (!ix && !iy) return 0;
+    var tx = -Math.sin(o.aci), ty = Math.cos(o.aci);  // açı artış yönü
+    var izdusum = ix * tx + iy * ty;
+    if (izdusum > 0.15) return 1;
+    if (izdusum < -0.15) return -1;
+    return 0;
+  }
+
   // --- simülasyon (sadece oda sahibinde) ----------------------------------
 
   function guncelle(d, dt) {
@@ -68,9 +82,14 @@ MG.oyunlar.cember = (function () {
     for (var k in d.oyuncular) {
       var o = d.oyuncular[k];
       if (!o.canli) { o.dusme = Math.min(1, o.dusme + dt * 1.5); continue; }
-      if (d.botDurum[k]) MG.cemberBot.guncelle(d, +k, dt);
       var g = d.girdiler[k];
-      var yon = (g.d ? 1 : 0) - (g.a ? 1 : 0);
+      var yon;
+      if (d.botDurum[k]) {
+        MG.cemberBot.guncelle(d, +k, dt);
+        yon = (g.d ? 1 : 0) - (g.a ? 1 : 0);   // bot doğrudan açısal yön verir
+      } else {
+        yon = ekranYonu(o, g);
+      }
       if (yon) o.aci = (o.aci + yon * C.oyuncuHiz * dt + TAU) % TAU;
     }
 
@@ -284,7 +303,7 @@ MG.oyunlar.cember = (function () {
   return {
     id: 'cember',
     ad: 'Çember Kaçış',
-    kurallar: 'A / D ya da ← →: çemberde kaç · Lazerlerden ve boşluktan sakın · Son kalan kazanır',
+    kurallar: 'Yön tuşları: bastığın yöne kaç · Lazerlerden ve boşluktan sakın · Son kalan kazanır',
     kur: kur,
     siralama: siralama,
     girdi: girdi,

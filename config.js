@@ -116,7 +116,11 @@ MG.ayar = {
     yercekimi: 1600,
     hiz: 205,
     havaKontrol: 0.75,   // havadayken yatay kontrol payı
-    zipHiz: 570,
+    zipHiz: 630,         // kat arası ~100 px; 570 ile zıplama sınırda kalıyordu
+    // Vuruş toleransları — dar tutulunca "bastım ama patlamadı" hissi veriyor
+    vurusYatay: 34,      // yatay yakalama genişliği
+    vurusPayi: 12,       // balon yığınının tepesinden ne kadar yukarısı sayılır
+    tepePayi: 70,        // zıplamanın tepesinde (hız ~0) da vuruş geçerli
     oyuncuYaricap: 14,
     balonYaricap: 8,
     balonSayisi: 3,

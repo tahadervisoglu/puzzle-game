@@ -58,7 +58,7 @@ MG.oyunlar.balon = (function () {
         yerde: false, bakis: 1,
         balon: B.balonSayisi,
         dokunulmazlik: 0,
-        oncekiSpace: false,
+        oncekiZipla: false,
         canli: true
       };
       d.oyuncular[s].x = Math.max(30, Math.min(W - 30, d.oyuncular[s].x));
@@ -104,13 +104,20 @@ MG.oyunlar.balon = (function () {
       o.vx -= o.vx * Math.min(1, dt * 12);
     }
 
-    // Zıplama: yalnızca yerdeyken, basma anında
-    if (g.space && !o.oncekiSpace && o.yerde) {
+    // Zıplama yukarı bir hareket: W / yukarı ok doğal geliyor, Boşluk da
+    // kabul ediliyor. Yalnızca yerdeyken ve basma anında.
+    var ziplaTus = g.w || g.space;
+    if (ziplaTus && !o.oncekiZipla && o.yerde) {
       o.vy = -B.zipHiz;
       o.yerde = false;
       MG.ses.zipla();
     }
-    o.oncekiSpace = g.space;
+    o.oncekiZipla = ziplaTus;
+
+    // Aşağı tuşu boşta duruyordu: platform oyunlarında S/↓ alt kata inmektir.
+    // En alttaki zemin hariç, kısa süre platformdan geçilir.
+    o.gecis = Math.max(0, (o.gecis || 0) - dt);
+    if (g.s && o.yerde && o.y < 400) { o.gecis = 0.22; o.yerde = false; }
 
     o.vy += B.yercekimi * dt;
     o.x += o.vx * dt;
@@ -129,6 +136,7 @@ MG.oyunlar.balon = (function () {
   function platformCarpismasi(d, o, oncekiAlt) {
     o.yerde = false;
     if (o.vy < 0) return;
+    if (o.gecis > 0) return;          // aşağı inerken platformlar geçilir
     var alt = o.y + B.oyuncuYaricap;
     for (var i = 0; i < d.platformlar.length; i++) {
       var p = d.platformlar[i];
@@ -143,6 +151,10 @@ MG.oyunlar.balon = (function () {
   }
 
   // Vuruş: birinin ayakları, ötekinin balon yığınına yukarıdan değerse.
+  //
+  // Buradaki toleranslar bilerek cömert. Dar tutulduğunda oyun "bastım ama
+  // patlamadı" hissi veriyordu: zıplamanın tepesinde dikey hız sıfıra
+  // yaklaştığı için vuruş düşüyor, birkaç pikselle ıskalanıyordu.
   function vuruslar(d) {
     var ks = Object.keys(d.oyuncular);
     for (var i = 0; i < ks.length; i++) {
@@ -150,14 +162,14 @@ MG.oyunlar.balon = (function () {
         if (i === j) continue;
         var a = d.oyuncular[ks[i]], b = d.oyuncular[ks[j]];
         if (!a.canli || !b.canli || b.dokunulmazlik > 0) continue;
-        if (a.vy <= 0) continue;                        // yukarı çıkarken vuramaz
-        // Yatay tolerans dar tutulunca üstüne denk gelmek neredeyse
-        // imkânsızdı; balon yığını gövdeden geniş sayılıyor.
-        if (Math.abs(a.x - b.x) > B.oyuncuYaricap * 1.5 + B.balonYaricap) continue;
+        // Tepe noktasında hız sıfırdan geçer; oradaki temas da sayılmalı
+        if (a.vy < -B.tepePayi) continue;
+        if (Math.abs(a.x - b.x) > B.vurusYatay) continue;
 
         var ayak = a.y + B.oyuncuYaricap;
         var tepe = balonUstu(b);
-        if (ayak < tepe - 6 || ayak > b.y - B.oyuncuYaricap * 0.2) continue;
+        // Balon yığınının tepesinden rakibin gövde hizasına kadar geçerli
+        if (ayak < tepe - B.vurusPayi || ayak > b.y) continue;
 
         patlat(d, +ks[j], b);
         a.vy = -B.sekmeHiz;                             // patlatan seker
@@ -170,12 +182,14 @@ MG.oyunlar.balon = (function () {
     o.balon--;
     o.dokunulmazlik = B.dokunulmazlikSn;
     o.vy = -B.sekmeHiz * 0.45;                          // geri tepme
-    for (var i = 0; i < 12; i++) {
+    d.sarsinti = 0.22;                                  // vuruş hissedilsin
+    for (var i = 0; i < 20; i++) {
       var a = Math.random() * Math.PI * 2;
+      var h = 110 + Math.random() * 110;
       d.parcalar.push({
         x: o.x, y: balonUstu(o) + B.balonYaricap,
-        vx: Math.cos(a) * 130, vy: Math.sin(a) * 130,
-        omur: 0.35 + Math.random() * 0.3, renk: A.renkler[koltuk]
+        vx: Math.cos(a) * h, vy: Math.sin(a) * h,
+        omur: 0.35 + Math.random() * 0.35, renk: A.renkler[koltuk]
       });
     }
     MG.ses.patlama();
@@ -261,7 +275,7 @@ MG.oyunlar.balon = (function () {
       o.dokunulmazlik = v[5];
       o.bakis = v[6];
       o.yerde = v[7] === 1;
-      if (o.balon < oncekiBalon) patlamaEfekti(d, v[0], o);
+      if (o.balon < oncekiBalon) { patlamaEfekti(d, v[0], o); d.sarsinti = 0.22; }
     }
   }
 
@@ -282,6 +296,7 @@ MG.oyunlar.balon = (function () {
       var hz = A.yayin.yumusatmaHizi;
       for (var k in d.oyuncular) MG.yumusat.nokta(d.oyuncular[k], dt, hz);
     }
+    if (d.sarsinti) d.sarsinti = Math.max(0, d.sarsinti - dt);
     for (var i = d.parcalar.length - 1; i >= 0; i--) {
       var p = d.parcalar[i];
       p.omur -= dt;
@@ -294,7 +309,7 @@ MG.oyunlar.balon = (function () {
   return {
     id: 'balon',
     ad: 'Balon Düellosu',
-    kurallar: 'A / D ya da ← →: koş · Boşluk: zıpla · Rakibin balonuna üstünden bas',
+    kurallar: 'A / D: koş · W / ↑ / Boşluk: zıpla · S / ↓: alt kata in · Rakibin balonuna üstünden bas',
     balonUstu: balonUstu,
     kur: kur,
     siralama: siralama,

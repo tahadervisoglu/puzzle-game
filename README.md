@@ -32,14 +32,14 @@ kalıp puan topluyorsun.
 | **Işık Duvarı** | WASD/oklar: yön değiştir | Arkanda duvar kalır, çarpmayan son kişi |
 | **Örümcek Kaç** | WASD/oklar + Boşluk: örümceği fırlat | Fitil patlamadan kaçan son kişi |
 | **Buz Sumo** | Boşluk basılı: güç topla, bırak: fırla | Arenada kalan son kişi |
-| **Balon Düellosu** | A/D ya da ← → · Boşluk: zıpla | Rakibin balonuna bas, son kalan |
+| **Balon Düellosu** | A/D · W/↑/Boşluk: zıpla · S/↓: alt kata in | Rakibin balonuna bas, son kalan |
 | **Kuyruk Yakala** | WASD/oklar · Boşluk: atıl | Kuyruk ucunu kap, kuyruksuz kalan elenir |
-| **Çember Kaçış** | A/D ya da ← → | Lazerlerden son kurtulan |
+| **Çember Kaçış** | Yön tuşları: bastığın yöne kaç | Lazerlerden son kurtulan |
 | **Kutu Kapmaca** | WASD/oklar: forklift · Boşluk: kaldır/bırak | 30 sn'de en çok kutu |
 | **Renk Kapma** | WASD/oklar: koş | 30 sn'de en çok alanı boyayan |
 | **Kral Tepesi** | WASD/oklar · Boşluk: omuz at | Tepede en çok saniye geçiren |
 | **Araba Yarışı** | WASD/oklar: sür | 2 turu ilk bitiren |
-| **Yokuş Aşağı** | Boşluk: zıpla | 30 sn sonunda en öndeki |
+| **Yokuş Aşağı** | W/↑/Boşluk: zıpla | 30 sn sonunda en öndeki |
 | **Şimşek Refleks** | Boşluk: kap | En çok puan (bombaya ve eksiye dokunma) |
 | **Ok Refleksi** | Yön tuşları | Kendi şeridinde en çok ok geçen |
 

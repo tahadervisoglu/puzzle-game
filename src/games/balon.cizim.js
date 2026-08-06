@@ -12,6 +12,10 @@ MG.balonCizim = (function () {
     c.clearRect(0, 0, cv.width, cv.height);
     c.save();
     c.scale(olcek, olcek);
+    if (d.sarsinti) {
+      c.translate((Math.random() - 0.5) * d.sarsinti * 16,
+                  (Math.random() - 0.5) * d.sarsinti * 16);
+    }
 
     gokyuzu(c);
     platformlariCiz(c, d);
@@ -67,29 +71,44 @@ MG.balonCizim = (function () {
   function oyuncuCiz(c, o, renk, ad, O) {
     var r = B.oyuncuYaricap;
 
-    // Balonlar: kafanın üstünde dizili, hafifçe salınıyor
+    // Balonlar tam çarpışma noktasında çizilir. Önceden hafifçe salınıyorlardı
+    // ama çarpışma sabit noktadan hesaplanıyordu: gördüğün yere basıp
+    // ıskalıyordun, oyunun en sinir bozucu yanı buydu.
     for (var i = 0; i < o.balon; i++) {
       var by = o.y - r - (i + 1) * B.balonYaricap * 1.7;
-      var salin = Math.sin(Date.now() / 400 + i * 1.3 + o.x * 0.02) * 2.5;
       c.save();
       c.strokeStyle = 'rgba(0,0,0,0.25)';      // ip
       c.lineWidth = 1.5;
       c.beginPath();
       c.moveTo(o.x, o.y - r);
-      c.lineTo(o.x + salin, by + B.balonYaricap);
+      c.lineTo(o.x, by + B.balonYaricap);
       c.stroke();
 
       c.fillStyle = renk;
       c.beginPath();
-      c.ellipse(o.x + salin, by, B.balonYaricap, B.balonYaricap * 1.15, 0, 0, TAU);
+      c.ellipse(o.x, by, B.balonYaricap, B.balonYaricap * 1.15, 0, 0, TAU);
       c.fill();
       c.strokeStyle = 'rgba(0,0,0,0.28)';
       c.lineWidth = 1.5;
       c.stroke();
       c.fillStyle = 'rgba(255,255,255,0.55)';  // parlama
       c.beginPath();
-      c.arc(o.x + salin - 2.5, by - 3, 2.4, 0, TAU);
+      c.arc(o.x - 2.5, by - 3, 2.4, 0, TAU);
       c.fill();
+      c.restore();
+    }
+
+    // En üstteki balon hedeftir: kesikli halka nereye basılacağını söylüyor
+    if (o.balon > 0 && o.dokunulmazlik <= 0) {
+      var tepeY = o.y - r - o.balon * B.balonYaricap * 1.7;
+      c.save();
+      c.strokeStyle = 'rgba(255,255,255,0.6)';
+      c.lineWidth = 2;
+      c.setLineDash([4, 4]);
+      c.beginPath();
+      c.arc(o.x, tepeY, B.balonYaricap + 5, 0, TAU);
+      c.stroke();
+      c.setLineDash([]);
       c.restore();
     }
 
