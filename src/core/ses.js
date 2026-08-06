@@ -3,8 +3,10 @@
 // ilk tıklamada çağrılır.
 MG.ses = (function () {
   var ac = null;
+  var sessiz = false;   // MG.ses.sustur(true) ile kapatılır (test ederken şart)
 
   function baglam() {
+    if (sessiz) return null;
     if (!window.AudioContext && !window.webkitAudioContext) return null;
     if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
     if (ac.state === 'suspended') ac.resume();
@@ -47,6 +49,11 @@ MG.ses = (function () {
 
   return {
     ac: function () { try { baglam(); } catch (e) {} },
+    sustur: function (deger) {
+      sessiz = !!deger;
+      if (sessiz && ac && ac.suspend) { try { ac.suspend(); } catch (e) {} }
+    },
+    sessizMi: function () { return sessiz; },
     ates: function () { blip(240, 70, 0.12, 'square', 0.12); },
     sekme: function () { blip(700, 500, 0.04, 'triangle', 0.06); },
     patlama: function () { gurultu(0.45, 0.35); blip(120, 30, 0.4, 'sawtooth', 0.15); },

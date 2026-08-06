@@ -10,6 +10,7 @@ MG.oturum = {
   turNo: 0,             // kaçıncı tur (1'den başlar)
   oyunHavuzu: [],       // karıştırılmış oyun sırası — tekrar etmesin diye
   sonOyun: null,
+  secilenOyun: null,    // null = karışık; doluysa her tur o oyun oynanır
 
   oturanSayisi: function () {
     var n = 0;
@@ -40,5 +41,6 @@ MG.oturum = {
     this.turNo = 0;
     this.oyunHavuzu = [];
     this.sonOyun = null;
+    this.secilenOyun = null;
   }
 };

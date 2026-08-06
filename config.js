@@ -84,6 +84,119 @@ MG.ayar = {
     enFazlaGeri: 380        // kimse bundan fazla geri kalamaz
   },
 
+  ok: {
+    turSureSn: 30,
+    diziUzunluk: 500,     // kimsenin bitiremeyeceği kadar uzun olmalı
+    gorunenOk: 6,         // şeritte önden kaç ok görünür
+    yanlisDonmaSn: 0.45,  // yanlış tuş: kısa ceza, spam engelleyecek kadar
+    botTepkiMin: 0.2,
+    botTepkiMax: 0.5,
+    botHataOlasilik: 0.07
+  },
+
+  kuyruk: {
+    turSureSn: 60,
+    oyuncuYaricap: 14,
+    hiz: 205,
+    ivme: 1300,
+    surtunme: 5,
+    kuyrukYavaslatma: 13,   // her ekstra kuyruk hızını bu kadar düşürür
+    enAzHiz: 130,
+    segmentMesafe: 17,
+    segmentYaricap: 8,
+    atilmaHiz: 430,         // Boşluk ile kısa atılma
+    atilmaBeklemeSn: 1.6,
+    dokunulmazlikSn: 1.2,
+    baslangicKuyruk: 3,     // tek kuyrukta ilk temasta eleniyordun, tur kısaydı
+    botKararSn: 0.2
+  },
+
+  balon: {
+    turSureSn: 60,
+    yercekimi: 1600,
+    hiz: 205,
+    havaKontrol: 0.75,   // havadayken yatay kontrol payı
+    zipHiz: 570,
+    oyuncuYaricap: 14,
+    balonYaricap: 8,
+    balonSayisi: 3,
+    dokunulmazlikSn: 1.3,
+    sekmeHiz: 420,       // balon patlatınca patlatanın sekmesi
+    platformKalinlik: 12,
+    botKararSn: 0.15
+  },
+
+  kral: {
+    turSureSn: 45,
+    tepeYaricap: 58,     // beşi birden sığmasın: itişme bundan doğuyor
+    oyuncuYaricap: 18,
+    ivme: 950,
+    maxHiz: 235,
+    surtunme: 4.5,       // buz değil: kontrol iyi, itiş kakış net
+    esneklik: 1.15,
+    omuzGuc: 470,        // Boşluk ile yakındakileri savurma
+    omuzMenzil: 62,
+    omuzBeklemeSn: 1.3,
+    puanHizi: 14,        // tepedeki puan akışı — kalabalıkta BÖLÜŞÜLÜR
+    tepeKaymaSn: 13,     // tepe bu aralıkla yer değiştirir
+    tepeKaymaSuresi: 1.6
+  },
+
+  boya: {
+    turSureSn: 30,
+    hucre: 20,            // boyama çözünürlüğü
+    oyuncuYaricap: 13,
+    hiz: 185,
+    firca: 16,            // bu yarıçaptaki hücreler boyanır
+    botKararSn: 0.5
+  },
+
+  zemin: {
+    turSureSn: 90,
+    // Karo büyük ve çatlama hızlıyken zemin 5 saniyede tükeniyordu; küçük
+    // karo + uzun çatlama süresi turu 20-30 saniyeye çıkarıyor.
+    yaricap: 19,          // altıgen karonun yarıçapı
+    oyuncuYaricap: 11,
+    hiz: 140,
+    catlamaSn: 2.5,       // bastıktan sonra karo bu sürede çöker
+    catlamaEnAz: 0.9,     // zorluk arttıkça buraya kadar iner
+    zorlukSn: 25,         // her bu sürede çatlama süresi kısalır
+    zorlukAzalma: 0.22,
+    dusmeSn: 0.55,        // karo düşerken geçen süre (üstünde durulamaz)
+    oyuncuDusmeSn: 0.9,
+    botKararSn: 0.14
+  },
+
+  isik: {
+    turSureSn: 60,
+    hucre: 10,           // iz kalınlığı ve çarpışma çözünürlüğü
+    hiz: 130,            // px/sn — durmak yok, sürekli ilerlersin
+    hizArtisSn: 12,      // her bu sürede hız artar
+    hizArtisi: 18,
+    maxHiz: 260,
+    kenarBosluk: 60      // doğuşların kenardan uzaklığı
+  },
+
+  bomba: {
+    turSureSn: 90,
+    hucre: 40,
+    sutun: 19,          // tek sayı olmalı: çift indekslere sert sütun geliyor
+    satir: 11,
+    oyuncuYaricap: 13,
+    hiz: 165,
+    hizBonusu: 20,      // her hız bonusunun kattığı
+    maxHiz: 255,
+    fitilSn: 2.6,
+    alevOmurSn: 0.5,
+    baslangicBomba: 1,
+    baslangicMenzil: 2,
+    maxBomba: 6,
+    maxMenzil: 8,
+    kutuOran: 0.72,     // uygun hücrelerin bu kadarı kırılabilir kutu olur
+    bonusOran: 0.32,    // kırılan kutudan bonus çıkma olasılığı
+    botKararSn: 0.12
+  },
+
   sumo: {
     turSureSn: 60,
     arenaYaricap: 230,       // 500 px yüksekliğe sığan pratik üst sınır

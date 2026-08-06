@@ -32,6 +32,11 @@ MG.tur = (function () {
   // Her tur farklı oyun: karışık bir havuzdan çekiyoruz. Doğrudan rastgele
   // seçmek aynı oyunu üst üste getirebiliyordu.
   function sonrakiOyunId() {
+    // Lobide tek bir oyun seçildiyse seri boyunca hep o oynanır
+    if (O.secilenOyun && MG.oyunlar[O.secilenOyun]) {
+      O.sonOyun = O.secilenOyun;
+      return O.sonOyun;
+    }
     if (!O.oyunHavuzu || !O.oyunHavuzu.length) {
       O.oyunHavuzu = karistir(Object.keys(MG.oyunlar));
       // Havuz yenilenirken başa son oynanan denk gelirse takas et, yoksa
@@ -138,7 +143,8 @@ MG.tur = (function () {
 
   function lobiyeDon() { // sadece oda sahibi
     if (!MG.net.hostMu()) return;
-    MG.net.yayinla({ t: 'lobiyeDon', koltuklar: O.koltukOzet(), turSayisi: O.turSayisi });
+    MG.net.yayinla({ t: 'lobiyeDon', koltuklar: O.koltukOzet(),
+                     turSayisi: O.turSayisi, secilenOyun: O.secilenOyun });
     MG.lobi.goster();
   }
   U.$('btnLobiyeDon').onclick = lobiyeDon;
@@ -156,7 +162,7 @@ MG.tur = (function () {
     MG.net.koltukBagla(conn, bos);
     conn.send({
       t: 'hosgeldin', koltuk: bos, koltuklar: O.koltukOzet(),
-      skorlar: O.skorlar, turSayisi: O.turSayisi
+      skorlar: O.skorlar, turSayisi: O.turSayisi, secilenOyun: O.secilenOyun
     });
     MG.lobi.degisti();
   };
@@ -192,6 +198,7 @@ MG.tur = (function () {
     if (d.t === 'lobiDurum') {
       O.koltuklar = d.koltuklar;
       if (d.turSayisi) O.turSayisi = d.turSayisi;
+      if ('secilenOyun' in d) O.secilenOyun = d.secilenOyun;
       if (O.evre === 'lobi') MG.lobi.ciz(); else U.ustBarYenile();
     } else if (d.t === 'basla') {
       O.koltuklar = d.koltuklar;
@@ -210,6 +217,7 @@ MG.tur = (function () {
     } else if (d.t === 'lobiyeDon') {
       O.koltuklar = d.koltuklar;
       if (d.turSayisi) O.turSayisi = d.turSayisi;
+      if ('secilenOyun' in d) O.secilenOyun = d.secilenOyun;
       MG.lobi.goster();
     }
   };

@@ -9,9 +9,10 @@ kurarsın. Herkes gelince oda sahibi kaç tur oynanacağını seçip başlatır.
 ## Nasıl oynanır
 
 Bir seri 3, 5 ya da 8 turdan oluşur. Her tur **farklı** bir minigame gelir —
-oyunlar karıştırılmış bir havuzdan çekildiği için aynısı tekrar etmez. Her
-turun sonunda sıralamaya göre puan dağıtılır (1. üç, 2. iki, 3. bir puan),
-seri bitince toplam puanı en yüksek olan şampiyon olur.
+oyunlar karıştırılmış bir havuzdan çekildiği için aynısı tekrar etmez. Tek bir
+oyunu denemek istersen lobiden onu seçebilirsin, o zaman seri boyunca hep o
+oynanır. Her turun sonunda sıralamaya göre puan dağıtılır (1. üç, 2. iki,
+3. bir puan), seri bitince toplam puanı en yüksek olan şampiyon olur.
 
 Hareket **WASD ya da ok tuşlarıyla**, her oyunun özel eylemi **Boşluk** ile.
 Kendi karakterinin üstünde kendi renginde bir ok durur, kalabalıkta kaybolmazsın.
@@ -20,16 +21,27 @@ Test için oda sahibi boş koltuklara bot ekleyebilir; kimse eklemezse bot yoktu
 
 ## Oyunlar
 
+16 minigame var. Yarısında eleniyorsun, yarısında son saniyeye kadar oyunda
+kalıp puan topluyorsun.
+
 | Oyun | Kontrol | Kazanma |
 |---|---|---|
 | **Tank Düellosu** | WASD/oklar + Boşluk: ateş | Son kalan |
-| **Kutu Kapmaca** | WASD/oklar: forklift · Boşluk: kaldır/bırak | 30 sn'de en çok kutu |
-| **Şimşek Refleks** | Boşluk: kap | En çok puan (bombaya ve eksiye dokunma) |
-| **Araba Yarışı** | WASD/oklar: sür | 2 turu ilk bitiren |
-| **Çember Kaçış** | A / D ya da ← → | Lazerlerden son kurtulan |
-| **Yokuş Aşağı** | Boşluk: zıpla | 30 sn sonunda en öndeki |
+| **Bomba Kaos** | WASD/oklar + Boşluk: bomba bırak | Alevden kaçan son kişi |
+| **Zemin Çöküyor** | WASD/oklar: koş | Bastığın karo çöker, son ayakta kalan |
+| **Işık Duvarı** | WASD/oklar: yön değiştir | Arkanda duvar kalır, çarpmayan son kişi |
 | **Örümcek Kaç** | WASD/oklar + Boşluk: örümceği fırlat | Fitil patlamadan kaçan son kişi |
 | **Buz Sumo** | Boşluk basılı: güç topla, bırak: fırla | Arenada kalan son kişi |
+| **Balon Düellosu** | A/D ya da ← → · Boşluk: zıpla | Rakibin balonuna bas, son kalan |
+| **Kuyruk Yakala** | WASD/oklar · Boşluk: atıl | Kuyruk ucunu kap, kuyruksuz kalan elenir |
+| **Çember Kaçış** | A/D ya da ← → | Lazerlerden son kurtulan |
+| **Kutu Kapmaca** | WASD/oklar: forklift · Boşluk: kaldır/bırak | 30 sn'de en çok kutu |
+| **Renk Kapma** | WASD/oklar: koş | 30 sn'de en çok alanı boyayan |
+| **Kral Tepesi** | WASD/oklar · Boşluk: omuz at | Tepede en çok saniye geçiren |
+| **Araba Yarışı** | WASD/oklar: sür | 2 turu ilk bitiren |
+| **Yokuş Aşağı** | Boşluk: zıpla | 30 sn sonunda en öndeki |
+| **Şimşek Refleks** | Boşluk: kap | En çok puan (bombaya ve eksiye dokunma) |
+| **Ok Refleksi** | Yön tuşları | Kendi şeridinde en çok ok geçen |
 
 ## Çalıştırma
 

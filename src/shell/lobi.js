@@ -106,7 +106,9 @@ MG.lobi = (function () {
       ul.appendChild(li);
     }
     if (!MG.net.hostMu()) {
-      $('lobiBaslik').textContent = 'Oyuncular · ' + O.turSayisi + ' tur';
+      var oyunAdi = O.secilenOyun && MG.oyunlar[O.secilenOyun]
+        ? MG.oyunlar[O.secilenOyun].ad : 'karışık';
+      $('lobiBaslik').textContent = 'Oyuncular · ' + O.turSayisi + ' tur · ' + oyunAdi;
     } else {
       $('lobiBaslik').textContent = 'Oyuncular';
     }
@@ -131,11 +133,34 @@ MG.lobi = (function () {
       b.onclick = function () { O.turSayisi = n; degisti(); };
       kutu.appendChild(b);
     });
+    oyunSeciciCiz();
+  }
+
+  // Oyun seçimi: "Karışık" her tur farklı oyun getirir, tek oyun seçilirse
+  // seri boyunca hep o oynanır — tek bir oyunu denemek için pratik.
+  function oyunSeciciCiz() {
+    var kutu = $('oyunDugmeleri');
+    kutu.innerHTML = '';
+    dugmeEkle(kutu, 'Karışık', null);
+    Object.keys(MG.oyunlar).forEach(function (id) {
+      dugmeEkle(kutu, MG.oyunlar[id].ad, id);
+    });
+  }
+
+  function dugmeEkle(kutu, metin, id) {
+    var b = document.createElement('button');
+    b.textContent = metin;
+    b.className = 'oyunDugme' + (O.secilenOyun === id ? ' secili' : '');
+    b.onclick = function () { O.secilenOyun = id; degisti(); };
+    kutu.appendChild(b);
   }
 
   // Oda sahibi lobide bir şey değiştirdi — herkese bildir.
   function degisti() {
-    MG.net.yayinla({ t: 'lobiDurum', koltuklar: O.koltukOzet(), turSayisi: O.turSayisi });
+    MG.net.yayinla({
+      t: 'lobiDurum', koltuklar: O.koltukOzet(),
+      turSayisi: O.turSayisi, secilenOyun: O.secilenOyun
+    });
     ciz();
   }
 
