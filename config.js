@@ -321,25 +321,15 @@ MG.ayar = {
     // Otorite sunucuda. Boş bırakılırsa aynı makinedeki sunucuya bağlanır
     // (geliştirme); yayında buradaki adrese.
     //
-    // GEÇİCİ: sunucu şu an geliştirme makinesinde çalışıyor ve dışarıya
-    // localhost.run SSH tüneliyle açılıyor. Bu ağ Cloudflare Tunnel'ın
-    // kullandığı 7844 portunu kapattığı için o yol denenip elendi.
-    // Anonim tünelin adı her açılışta DEĞİŞİR — tüneli yeniden kurunca
-    // burayı da güncelleyip yayına almak gerekir. Kalıcı çözüm bulunca
-    // (Render vb.) bu satır sabit adresle değişecek.
-    sunucu: 'wss://df86c924812233.lhr.life',
+    // Sunucu geliştirme makinesinde çalışıyor, dışarıya localhost.run SSH
+    // tüneliyle açılıyor (baslat.ps1). Cloudflare Tunnel denenip elendi:
+    // bu ağ onun kullandığı 7844 portunu kapatıyor.
+    //
+    // Adres sabit çünkü tünele hesaba kayıtlı bir SSH anahtarıyla bağlanılıyor;
+    // anonim bağlanınca her açılışta değişiyordu. Anahtar değişirse buradaki
+    // adres de değişir — baslat.ps1 uyuşmazlığı görüp günceller ve yayına alır.
+    sunucu: 'wss://8105fc5ba213c4.lhr.life',
     // Ücretsiz barındırmada sunucu uykuya dalabiliyor, uyanması ~1 dakika
-    baglantiZamanAsimiMs: 75000,
-    // Metered deneme hesabı (README'deki çalışan yapılandırma).
-    // DİKKAT: TURN alan adı panel alan adıyla AYNI DEĞİL.
-    turn: {
-      host: 'global.relay.metered.ca',
-      username: '7ea849840c346367c20aa635',
-      credential: 'zioLuy8n7tYIpf94'
-    },
-    stun: [
-      'stun:stun.l.google.com:19302',
-      'stun:stun1.l.google.com:19302'
-    ]
+    baglantiZamanAsimiMs: 75000
   }
 };

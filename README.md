@@ -175,9 +175,9 @@ Ev bağlantılarının çoğu (CGNAT) iki tarayıcının doğrudan bağlanmasın
 net: {
   turn: {
     host: 'global.relay.metered.ca',          // TURN sunucusu
-    apiHost: 'puzzlegameaa.metered.live',     // panel/API adresi (AYRI!)
-    username: '7ea849840c346367c20aa635',
-    credential: 'zioLuy8n7tYIpf94'
+    apiHost: '<uygulama>.metered.live',       // panel/API adresi (AYRI!)
+    username: '<panelden alınır>',
+    credential: '<panelden alınır>'
   },
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -186,7 +186,9 @@ net: {
 }
 ```
 
-Bunlar deneme hesabına ait, paylaşmakta sakınca yok. Kota dolarsa ya da yavaşlarsa panelden yeni kimlik bilgisi üretilir.
+Kimlik bilgileri panelden alınır. Buradaki gerçek değerler kaldırıldı: kod
+artık TURN kullanmıyor, deponun herkese açık olduğu bir yerde kullanılmayan
+bir parolayı tutmanın anlamı yok.
 
 ### ⚠️ İki tur kaybettiren tuzak
 

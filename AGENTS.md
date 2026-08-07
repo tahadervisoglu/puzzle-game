@@ -92,5 +92,13 @@ setInterval" yaz.
 `node sunucu.js` → http://localhost:8080 (no-store başlıklı, önbellek
 sürprizi olmasın diye).
 
+Arkadaşlarla oynamak için `baslat.ps1` (masaüstündeki kısayol onu çağırır):
+oyun sunucusunu başlatır, localhost.run SSH tünelini açar, tünel adresi
+`config.js`'tekinden farklıysa günceller ve yayına gönderir. Tünele hesaba
+kayıtlı anahtarla bağlanıldığı için adres sabit; normalde güncelleme
+gerekmez. Sunucu ve tünel pencereye bağlı başlatılır — pencere kapanınca
+ikisi de kapanır, ortada zombi süreç kalmaz. Tünel oyun ortasında düşerse
+betik fark edip yeniden kurar.
+
 **Commit ve push kullanıcı istemeden yapılmaz.** Kod yazılır, kullanıcı
 söyleyince birlikte gönderilir.
