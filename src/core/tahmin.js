@@ -67,6 +67,23 @@ MG.tahmin = (function () {
     }
     t.dx = (t.dx || 0) + hx;
     t.dy = (t.dy || 0) + hy;
+
+    // Geçmişi de aynı miktarda kaydır. Kaydırmazsak bir sonraki paket, henüz
+    // eritilmemiş olan AYNI sapmayı yeniden ölçer ve üstüne ekler; saniyede
+    // 30 paketle düzeltme büyüyerek birikir ve oyuncu tuşa hiç basmadan
+    // kaymaya başlar. Ölçümde araç haritanın dışına çıkıyordu.
+    for (var i = 0; i < t.poz.length; i++) {
+      t.poz[i].x += hx;
+      t.poz[i].y += hy;
+    }
+
+    // Emniyet: birikmiş düzeltme sıçrama eşiğini aşarsa yumuşatmanın anlamı
+    // kalmaz, doğrudan otur.
+    if (t.dx * t.dx + t.dy * t.dy > sic * sic) {
+      t.x = sx; t.y = sy;
+      t.dx = t.dy = 0;
+      t.poz = null;
+    }
     if (saci != null) t.aci = saci;   // açıda tahmin sapması birikmez
   }
 
