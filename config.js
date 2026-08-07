@@ -318,11 +318,13 @@ MG.ayar = {
   renkler: ['#2ecc40', '#e63946', '#2f6df6', '#ff9f1c', '#9b5de5'],
 
   net: {
-    // Oda kodu yok: sabit bir kimlik havuzu var. "Oyna"ya basan sırayla
-    // bu odalara bağlanmayı dener; boş olanı bulursa kendisi kurar.
-    onek: 'minigames-oda-',
-    odaSayisi: 4,
-    odaDenemeMs: 4000,   // bir odanın cevabı bu sürede gelmezse boş sayılır
+    // Otorite sunucuda. Boş bırakılırsa aynı makinedeki sunucuya bağlanır
+    // (geliştirme); yayında buraya Render adresi yazılır.
+    // Render'daki servisin adresi. Servis adını değiştirirsen burayı da
+    // güncelle, yoksa yayındaki oyun sunucuyu bulamaz.
+    sunucu: 'wss://puzzle-game.onrender.com',
+    // Ücretsiz barındırmada sunucu uykuya dalabiliyor, uyanması ~1 dakika
+    baglantiZamanAsimiMs: 75000,
     // Metered deneme hesabı (README'deki çalışan yapılandırma).
     // DİKKAT: TURN alan adı panel alan adıyla AYNI DEĞİL.
     turn: {

@@ -23,43 +23,20 @@ MG.lobi = (function () {
     var ad = adAl();
     $('btnOyna').disabled = true;
     $('btnOyna').textContent = 'Bağlanılıyor…';
+    U.girisHata('Sunucuya bağlanılıyor… (uykudaysa bir dakika sürebilir)');
 
-    MG.net.otomatikBaglan(ad, function (hata, d) {
+    MG.net.baglan(ad, function (hata, d) {
       $('btnOyna').disabled = false;
       $('btnOyna').textContent = 'Oyna';
       if (hata) return U.girisHata(hata);
       U.girisHata('');
 
-      if (d && d.host) {          // boş oda bulundu, sahibi biziz
-        O.benKoltuk = 0;
-        O.koltuklar = [];
-        O.koltuklar[0] = { ad: ad, bot: false };
-        O.skorlar = {};
-      } else {                    // açık odaya katıldık
-        O.benKoltuk = d.koltuk;
-        O.koltuklar = d.koltuklar;
-        O.skorlar = d.skorlar || {};
-        if (d.turSayisi) O.turSayisi = d.turSayisi;
-      }
+      O.benKoltuk = d.koltuk;
+      O.koltuklar = d.koltuklar;
+      O.skorlar = d.skorlar || {};
+      if (d.turSayisi) O.turSayisi = d.turSayisi;
+      if ('secilenOyun' in d) O.secilenOyun = d.secilenOyun;
       goster();
-    }, function (durum) {
-      U.girisHata(durum);
-    });
-  };
-
-  $('btnBagTest').onclick = function () {
-    MG.ses.ac();
-    var kutu = $('bagTestSonuc');
-    kutu.classList.remove('gizli');
-    kutu.textContent = 'Adaylar toplanıyor… (~8 sn)';
-    MG.bagTest(function (hata, s) {
-      if (hata) return void (kutu.textContent = hata);
-      kutu.textContent =
-        'Kendi adresim (host)   : ' + (s.host ? 'var' : 'YOK') + '\n' +
-        'Dış adresim (STUN)     : ' + (s.stun ? 'çalışıyor' : 'ÇALIŞMIYOR') + '\n' +
-        'Aktarıcı (TURN)        : ' + (s.turn ? 'çalışıyor' : 'ÇALIŞMIYOR') +
-        (s.turn ? '\n\nHer şey yolunda, arkadaşların bağlanabilir.'
-                : '\n\nTURN çalışmıyor — çoğu arkadaşın BAĞLANAMAZ.');
     });
   };
 
@@ -77,11 +54,11 @@ MG.lobi = (function () {
     MG.tur.durdur();
     U.ekranGoster('ekranLobi');
 
-    var host = MG.net.hostMu();
-    $('btnBaslat').classList.toggle('gizli', !host);
-    $('btnBotEkle').classList.toggle('gizli', !host);
-    $('turSecici').classList.toggle('gizli', !host);
-    $('lobiBilgi').textContent = host
+    var sahip = MG.net.sahipMiyim();
+    $('btnBaslat').classList.toggle('gizli', !sahip);
+    $('btnBotEkle').classList.toggle('gizli', !sahip);
+    $('turSecici').classList.toggle('gizli', !sahip);
+    $('lobiBilgi').textContent = sahip
       ? 'Arkadaşların "Oyna" deyince buraya düşecek.'
       : 'Oda sahibinin başlatması bekleniyor…';
     ciz();
@@ -91,7 +68,7 @@ MG.lobi = (function () {
     turSeciciCiz();
     var ul = $('lobiListe');
     ul.innerHTML = '';
-    var host = MG.net.hostMu();
+    var sahip = MG.net.sahipMiyim();
     for (var i = 0; i < A.oyuncuMax; i++) {
       var li = document.createElement('li');
       var k = O.koltuklar[i];
@@ -99,13 +76,13 @@ MG.lobi = (function () {
         li.innerHTML = U.nokta(i) + '<span>' + k.ad +
           (i === 0 ? ' <em>(oda sahibi)</em>' : '') +
           (i === O.benKoltuk && !k.bot ? ' <em>(sen)</em>' : '') + '</span>';
-        if (host && k.bot) li.appendChild(botSilDugmesi(i));
+        if (sahip && k.bot) li.appendChild(botSilDugmesi(i));
       } else {
         li.innerHTML = U.nokta(i) + '<span class="bos">Bekleniyor…</span>';
       }
       ul.appendChild(li);
     }
-    if (!MG.net.hostMu()) {
+    if (!MG.net.sahipMiyim()) {
       var oyunAdi = O.secilenOyun && MG.oyunlar[O.secilenOyun]
         ? MG.oyunlar[O.secilenOyun].ad : 'karışık';
       $('lobiBaslik').textContent = 'Oyuncular · ' + O.turSayisi + ' tur · ' + oyunAdi;
@@ -118,7 +95,7 @@ MG.lobi = (function () {
     var b = document.createElement('button');
     b.textContent = '✕';
     b.className = 'sil';
-    b.onclick = function () { O.koltuklar[dizin] = null; degisti(); };
+    b.onclick = function () { MG.net.gonder({ t: 'botSil', koltuk: dizin }); };
     return b;
   }
 
@@ -130,7 +107,7 @@ MG.lobi = (function () {
       var b = document.createElement('button');
       b.textContent = n;
       b.className = 'turDugme' + (n === O.turSayisi ? ' secili' : '');
-      b.onclick = function () { O.turSayisi = n; degisti(); };
+      b.onclick = function () { ayarYolla(n, O.secilenOyun); };
       kutu.appendChild(b);
     });
     oyunSeciciCiz();
@@ -151,26 +128,24 @@ MG.lobi = (function () {
     var b = document.createElement('button');
     b.textContent = metin;
     b.className = 'oyunDugme' + (O.secilenOyun === id ? ' secili' : '');
-    b.onclick = function () { O.secilenOyun = id; degisti(); };
+    b.onclick = function () { ayarYolla(O.turSayisi, id); };
     kutu.appendChild(b);
   }
 
-  // Oda sahibi lobide bir şey değiştirdi — herkese bildir.
-  function degisti() {
-    MG.net.yayinla({
-      t: 'lobiDurum', koltuklar: O.koltukOzet(),
-      turSayisi: O.turSayisi, secilenOyun: O.secilenOyun
-    });
+  // Lobi kararları sunucuya gider; herkese dağıtmayı o üstlenir. Yerel durum
+  // da hemen güncellenir: yalnızca sunucunun cevabını beklersek arka arkaya
+  // yapılan iki tıklamada ikincisi henüz güncellenmemiş eski değeri geri
+  // gönderip birincisini eziyordu. Sunucu farklı karar verirse lobiDurum
+  // mesajıyla zaten düzeltiyor.
+  function ayarYolla(turSayisi, secilenOyun) {
+    O.turSayisi = turSayisi;
+    O.secilenOyun = secilenOyun;
     ciz();
+    MG.net.gonder({ t: 'ayar', turSayisi: turSayisi, secilenOyun: secilenOyun });
   }
 
   $('btnBotEkle').onclick = function () {
-    for (var i = 0; i < A.oyuncuMax; i++) {
-      if (!O.koltuklar[i]) {
-        O.koltuklar[i] = { ad: 'Bot ' + 'ABCDE'[i], bot: true };
-        return degisti();
-      }
-    }
+    MG.net.gonder({ t: 'bot' });
   };
 
   $('btnBaslat').onclick = function () {
@@ -178,7 +153,7 @@ MG.lobi = (function () {
       $('lobiBilgi').textContent = 'En az 2 oyuncu gerek — arkadaş bekle ya da bot ekle.';
       return;
     }
-    MG.tur.seriBaslat();
+    MG.net.gonder({ t: 'basla' });
   };
 
   $('btnAyril').onclick = ayril;
@@ -190,5 +165,5 @@ MG.lobi = (function () {
     U.ekranGoster('ekranGiris');
   }
 
-  return { goster: goster, ciz: ciz, degisti: degisti, ayril: ayril };
+  return { goster: goster, ciz: ciz, ayril: ayril };
 })();

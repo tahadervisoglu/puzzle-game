@@ -48,13 +48,22 @@ gerekiyorsa sözleşme eksik demektir — sözleşmeyi düzelt, özel durum yazm
 
 ## Ağ modeli — pazarlık konusu değil
 
-Çarpışmalı oyunlarda **otorite oda sahibindedir**. Misafir hiçbir şey simüle
-etmez: sadece tuş girdisi gönderir, gelen durumu çizer. Botları da oda sahibi
-simüle eder, yoksa her makinede farklı oynarlar.
+**Otorite sunucudadır** (`sunucu/`). İstemci hiçbir şey simüle etmez: sadece
+tuş girdisi gönderir, gelen durumu yumuşatarak çizer. Botları da sunucu
+işletir. Oda sahipliği yalnızca lobi kararlarıdır (kaç tur, hangi oyun,
+başlat, bot ekle) — oyun otoritesiyle ilgisi yoktur.
 
-Simülasyon `setInterval`'de, çizim `requestAnimationFrame`'de çalışır.
-`rAF` arka plan sekmesinde durur; simülasyon ona bağlanırsa oda sahibi sekme
-değiştirdiğinde herkesin oyunu donar.
+Önce otorite oyunculardan birindeydi; o kişinin girdi gecikmesi sıfır,
+ötekilerinki bir gidiş-dönüş kadardı ve fark oynanışta belli oluyordu.
+
+Sunucu oyun dosyalarını `src/`'den aynen yükler (`sunucu/oyunYukle.js`).
+Bu yüzden `games/` katmanının ağı ve DOM'u tanımaması üslup tercihi değil,
+sunucunun çalışması bu kurala bağlı. **Yeni oyun eklerken `oyunYukle.js`
+listesine de ekle**, yoksa sunucu o oyunu bilmez.
+
+İstemcide çizim `requestAnimationFrame`'de, görsel efektler ve geri sayım
+`setInterval`'de çalışır. `rAF` arka plan sekmesinde durur; efektler ona
+bağlanırsa sekmeye dönüldüğünde birikmiş efektler patlar.
 
 Rastgeleliğin tamamı tohumlu RNG'den gelir (`MG.rngYap`). `Math.random()`
 simülasyonda kullanılmaz — sadece görsel efektlerde serbesttir.

@@ -1,233 +1,113 @@
-// Ağ katmanı — yıldız topoloji: herkes oda sahibine bağlanır, o dağıtır.
-// Koltuk atama ve oyun mantığı burada YOK; bu dosya sadece bağlantı,
-// mesaj taşıma, nabız ve kopma tespitiyle ilgilenir.
+// Ağ katmanı — sunucuya WebSocket bağlantısı.
+//
+// Önce PeerJS ile eşler arası bağlanıyorduk ve oyunculardan biri "oda sahibi"
+// olarak dünyayı simüle ediyordu; o kişinin girdi gecikmesi sıfır, ötekilerin
+// bir gidiş-dönüş kadardı. Artık otorite sunucuda: herkes eşit mesafede.
+// Yan kazanç, TURN aktarıcısına hiç ihtiyaç kalmaması — bağlanamama sorunu
+// da bitiyor.
 MG.net = (function () {
   var A = MG.ayar;
-  var peer = null;
-  var hostMu = false;
-  var kod = null;
-  var baglar = {};      // host: koltuk -> DataConnection
-  var hostBag = null;   // misafir: oda sahibine giden bağlantı
-  var sonGelen = {};    // koltuk -> son mesaj zamanı (misafirde 'host' anahtarı)
-  var nabizId = null, bekciId = null;
+  var soket = null;
+  var benKoltuk = -1;
+  var sahipKoltuk = -1;
+  var baglandi = false;
 
   // Kabuk bu nesneye işleyici atar:
-  //   girisIstegi(conn, ad)  — host: yeni oyuncu katılmak istiyor
-  //   mesaj(koltuk, veri)    — oyun/lobi mesajı geldi (misafirde koltuk=0, hep hosttan)
-  //   koptu(koltuk)          — host: bir misafir düştü
-  //   hostKoptu()            — misafir: oda sahibi düştü
+  //   mesaj(veri)   — sunucudan oyun/lobi mesajı geldi
+  //   koptu(sebep)  — bağlantı düştü
   var olay = {};
 
-  function iceServersAl() {
-    var t = A.net.turn;
-    var srv = A.net.stun.map(function (u) { return { urls: u }; });
-    // Bazı ağlar sadece 443/TCP'ye izin verir — adresleri hep birlikte dene.
-    srv.push({
-      urls: [
-        'turn:' + t.host + ':80',
-        'turn:' + t.host + ':80?transport=tcp',
-        'turn:' + t.host + ':443',
-        'turns:' + t.host + ':443?transport=tcp'
-      ],
-      username: t.username,
-      credential: t.credential
-    });
-    return srv;
+  function sunucuAdresi() {
+    // Yerelde geliştirirken aynı makinedeki sunucuya bağlan; yayında
+    // config'deki adrese. Karar burada veriliyor çünkü config.js sunucu
+    // tarafında da yükleniyor ve orada `location` yok.
+    var yerel = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (!yerel && A.net.sunucu) return A.net.sunucu;
+    var protokol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return protokol + '//' + location.hostname + ':8090';
   }
 
-  // PeerJS tembel yüklenir — "Oda kur"a basılana kadar indirilmez,
-  // böylece sayfa internetsiz de açılır.
-  function peerjsYukle(tamam, hata) {
-    if (window.Peer) return tamam();
-    var s = document.createElement('script');
-    s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
-    s.onload = function () { tamam(); };
-    s.onerror = function () { hata('PeerJS yüklenemedi — internet bağlantısı var mı?'); };
-    document.head.appendChild(s);
-  }
-
-  function odaAdi(no) { return A.net.onek + no; }
-
-  // Her denemeden önce eski peer yok edilir — önce "Oda kur"a sonra
-  // "Katıl"a basılırsa eski peer ayakta kalır ve bağlantı katmanı bozulur.
-  function sifirla() {
-    if (nabizId) { clearInterval(nabizId); nabizId = null; }
-    if (bekciId) { clearInterval(bekciId); bekciId = null; }
-    if (peer) { try { peer.destroy(); } catch (e) {} }
-    peer = null; hostBag = null; baglar = {}; sonGelen = {}; kod = null;
-  }
-
-  // --- otomatik eşleşme ----------------------------------------------------
-  // Kullanıcı kod girmez. Sırayla odalara bağlanmayı deneriz: biri açıksa
-  // ona katılırız, boşsa o kimliği alıp oda sahibi oluruz.
-
-  function otomatikBaglan(ad, bitti, ilerleme) {
-    sifirla();
-    peerjsYukle(function () { odaSirasi(1, ad, bitti, ilerleme); },
-                function (m) { bitti(m); });
-  }
-
-  function odaSirasi(no, ad, bitti, ilerleme) {
-    if (no > A.net.odaSayisi) {
-      return bitti('Bütün odalar dolu. Biraz sonra tekrar dene.');
-    }
-    if (ilerleme) ilerleme(no === 1 ? 'Oda aranıyor…' : 'Sıradaki oda deneniyor…');
-
-    katilDene(no, ad, function (sonuc, veri) {
-      if (sonuc === 'TAMAM') return bitti(null, veri);
-      if (sonuc === 'BOS') {
-        if (ilerleme) ilerleme('Boş oda bulundu, kuruluyor…');
-        return odaKur(no, bitti, function () {
-          // Kimliği araya biri kaptıysa sıradakine geç
-          odaSirasi(no + 1, ad, bitti, ilerleme);
-        });
-      }
-      if (sonuc === 'DOLU') return odaSirasi(no + 1, ad, bitti, ilerleme);
-      bitti(sonuc); // gerçek hata
-    });
-  }
-
-  // Tek bir odaya katılmayı dener. Sonuç: TAMAM | BOS | DOLU | hata metni
-  function katilDene(no, ad, bitti) {
-    var p = new Peer({ config: { iceServers: iceServersAl() } });
+  function baglan(ad, bitti) {
+    ayril();
+    var adres = sunucuAdresi();
     var bittiMi = false;
-    function birKez(sonuc, veri) {
+    function birKez(hata, veri) {
       if (bittiMi) return;
       bittiMi = true;
-      clearTimeout(zam);
-      if (sonuc === 'TAMAM') { peer = p; hostMu = false; kod = odaAdi(no); }
-      else { try { p.destroy(); } catch (e) {} }
-      bitti(sonuc, veri);
+      clearTimeout(zaman);
+      bitti(hata, veri);
     }
-    // Cevap gelmezse odayı boş say — conn.on('open') hiç tetiklenmeyebilir
-    var zam = setTimeout(function () { birKez('BOS'); }, A.net.odaDenemeMs);
 
-    p.on('error', function (e) {
-      if (e.type === 'peer-unavailable') birKez('BOS');
-      else if (!bittiMi) birKez('Bağlantı hatası: ' + e.type);
-    });
-    p.on('open', function () {
-      var c = p.connect(odaAdi(no), { reliable: true });
-      hostBag = c;
-      c.on('open', function () { c.send({ t: 'giris', ad: ad }); });
-      c.on('data', function (d) {
-        if (!d || !d.t) return;
-        sonGelen.host = Date.now();
-        if (d.t === 'hosgeldin') {
-          nabizBaslat(); bekciBaslat();
-          birKez('TAMAM', d);
-        } else if (d.t === 'dolu') {
-          birKez('DOLU');
-        } else if (d.t !== 'nabiz') {
-          if (olay.mesaj) olay.mesaj(0, d);
-        }
-      });
-      c.on('close', function () { if (olay.hostKoptu) olay.hostKoptu(); });
-      c.on('error', function () { if (olay.hostKoptu) olay.hostKoptu(); });
-    });
-  }
+    // Sunucu uykudaysa (ücretsiz barındırma) uyanması bir dakikayı bulabilir
+    var zaman = setTimeout(function () {
+      birKez('Sunucuya ulaşılamadı. Uyanıyor olabilir, biraz sonra dene.');
+    }, A.net.baglantiZamanAsimiMs);
 
-  function odaKur(no, bitti, kimlikKapildi) {
-    var p = new Peer(odaAdi(no), { config: { iceServers: iceServersAl() } });
-    var acildi = false;
-    p.on('open', function () {
-      acildi = true;
-      peer = p; hostMu = true; kod = odaAdi(no);
-      p.on('connection', yeniBaglanti);
-      nabizBaslat(); bekciBaslat();
-      bitti(null, { host: true, oda: no });
-    });
-    p.on('error', function (e) {
-      if (acildi) return; // kurulduktan sonraki hatalar bağlantı bazında ele alınır
-      try { p.destroy(); } catch (err) {}
-      // İki kişi aynı anda "Oyna"ya bastıysa kimliği biri kapmıştır
-      if (e.type === 'unavailable-id') kimlikKapildi();
-      else bitti('Bağlantı hatası: ' + e.type);
-    });
-  }
+    try {
+      soket = new WebSocket(adres);
+    } catch (e) {
+      return birKez('Bağlantı kurulamadı: ' + e.message);
+    }
 
-  function yeniBaglanti(conn) {
-    conn.on('data', function (d) {
+    soket.onopen = function () {
+      baglandi = true;
+      soket.send(JSON.stringify({ t: 'katil', ad: ad }));
+    };
+
+    soket.onmessage = function (ev) {
+      var d;
+      try { d = JSON.parse(ev.data); } catch (e) { return; }
       if (!d || !d.t) return;
-      var koltuk = conn._mgKoltuk;
-      if (koltuk != null) sonGelen[koltuk] = Date.now();
-      if (d.t === 'giris' && koltuk == null) {
-        if (olay.girisIstegi) olay.girisIstegi(conn, ('' + (d.ad || 'Oyuncu')).slice(0, 12));
-      } else if (koltuk != null && d.t !== 'nabiz') {
-        if (olay.mesaj) olay.mesaj(koltuk, d);
+
+      if (d.t === 'hosgeldin') {
+        benKoltuk = d.koltuk;
+        sahipKoltuk = d.sahip;
+        return birKez(null, d);
       }
-    });
-    conn.on('close', function () { dusur(conn); });
-    conn.on('error', function () { dusur(conn); });
+      if (d.t === 'dolu') return birKez(d.sebep || 'Oda dolu.');
+      if (d.sahip != null) sahipKoltuk = d.sahip;
+      if (olay.mesaj) olay.mesaj(d);
+    };
+
+    soket.onclose = function () {
+      baglandi = false;
+      if (!bittiMi) return birKez('Sunucu bağlantısı kurulamadı.');
+      if (olay.koptu) olay.koptu();
+    };
+
+    soket.onerror = function () {
+      if (!bittiMi) birKez('Sunucuya bağlanılamadı: ' + adres);
+    };
   }
 
-  // Kabuk koltuk atadıktan sonra bağlantıyı koltuğa bağlar.
-  function koltukBagla(conn, koltuk) {
-    conn._mgKoltuk = koltuk;
-    baglar[koltuk] = conn;
-    sonGelen[koltuk] = Date.now();
+  function gonder(o) {
+    if (!soket || soket.readyState !== 1) return;
+    try { soket.send(JSON.stringify(o)); } catch (e) { /* yoksay */ }
   }
 
-  function dusur(conn) {
-    var koltuk = conn._mgKoltuk;
-    if (koltuk == null) return;
-    conn._mgKoltuk = null;
-    delete baglar[koltuk];
-    delete sonGelen[koltuk];
-    try { conn.close(); } catch (e) {}
-    if (olay.koptu) olay.koptu(koltuk);
-  }
-
-  // --- nabız ve kopma tespiti ---------------------------------------------
-  // WebRTC sekme kapandığını bildirmez; conn.on('close') çoğu zaman gelmez.
-  // Akan mesajları nabız sayıp sessizlikte düşmüş kabul ediyoruz.
-
-  function nabizBaslat() {
-    nabizId = setInterval(function () { gonder({ t: 'nabiz' }); }, A.yayin.nabizMs);
-  }
-
-  function bekciBaslat() {
-    bekciId = setInterval(function () {
-      var simdi = Date.now();
-      if (hostMu) {
-        for (var k in baglar) {
-          if (simdi - (sonGelen[k] || 0) > A.yayin.kopmaMs) dusur(baglar[k]);
-        }
-      } else if (sonGelen.host && simdi - sonGelen.host > A.yayin.kopmaMs) {
-        if (olay.hostKoptu) olay.hostKoptu();
-      }
-    }, 1000);
-  }
-
-  // --- gönderim ------------------------------------------------------------
-
-  function yayinla(o) { // host: tüm misafirlere
-    for (var k in baglar) {
-      var c = baglar[k];
-      if (c.open) c.send(o);
+  function ayril() {
+    if (soket) {
+      try {
+        if (soket.readyState === 1) soket.send(JSON.stringify({ t: 'ayril' }));
+        soket.onclose = null;
+        soket.close();
+      } catch (e) { /* yoksay */ }
     }
-  }
-
-  function gonderKoltuga(koltuk, o) {
-    var c = baglar[koltuk];
-    if (c && c.open) c.send(o);
-  }
-
-  function gonder(o) { // misafir: hosta; hostta yayına düşer
-    if (hostMu) yayinla(o);
-    else if (hostBag && hostBag.open) hostBag.send(o);
+    soket = null;
+    baglandi = false;
+    benKoltuk = -1;
+    sahipKoltuk = -1;
   }
 
   return {
     olay: olay,
-    otomatikBaglan: otomatikBaglan,
-    ayril: sifirla,
-    yayinla: yayinla,
+    baglan: baglan,
     gonder: gonder,
-    gonderKoltuga: gonderKoltuga,
-    koltukBagla: koltukBagla,
-    iceServersAl: iceServersAl,
-    hostMu: function () { return hostMu; },
-    kodAl: function () { return kod; }
+    ayril: ayril,
+    benKoltukAl: function () { return benKoltuk; },
+    // Oda sahipliği yalnızca lobi kararları için: kim başlatır, kim bot ekler.
+    // Oyun otoritesiyle ilgisi yok, o tamamen sunucuda.
+    sahipMiyim: function () { return benKoltuk >= 0 && benKoltuk === sahipKoltuk; },
+    bagliMi: function () { return baglandi; }
   };
 })();

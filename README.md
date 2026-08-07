@@ -45,23 +45,64 @@ kalıp puan topluyorsun.
 
 ## Çalıştırma
 
-`index.html` çift tıklanınca da açılır. Geliştirirken tarayıcı önbelleği
-yüzünden olmayan hatayı aramamak için:
+İki parça var: tarayıcıda çalışan oyun (kök dizin) ve otoriter oyun sunucusu
+(`sunucu/`).
 
 ```bash
-node sunucu.js
+node sunucu.js          # oyunu sunar  → http://localhost:8080
+cd sunucu && npm install && node index.js   # oyun sunucusu → ws://localhost:8090
 ```
 
-Sonra http://localhost:8080 — `no-store` başlığıyla sunar.
+Yerelde açtığında istemci otomatik olarak `localhost:8090`'daki sunucuya
+bağlanır; yayında `config.js` içindeki `net.sunucu` adresine.
 
-Çok oyunculu oynamak için sayfanın **https** adresinde olması şart, WebRTC
-bunu istiyor. GitHub Pages bunu karşılıyor.
+Oyunun kendisi GitHub Pages'te (statik), sunucu Render'da duruyor.
+
+### Sunucuyu Render'a kurma
+
+- **Root Directory:** boş bırak
+- **Build Command:** `cd sunucu && npm install`
+- **Start Command:** `cd sunucu && node index.js`
+- **Region:** Frankfurt (Türkiye'ye en yakın; Virginia ~100 ms fazladan gecikme)
+- **Instance Type:** Free yeter
+
+Root dizini `sunucu` yapmak da çalışır ama **yapma**: Render o durumda dizin
+dışındaki değişiklikleri otomatik dağıtmıyor, oysa sunucu oyun kodunu
+`src/`'den okuyor — oyunu güncellediğinde sunucu eski kodda kalırdı.
+
+Ücretsiz katmanda servis 15 dakika sessizlikte uykuya dalar, ilk bağlanan
+~1 dakika bekler. Oyun sürerken uyumaz: WebSocket mesajları da etkinlik
+sayılıyor.
 
 ---
 
-Aşağısı, projenin ağ tarafının **neden böyle kurulduğunu** anlatıyor.
-Bu mimari [Puzzle Party](https://github.com/tahadervisoglu/puzzle-game/tree/main~1)
-projesinde çalışır durumda kanıtlandı; oradaki tuzaklar da burada yazılı.
+## Ağ mimarisi: neden sunucu?
+
+Otorite **sunucuda**. İstemci hiçbir şey simüle etmez; tuş girdisi yollar,
+gelen durumu yumuşatarak çizer. Sunucu oyun dosyalarını `src/`'den aynen
+yükler, yani aynı kod iki yerde çalışır — `games/` katmanının ağı ve DOM'u
+tanımaması bu yüzden zorunlu bir kural.
+
+Önce PeerJS ile eşler arası bağlanıyorduk ve oyunculardan biri "oda sahibi"
+olarak dünyayı işletiyordu. İki sorunu vardı:
+
+1. **Oda sahibi avantajlıydı.** Onun girdi gecikmesi sıfırken ötekilerinki bir
+   gidiş-dönüş kadardı ve bu oynanışta belli oluyordu.
+2. **TURN zorunluydu.** Ev bağlantılarının çoğu (CGNAT) doğrudan eşleşmeye izin
+   vermiyor, trafiği aktaran bir TURN sunucusu gerekiyordu — bağlanamama
+   şikâyetlerinin baş sebebi buydu.
+
+Sunucuya geçince ikisi de bitti: herkes sunucuya eşit mesafede ve WebSocket
+her ağdan geçtiği için aktarıcıya gerek kalmadı.
+
+**Ödediğimiz bedel:** artık kimsenin gecikmesi sıfır değil (herkes ~40-60 ms),
+ve sunucu uykudayken ilk bağlanan bir dakika bekliyor.
+
+---
+
+Aşağısı **tarihsel**: PeerJS/TURN dönemine ait notlar. Kod artık bunları
+kullanmıyor ama eşler arası bir şey yazacak olursak buradaki tuzaklar hâlâ
+geçerli.
 
 ---
 
