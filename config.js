@@ -319,10 +319,15 @@ MG.ayar = {
 
   net: {
     // Otorite sunucuda. Boş bırakılırsa aynı makinedeki sunucuya bağlanır
-    // (geliştirme); yayında buraya Render adresi yazılır.
-    // Render'daki servisin adresi. Servis adını değiştirirsen burayı da
-    // güncelle, yoksa yayındaki oyun sunucuyu bulamaz.
-    sunucu: 'wss://puzzle-game.onrender.com',
+    // (geliştirme); yayında buradaki adrese.
+    //
+    // GEÇİCİ: sunucu şu an geliştirme makinesinde çalışıyor ve dışarıya
+    // localhost.run SSH tüneliyle açılıyor. Bu ağ Cloudflare Tunnel'ın
+    // kullandığı 7844 portunu kapattığı için o yol denenip elendi.
+    // Anonim tünelin adı her açılışta DEĞİŞİR — tüneli yeniden kurunca
+    // burayı da güncelleyip yayına almak gerekir. Kalıcı çözüm bulunca
+    // (Render vb.) bu satır sabit adresle değişecek.
+    sunucu: 'wss://df86c924812233.lhr.life',
     // Ücretsiz barındırmada sunucu uykuya dalabiliyor, uyanması ~1 dakika
     baglantiZamanAsimiMs: 75000,
     // Metered deneme hesabı (README'deki çalışan yapılandırma).
