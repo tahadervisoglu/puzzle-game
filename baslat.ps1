@@ -69,7 +69,7 @@ function SunucuBaslat {
   throw "Sunucu $port portunda ayağa kalkmadı."
 }
 
-function TunelAc {
+function TunelDene {
   Remove-Item $gecici, $hataLog -ErrorAction SilentlyContinue
   $script:tunelSurec = Start-Process ssh `
     -ArgumentList @(
@@ -86,11 +86,33 @@ function TunelAc {
 
   for ($i = 0; $i -lt 40; $i++) {
     Start-Sleep -Seconds 2
-    $metin = Get-Content $gecici -Raw -ErrorAction SilentlyContinue
-    if ($metin -match '([0-9a-f]+\.lhr\.life)') { return $Matches[1] }
-    if ($script:tunelSurec.HasExited) { throw 'Tünel bağlantısı düştü. İnternet bağlantını kontrol et.' }
+    # Adres kimi zaman stdout'a, karşılama yazısı stderr'e düşüyor; ikisi de
+    # taranıyor ki akış nereye giderse gitsin adres kaçmasın.
+    $metin = (Get-Content $gecici -Raw -ErrorAction SilentlyContinue) +
+             (Get-Content $hataLog -Raw -ErrorAction SilentlyContinue)
+    if ($metin -match '([a-z0-9\-]+\.lhr\.life)') { return $Matches[1] }
+    if ($script:tunelSurec.HasExited) { return $null }
   }
-  throw 'Tünel adresi 80 saniyede gelmedi.'
+  return $null
+}
+
+# Önceki tünel kapandıktan hemen sonra bağlanılırsa localhost.run bağlantıyı
+# kapatıyor: ayrılan alan adı bir süre daha eski oturumun üzerinde kalıyor.
+# Tek denemede pes etmek yerine birkaç kez denenir — betiği kapatıp hemen
+# açmak sık yapılan bir şey.
+function TunelAc {
+  for ($deneme = 1; $deneme -le 4; $deneme++) {
+    $adres = TunelDene
+    if ($adres) { return $adres }
+    if ($script:tunelSurec -and -not $script:tunelSurec.HasExited) {
+      Stop-Process -Id $script:tunelSurec.Id -Force -ErrorAction SilentlyContinue
+    }
+    if ($deneme -lt 4) {
+      Yaz "  Tunel kurulamadi, 10 sn sonra tekrar denenecek ($deneme/3)" 'DarkGray'
+      Start-Sleep -Seconds 10
+    }
+  }
+  throw 'Tunel kurulamadi. Internet baglantini kontrol et.'
 }
 
 # Adres yalnızca net.sunucu satırında geçer; dosyanın kalanına dokunulmuyor.
