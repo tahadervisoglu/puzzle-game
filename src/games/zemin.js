@@ -126,7 +126,16 @@ MG.oyunlar.zemin = (function () {
   }
 
   function oyuncuGuncelle(d, koltuk, o, dt) {
-    hareket(d, koltuk, o, dt);
+    var g = d.girdiler[koltuk];
+    var ix = (g.d ? 1 : 0) - (g.a ? 1 : 0);
+    var iy = (g.s ? 1 : 0) - (g.w ? 1 : 0);
+    if (ix || iy) {
+      var uz = Math.sqrt(ix * ix + iy * iy);
+      o.x += (ix / uz) * Z.hiz * dt;
+      o.y += (iy / uz) * Z.hiz * dt;
+      o.x = Math.max(0, Math.min(W, o.x));
+      o.y = Math.max(0, Math.min(H, o.y));
+    }
 
     var kr = karoBul(d, o.x, o.y);
     if (!basilabilir(kr)) return dus(d, koltuk, o);
@@ -136,28 +145,6 @@ MG.oyunlar.zemin = (function () {
       kr.durum = CATLAK;
       kr.sayac = catlamaSuresi(d);
     }
-  }
-
-  function hareket(d, koltuk, o, dt) {
-    var g = d.girdiler[koltuk];
-    var ix = (g.d ? 1 : 0) - (g.a ? 1 : 0);
-    var iy = (g.s ? 1 : 0) - (g.w ? 1 : 0);
-    if (!ix && !iy) return;
-    var uz = Math.sqrt(ix * ix + iy * iy);
-    o.x += (ix / uz) * Z.hiz * dt;
-    o.y += (iy / uz) * Z.hiz * dt;
-    o.x = Math.max(0, Math.min(W, o.x));
-    o.y = Math.max(0, Math.min(H, o.y));
-  }
-
-  // Yalnızca hareket tahmin edilir. Karo çatlatmak ve düşmek kalıcı sonuç:
-  // karoların durumu ağdan geliyor, istemci de çatlatırsa zemin iki tarafta
-  // ayrışır ve oyuncu olmadığı yerde boşluğa düşer.
-  function tahmin(d, koltuk, dt) {
-    var o = d.oyuncular[koltuk];
-    if (!o || !o.canli) return;
-    hareket(d, koltuk, o, dt);
-    MG.tahmin.pozKaydet(o, MG.simdi());
   }
 
   function karolariGuncelle(d, dt) {
@@ -268,12 +255,8 @@ MG.oyunlar.zemin = (function () {
       var o = d.oyuncular[v[0]];
       if (!o) continue;
       var oncedenCanli = o.canli;
-      if (v[0] === d.tahminKoltuk) {
-        MG.tahmin.duzelt(o, v[1], v[2], null, d.gecikmeMs || 0);
-      } else {
-        o.hx = v[1]; o.hy = v[2];
-        if (o.ilkPaket == null) { o.x = o.hx; o.y = o.hy; o.ilkPaket = 1; }
-      }
+      o.hx = v[1]; o.hy = v[2];
+      if (o.ilkPaket == null) { o.x = o.hx; o.y = o.hy; o.ilkPaket = 1; }
       o.canli = v[3] === 1;
       if (oncedenCanli && !o.canli) { o.dusme = 0; MG.ses.dusme(); }
     }
@@ -284,7 +267,6 @@ MG.oyunlar.zemin = (function () {
       var hz = A.yayin.yumusatmaHizi;
       for (var k in d.oyuncular) {
         var o = d.oyuncular[k];
-        if (+k === d.tahminKoltuk) { MG.tahmin.erit(o, dt); continue; }
         if (o.canli) MG.yumusat.nokta(o, dt, hz);
       }
       // Sayaçlar misafirde de işlesin ki karo titremesi doğru görünsün
@@ -316,7 +298,6 @@ MG.oyunlar.zemin = (function () {
     siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
-    tahmin: tahmin,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,

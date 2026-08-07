@@ -92,21 +92,15 @@ MG.oyunlar.isik = (function () {
     }
   }
 
-  function ilerle(d, koltuk, o, dt, tahminMi) {
+  function ilerle(d, koltuk, o, dt) {
     o.x += YON[o.yon][0] * d.hiz * dt;
     o.y += YON[o.yon][1] * d.hiz * dt;
 
     var cx = hucreX(o.x), cy = hucreY(o.y);
     if (cx === o.cx && cy === o.cy) return;   // hâlâ aynı hücrede
 
-    // Tahminde ölüm yok: elemeyi sunucu yapar. İstemci kendini öldürürse
-    // sunucu hayatta derken oyuncu ölmüş görünür ve geri dirilir.
-    if (cx < 0 || cy < 0 || cx >= SUTUN || cy >= SATIR) {
-      return tahminMi ? undefined : oldur(d, koltuk, o);
-    }
-    if (d.izler[indeks(cx, cy)]) {
-      return tahminMi ? undefined : oldur(d, koltuk, o);
-    }
+    if (cx < 0 || cy < 0 || cx >= SUTUN || cy >= SATIR) return oldur(d, koltuk, o);
+    if (d.izler[indeks(cx, cy)]) return oldur(d, koltuk, o);
 
     d.izler[indeks(cx, cy)] = koltuk + 1;
     o.cx = cx; o.cy = cy;
@@ -119,16 +113,6 @@ MG.oyunlar.isik = (function () {
       o.y = cy * L.hucre + L.hucre / 2;
     }
     o.bekleyen = null;
-  }
-
-  // İz bırakmak tahmine dahil: izler ağdan gelmiyor, her istemci konumlardan
-  // kendisi dolduruyor. Dönüşün anında görünmesi de buradan geliyor —
-  // bu oyunda tek girdi dönüş, gecikmesi en çok burada batıyordu.
-  function tahmin(d, koltuk, dt) {
-    var o = d.oyuncular[koltuk];
-    if (!o || !o.canli) return;
-    ilerle(d, koltuk, o, dt, true);
-    MG.tahmin.pozKaydet(o, MG.simdi());
   }
 
   function oldur(d, koltuk, o) {
@@ -208,17 +192,10 @@ MG.oyunlar.isik = (function () {
       var o = d.oyuncular[v[0]];
       if (!o) continue;
       var oncedenCanli = o.canli;
-      if (v[0] === d.tahminKoltuk) {
-        // İzi tahmin ederken zaten bıraktık. Yönü de sunucudan almıyoruz:
-        // gelen yön dönüşümüzden eski olduğu için bir kare geri sarar ve
-        // dönüş gözle görülür şekilde tekler.
-        MG.tahmin.duzelt(o, v[1], v[2], null, d.gecikmeMs || 0);
-      } else {
-        // İki paket arasındaki hücreleri doldur, yoksa duvar kesik kesik çıkar
-        izDoldur(d, v[0], o.x, o.y, v[1], v[2]);
-        o.x = v[1]; o.y = v[2]; o.yon = v[3];
-        o.cx = hucreX(o.x); o.cy = hucreY(o.y);
-      }
+      // İki paket arasındaki hücreleri doldur, yoksa duvar kesik kesik çıkar
+      izDoldur(d, v[0], o.x, o.y, v[1], v[2]);
+      o.x = v[1]; o.y = v[2]; o.yon = v[3];
+      o.cx = hucreX(o.x); o.cy = hucreY(o.y);
       o.canli = v[4] === 1;
       if (oncedenCanli && !o.canli) { patlama(d, o); MG.ses.patlama(); }
     }
@@ -239,8 +216,6 @@ MG.oyunlar.isik = (function () {
   }
 
   function efekt(d, dt) {
-    var ben = d.oyuncular[d.tahminKoltuk];
-    if (ben) MG.tahmin.erit(ben, dt);
     for (var i = d.parcalar.length - 1; i >= 0; i--) {
       var p = d.parcalar[i];
       p.omur -= dt;
@@ -261,7 +236,6 @@ MG.oyunlar.isik = (function () {
     siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
-    tahmin: tahmin,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,

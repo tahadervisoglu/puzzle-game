@@ -130,14 +130,6 @@ MG.oyunlar.tank = (function () {
   }
 
   function tankGuncelle(d, koltuk, t, dt) {
-    hareket(d, koltuk, t, dt);
-    ates(d, koltuk, t, dt);
-  }
-
-  // Dönme ve ilerleme. Yalnızca kendi girdisine ve duvarlara bağlı — başka
-  // oyuncular sonucu etkilemiyor. Bu yüzden istemcide de aynı sonucu verir
-  // ve tahmin bunu güvenle çağırabilir.
-  function hareket(d, koltuk, t, dt) {
     var g = d.girdiler[koltuk];
     var R = A.tank.yaricap;
 
@@ -151,21 +143,6 @@ MG.oyunlar.tank = (function () {
       var ny = t.y + Math.sin(t.aci) * v * dt;
       if (!daireDuvarCarpar(t.x, ny, R, d.duvarlar)) t.y = ny;
     }
-  }
-
-  // Yerel oyuncunun hareketini istemcide de hesaplar; tuşa basınca tank
-  // sunucuyu beklemeden döner. Ateş bilerek tahmin EDİLMEZ: mermiyi sunucu
-  // doğuruyor, burada da doğurursak tek atış iki mermi olarak görünür.
-  function tahmin(d, koltuk, dt) {
-    var t = d.tanklar[koltuk];
-    if (!t || !t.canli) return;
-    hareket(d, koltuk, t, dt);
-    MG.tahmin.pozKaydet(t, MG.simdi());
-  }
-
-  function ates(d, koltuk, t, dt) {
-    var g = d.girdiler[koltuk];
-    var R = A.tank.yaricap;
 
     t.bekleme = Math.max(0, t.bekleme - dt);
     if (g.space && t.bekleme <= 0 && aktifMermi(d, koltuk) < A.mermi.maxAktif) {
@@ -352,14 +329,8 @@ MG.oyunlar.tank = (function () {
       var t = d.tanklar[v[0]];
       if (!t) continue;
       var oncedenCanli = t.canli;
-      if (v[0] === d.tahminKoltuk) {
-        // Kendi tankımız: gelen konum hedef değil, tahminin düzeltmesidir.
-        // Hedef olarak alıp ona yumuşatsaydık her pakette geriye çekilirdik.
-        MG.tahmin.duzelt(t, v[1], v[2], v[3], d.gecikmeMs || 0);
-      } else {
-        t.hx = v[1]; t.hy = v[2]; t.haci = v[3];
-        if (t.ilkPaket == null) { t.x = t.hx; t.y = t.hy; t.aci = t.haci; t.ilkPaket = 1; }
-      }
+      t.hx = v[1]; t.hy = v[2]; t.haci = v[3];
+      if (t.ilkPaket == null) { t.x = t.hx; t.y = t.hy; t.aci = t.haci; t.ilkPaket = 1; }
       t.canli = v[4] === 1;
       if (oncedenCanli && !t.canli) {
         patlamaEfekti(d, t.x, t.y);
@@ -377,9 +348,6 @@ MG.oyunlar.tank = (function () {
     var A2 = A.yayin;
     for (var k in d.tanklar) {
       var t = d.tanklar[k];
-      // Kendi tankımız yumuşatılmaz; onu tahmin ilerletiyor, buradaki iş
-      // yalnızca biriken sapmayı sindirmek.
-      if (+k === d.tahminKoltuk) { MG.tahmin.erit(t, dt); continue; }
       if (t.hx == null) continue;
       MG.yumusat.nokta(t, dt, A2.yumusatmaHizi);
       t.aci = MG.yumusat.aci(t.aci, t.haci, dt, A2.yumusatmaHizi);
@@ -551,7 +519,6 @@ MG.oyunlar.tank = (function () {
     oyuncuOlu: oyuncuOlu,
     girdi: girdi,
     guncelle: guncelle,
-    tahmin: tahmin,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,

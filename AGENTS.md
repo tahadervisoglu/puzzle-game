@@ -33,8 +33,7 @@ MG.oyunlar.<id> = {
   id, ad, kurallar,              // kurallar: tek cümle, tur öncesi perdede çıkar
   kur(tohum, koltuklar),         // tohumdan dünyayı kurar — her istemcide AYNI sonuç
   girdi(d, koltuk, tus, basili), // tuş durumu
-  guncelle(d, dt),               // SADECE sunucuda çalışır
-  tahmin(d, koltuk, dt),         // OPSİYONEL — gecikme gizleme, aşağıya bak
+  guncelle(d, dt),               // SADECE oda sahibinde çalışır
   anlik(d),                      // yayınlanacak durum (küçük tut)
   uygula(d, s),                  // misafirde gelen durumu uygular
   efekt(d, dt),                  // görsel efektler, her istemcide
@@ -42,27 +41,6 @@ MG.oyunlar.<id> = {
   bitti(d)                       // null | { kazanan: koltuk|null }
 };
 ```
-
-## Gecikme gizleme (`tahmin`)
-
-`tahmin(d, koltuk, dt)` **yalnızca kendi oyuncunu** ilerletir ve istemcide her
-karede çağrılır. Kabuk tuşu sunucuya yollamadan önce yerelde de işler, böylece
-tank gidiş-dönüşü beklemeden döner. Uygulayan oyun üç şeye uymalı:
-
-1. Hareket, oyuncunun kendi girdisi ve **durağan** dünya dışında bir şeye
-   bağlı olmamalı. Bağlıysa (itiş kakış, çarpışma) tahmin sapar; sapma
-   düzeltmesi bunu toparlar ama sertleşir.
-2. **Kalıcı sonuç üretilmez** — mermi doğurmak, puan vermek, öldürmek yok.
-   Sunucu zaten üretiyor; tahmin de üretirse aynı şey iki kez olur.
-3. Her adımda `MG.tahmin.pozKaydet` çağrılmalı; `uygula` kendi koltuğu için
-   `MG.tahmin.duzelt`, `efekt` için `MG.tahmin.erit` kullanmalı.
-
-`d.tahminKoltuk` kabuk tarafından yazılır (oyun `tahmin` sunmuyorsa `-1`), yani
-uygulamayan oyunlar hiçbir şey değiştirmeden eskisi gibi çalışır.
-
-Kritik nokta `src/core/tahmin.js` başında yazılı: sunucudan gelen konum ŞU ANKİ
-tahminle değil, **o konumun ait olduğu andaki** tahminle karşılaştırılır. Yoksa
-oyuncu her pakette geriye çekilir ve tahminin faydası kaybolur.
 
 Oyun `d.kalan` alanını tutarsa kabuk süreyi üst barda gösterir.
 Kabuğa dokunmadan yeni oyun eklenebilmeli; eklerken kabuğu değiştirmen
@@ -115,19 +93,12 @@ setInterval" yaz.
 sürprizi olmasın diye).
 
 Arkadaşlarla oynamak için `baslat.ps1` (masaüstündeki kısayol onu çağırır):
-oyun sunucusunu başlatır, tüneli açar, adresi `config.js`'e yazıp yayına
-gönderir. Sunucu ve tünel pencereye bağlı başlatılır — pencere kapanınca
+oyun sunucusunu başlatır, localhost.run SSH tünelini açar, tünel adresi
+`config.js`'tekinden farklıysa günceller ve yayına gönderir. Tünele hesaba
+kayıtlı anahtarla bağlanıldığı için adres sabit; normalde güncelleme
+gerekmez. Sunucu ve tünel pencereye bağlı başlatılır — pencere kapanınca
 ikisi de kapanır, ortada zombi süreç kalmaz. Tünel oyun ortasında düşerse
 betik fark edip yeniden kurar.
-
-Önce **Cloudflare** tüneli denenir, olmazsa **localhost.run**'a düşülür.
-Ölçüm (Sakarya'dan, oyunun tam gidiş-dönüşü): Cloudflare **82 ms**,
-localhost.run **336 ms**. Fark çıkış noktasından: Cloudflare'inki İstanbul,
-localhost.run'unki Virginia. Yedek yol oyunu oynanır tutar ama yavaştır.
-
-**WARP açıkken Cloudflare tüneli kurulamıyor** — 7844 portu kapanıyor ve
-cloudflared adresi bassa da istekler 530 dönüyor. Bu yüzden tünel yalnızca
-adrese bakarak değil, dışarıdan sağlık sorgusuyla doğrulanır.
 
 **Commit ve push kullanıcı istemeden yapılmaz.** Kod yazılır, kullanıcı
 söyleyince birlikte gönderilir.
