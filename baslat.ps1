@@ -1,9 +1,9 @@
 # Tek tıkla yayın: sunucuyu başlatır, tüneli açar, tünelin yeni adresini
 # config.js'e yazar ve GitHub'a gönderir.
 #
-# Neden betik: anonim localhost.run tünelinin adı her açılışta değişiyor.
-# Elle yapıldığında üç adımdan (adresi kopyala, config'e yaz, push et) biri
-# sürekli unutuluyor ve oyun sessizce eski adrese bağlanmaya çalışıyordu.
+# Neden betik: tünel adı her açılışta değişiyor. Elle yapıldığında üç adımdan
+# (adresi kopyala, config'e yaz, push et) biri sürekli unutuluyor ve oyun
+# sessizce eski adrese bağlanmaya çalışıyordu.
 #
 # -PushAtma ile çalıştırılırsa her şeyi yapar ama GitHub'a göndermez;
 # betiği denemek için kullanılır.
@@ -26,6 +26,7 @@ $anahtar = Join-Path $env:USERPROFILE '.ssh\id_localhostrun'
 
 $sunucuSurec = $null
 $tunelSurec  = $null
+$tunelTuru   = ''
 
 function Yaz($metin, $renk = 'Gray') { Write-Host $metin -ForegroundColor $renk }
 
@@ -44,6 +45,8 @@ function EskileriTemizle {
   Get-CimInstance Win32_Process -Filter "Name = 'ssh.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -and $_.CommandLine -match 'localhost\.run' } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+  Get-Process cloudflared -ErrorAction SilentlyContinue |
+    ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }
 }
 
 function SunucuBaslat {
@@ -69,10 +72,54 @@ function SunucuBaslat {
   throw "Sunucu $port portunda ayağa kalkmadı."
 }
 
-function TunelDene {
+function CloudflaredYolu {
+  $adaylar = @(
+    (Join-Path ${env:ProgramFiles(x86)} 'cloudflared\cloudflared.exe'),
+    (Join-Path $env:ProgramFiles 'cloudflared\cloudflared.exe')
+  )
+  foreach ($y in $adaylar) { if (Test-Path $y) { return $y } }
+  $k = Get-Command cloudflared -ErrorAction SilentlyContinue
+  if ($k) { return $k.Source }
+  return $null
+}
+
+function SurecBaslat($dosya, $argumanlar) {
   Remove-Item $gecici, $hataLog -ErrorAction SilentlyContinue
-  $script:tunelSurec = Start-Process ssh `
-    -ArgumentList @(
+  return Start-Process $dosya -ArgumentList $argumanlar `
+    -RedirectStandardOutput $gecici -RedirectStandardError $hataLog `
+    -NoNewWindow -PassThru
+}
+
+# Adres kimi zaman stdout'a, karşılama yazısı stderr'e düşüyor; ikisi de
+# taranıyor ki akış nereye giderse gitsin adres kaçmasın.
+function AdresBekle($desen, $saniye) {
+  for ($i = 0; $i -lt ($saniye / 2); $i++) {
+    Start-Sleep -Seconds 2
+    $metin = (Get-Content $gecici -Raw -ErrorAction SilentlyContinue) +
+             (Get-Content $hataLog -Raw -ErrorAction SilentlyContinue)
+    if ($metin -match $desen) { return $Matches[1] }
+    if ($script:tunelSurec.HasExited) { return $null }
+  }
+  return $null
+}
+
+function TunelDurdur {
+  if ($script:tunelSurec -and -not $script:tunelSurec.HasExited) {
+    Stop-Process -Id $script:tunelSurec.Id -Force -ErrorAction SilentlyContinue
+  }
+}
+
+# Adresi görmek yetmiyor: cloudflared, tünel gerçekte kurulamasa bile adresi
+# hemen ekrana basıyor (WARP açıkken 7844 kapanıyor, adres yazılıyor ama
+# istekler 530 dönüyor). O yüzden her tünel dışarıdan sınanıyor.
+function TunelDene($tur) {
+  if ($tur -eq 'cloudflare') {
+    $exe = CloudflaredYolu
+    if (-not $exe) { return $null }
+    $script:tunelSurec = SurecBaslat $exe @('tunnel', '--url', "http://127.0.0.1:$port")
+    $adres = AdresBekle 'https://([a-z0-9\-]+\.trycloudflare\.com)' 60
+  } else {
+    $script:tunelSurec = SurecBaslat 'ssh' @(
       '-i', $anahtar,
       '-o', 'IdentitiesOnly=yes',   # yoksa ssh önce başka anahtarları dener
       '-o', 'StrictHostKeyChecking=accept-new',
@@ -80,39 +127,49 @@ function TunelDene {
       '-o', 'ExitOnForwardFailure=yes',
       '-R', "80:127.0.0.1:$port",
       'localhost.run'
-    ) `
-    -RedirectStandardOutput $gecici -RedirectStandardError $hataLog `
-    -NoNewWindow -PassThru
+    )
+    $adres = AdresBekle '([a-z0-9\-]+\.lhr\.life)' 80
+  }
+  if (-not $adres) { return $null }
 
-  for ($i = 0; $i -lt 40; $i++) {
-    Start-Sleep -Seconds 2
-    # Adres kimi zaman stdout'a, karşılama yazısı stderr'e düşüyor; ikisi de
-    # taranıyor ki akış nereye giderse gitsin adres kaçmasın.
-    $metin = (Get-Content $gecici -Raw -ErrorAction SilentlyContinue) +
-             (Get-Content $hataLog -Raw -ErrorAction SilentlyContinue)
-    if ($metin -match '([a-z0-9\-]+\.lhr\.life)') { return $Matches[1] }
-    if ($script:tunelSurec.HasExited) { return $null }
+  for ($i = 0; $i -lt 4; $i++) {
+    if (TunelSaglamMi $adres) { return $adres }
+    Start-Sleep -Seconds 3
   }
   return $null
 }
 
-# Önceki tünel kapandıktan hemen sonra bağlanılırsa localhost.run bağlantıyı
-# kapatıyor: ayrılan alan adı bir süre daha eski oturumun üzerinde kalıyor.
-# Tek denemede pes etmek yerine birkaç kez denenir — betiği kapatıp hemen
-# açmak sık yapılan bir şey.
+# Önce Cloudflare denenir: çıkışı İstanbul'da olduğu için oyunun tam turu
+# ~82 ms, localhost.run'da ~336 ms (çıkışı Virginia). Cloudflare kurulamazsa
+# — en olası sebep WARP'ın açık olması — oyun yine çalışsın diye yedeğe
+# düşülür. localhost.run'da birkaç deneme gerekebiliyor: önceki tünel
+# kapandıktan hemen sonra bağlanılınca ayrılmış alan adı hâlâ eski oturumun
+# üzerinde oluyor ve bağlantı reddediliyor.
 function TunelAc {
-  for ($deneme = 1; $deneme -le 4; $deneme++) {
-    $adres = TunelDene
-    if ($adres) { return $adres }
-    if ($script:tunelSurec -and -not $script:tunelSurec.HasExited) {
-      Stop-Process -Id $script:tunelSurec.Id -Force -ErrorAction SilentlyContinue
+  $yollar = @(
+    @{ tur = 'cloudflare';   ad = 'Cloudflare'; deneme = 2 },
+    @{ tur = 'localhostrun'; ad = 'localhost.run'; deneme = 3 }
+  )
+  foreach ($y in $yollar) {
+    for ($d = 1; $d -le $y.deneme; $d++) {
+      $adres = TunelDene $y.tur
+      if ($adres) {
+        $script:tunelTuru = $y.ad
+        return $adres
+      }
+      TunelDurdur
+      if ($d -lt $y.deneme) {
+        Yaz "  $($y.ad) kurulamadi, tekrar deneniyor ($d/$($y.deneme - 1))" 'DarkGray'
+        Start-Sleep -Seconds 8
+      }
     }
-    if ($deneme -lt 4) {
-      Yaz "  Tunel kurulamadi, 10 sn sonra tekrar denenecek ($deneme/3)" 'DarkGray'
-      Start-Sleep -Seconds 10
+    if ($y.tur -eq 'cloudflare') {
+      Yaz '  Cloudflare tuneli kurulamadi. En olasi sebep: WARP acik.' 'Yellow'
+      Yaz '  WARP kapaliyken oyun 4 kat hizli olur (82 ms / 336 ms).' 'Yellow'
+      Yaz '  Simdilik yedek yola geciliyor, oyun calisir ama yavas.' 'Yellow'
     }
   }
-  throw 'Tunel kurulamadi. Internet baglantini kontrol et.'
+  throw 'Hicbir tunel kurulamadi. Internet baglantini kontrol et.'
 }
 
 # Adres yalnızca net.sunucu satırında geçer; dosyanın kalanına dokunulmuyor.
@@ -139,6 +196,7 @@ function Gonder($adres) {
 # ortasında da düşebildiği için bu iş tek seferlik değil, tekrarlanabilir.
 function Yayinla {
   $adres = TunelAc
+  Yaz "  Tunel: $script:tunelTuru" 'Green'
   Yaz "  Adres: $adres" 'Green'
   $degisti = ConfigYaz $adres
   if (-not $degisti) {
@@ -203,6 +261,11 @@ try {
   Write-Host "  Arkadaslarina bu adresi ver:  $sayfa" -ForegroundColor White
   if (-not $PushAtma) {
     Write-Host '  (GitHub sayfayi yenilemesi ~1 dakika surer, hemen acilmazsa bekle)' -ForegroundColor DarkGray
+  }
+  if ($tunelTuru -ne 'Cloudflare') {
+    Write-Host ''
+    Write-Host '  DIKKAT: yedek tunel kullaniliyor, oyun belirgin yavas olacak.' -ForegroundColor Yellow
+    Write-Host '  WARP i kapatip pencereyi kapatip yeniden acarsan hizli yola geceriz.' -ForegroundColor Yellow
   }
   Write-Host ''
   Write-Host '  Bitirince bu pencereyi kapat; sunucu ve tunel de kapanir.' -ForegroundColor Yellow
