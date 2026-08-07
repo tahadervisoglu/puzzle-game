@@ -114,6 +114,16 @@ MG.oyunlar.boya = (function () {
     boya(d, koltuk, o.x, o.y);
   }
 
+  // Boyama tahmine dahil: zemin ağdan gelmiyor, her istemci konumlardan
+  // kendisi boyuyor. Yani burada boyamak kalıcı sunucu durumunu bozmaz,
+  // aksine fırçanın tuşla birlikte hareket etmesini sağlar.
+  function tahmin(d, koltuk, dt) {
+    var o = d.oyuncular[koltuk];
+    if (!o) return;
+    oyuncuGuncelle(d, koltuk, dt);
+    MG.tahmin.pozKaydet(o, MG.simdi());
+  }
+
   // --- sonuç ---------------------------------------------------------------
 
   function siralama(d) {
@@ -167,10 +177,16 @@ MG.oyunlar.boya = (function () {
       var v = s.oy[i];
       var o = d.oyuncular[v[0]];
       if (!o) continue;
-      // İki paket arasını da boya, yoksa iz kesik kesik kalır
-      izDoldur(d, v[0], o.x, o.y, v[1], v[2]);
-      o.hx = v[1]; o.hy = v[2];
-      if (o.ilkPaket == null) { o.x = o.hx; o.y = o.hy; o.ilkPaket = 1; }
+      if (v[0] === d.tahminKoltuk) {
+        // Kendi izimizi tahmin ederken zaten boyadık; burada tekrar boyamak
+        // geriye doğru sahte bir şerit çizerdi.
+        MG.tahmin.duzelt(o, v[1], v[2], null, d.gecikmeMs || 0);
+      } else {
+        // İki paket arasını da boya, yoksa iz kesik kesik kalır
+        izDoldur(d, v[0], o.x, o.y, v[1], v[2]);
+        o.hx = v[1]; o.hy = v[2];
+        if (o.ilkPaket == null) { o.x = o.hx; o.y = o.hy; o.ilkPaket = 1; }
+      }
       d.skor[v[0]] = v[3];
     }
   }
@@ -188,7 +204,10 @@ MG.oyunlar.boya = (function () {
   function efekt(d, dt) {
     if (!d.uzak) return;
     var hz = A.yayin.yumusatmaHizi;
-    for (var k in d.oyuncular) MG.yumusat.nokta(d.oyuncular[k], dt, hz);
+    for (var k in d.oyuncular) {
+      if (+k === d.tahminKoltuk) { MG.tahmin.erit(d.oyuncular[k], dt); continue; }
+      MG.yumusat.nokta(d.oyuncular[k], dt, hz);
+    }
   }
 
   return {
@@ -200,6 +219,7 @@ MG.oyunlar.boya = (function () {
     siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
+    tahmin: tahmin,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,

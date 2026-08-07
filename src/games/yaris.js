@@ -80,6 +80,17 @@ MG.oyunlar.yaris = (function () {
   }
 
   function aracGuncelle(d, koltuk, dt) {
+    hareket(d, koltuk, dt);
+    var a0 = d.araclar[koltuk];
+    lastikCarpmasi(d, a0);
+    ilerlemeGuncelle(d, a0);
+    izBirak(d, a0);
+  }
+
+  // Sürüş fiziği: yalnızca kendi girdisi ve durağan pist geometrisi. Lastik
+  // çarpması, tur sayacı ve iz bırakma bilerek dışarıda — onlar kalıcı sonuç
+  // üretiyor, tahmin de üretirse aynı şey iki kez olur.
+  function hareket(d, koltuk, dt) {
     var a = d.araclar[koltuk];
     var g = d.araclar[koltuk].bitti ? bosGirdi : d.girdiler[koltuk];
 
@@ -125,9 +136,13 @@ MG.oyunlar.yaris = (function () {
     a.x = Math.max(20, Math.min(P.dunya.w - 20, a.x));
     a.y = Math.max(20, Math.min(P.dunya.h - 20, a.y));
 
-    lastikCarpmasi(d, a);
-    ilerlemeGuncelle(d, a);
-    izBirak(d, a);
+  }
+
+  function tahmin(d, koltuk, dt) {
+    var a = d.araclar[koltuk];
+    if (!a || a.bitti) return;
+    hareket(d, koltuk, dt);
+    MG.tahmin.pozKaydet(a, MG.simdi());
   }
 
   // Lastik yığını sabit bir duvar değil: çarpınca itiliyor ve yavaşça
@@ -322,9 +337,14 @@ MG.oyunlar.yaris = (function () {
       var v = s.ar[i];
       var a = d.araclar[v[0]];
       if (!a) continue;
-      a.hx = v[1]; a.hy = v[2]; a.haci = v[3];
-      if (a.ilkPaket == null) { a.x = a.hx; a.y = a.hy; a.aci = a.haci; a.ilkPaket = 1; }
-      a.ilerleme = v[4]; a.kayma = v[5]; a.cimde = v[6] === 1;
+      if (v[0] === d.tahminKoltuk) {
+        MG.tahmin.duzelt(a, v[1], v[2], v[3], d.gecikmeMs || 0);
+      } else {
+        a.hx = v[1]; a.hy = v[2]; a.haci = v[3];
+        if (a.ilkPaket == null) { a.x = a.hx; a.y = a.hy; a.aci = a.haci; a.ilkPaket = 1; }
+        a.kayma = v[5]; a.cimde = v[6] === 1;
+      }
+      a.ilerleme = v[4];
       a.bitti = d.bitirenler.indexOf(v[0]) >= 0;
       izBirak(d, a);
     }
@@ -334,6 +354,7 @@ MG.oyunlar.yaris = (function () {
     var h = A.yayin.yumusatmaHizi;
     for (var k in d.araclar) {
       var a = d.araclar[k];
+      if (+k === d.tahminKoltuk) { MG.tahmin.erit(a, dt); continue; }
       MG.yumusat.nokta(a, dt, h, 200);
       if (a.haci != null) a.aci = MG.yumusat.aci(a.aci, a.haci, dt, h);
     }
@@ -355,6 +376,7 @@ MG.oyunlar.yaris = (function () {
     siralama: siralama,
     girdi: girdi,
     guncelle: guncelle,
+    tahmin: tahmin,
     anlik: anlik,
     uygula: uygula,
     efekt: efekt,

@@ -17,6 +17,7 @@ const DOSYALAR = [
   'src/core/ses.js',
   'src/core/geo.js',
   'src/core/yumusat.js',
+  'src/core/tahmin.js',
   'src/games/tank.js',
   'src/games/forklift.js',
   'src/games/forklift.bot.js',

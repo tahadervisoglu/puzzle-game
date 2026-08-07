@@ -12,12 +12,17 @@ MG.tur = (function () {
   var sayimKalan = 0, sonSayimTik = -1;
   var ustBarSayac = 0;
   var basiliTuslar = {};
+  var gecikmeMs = 0;   // ölçülen gidiş-dönüş; tahminin sapma hesabı buna dayanır
 
   // --- tur akışı -----------------------------------------------------------
 
   function yerelBasla(tohum, oyunId) {
     O.oyun = MG.oyunlar[oyunId] || MG.oyunlar.tank;
     O.oyunDurum = O.oyun.kur(tohum, O.koltuklar);
+    // Tahmin yalnızca kendi oyuncun için çalışır. Oyunlar bu koltuğu görünce
+    // sunucudan gelen konumu doğrudan yazmaz, düzeltme olarak işler.
+    // Oyun tahmini desteklemiyorsa -1 kalır ve her şey eskisi gibi çalışır.
+    O.oyunDurum.tahminKoltuk = O.oyun.tahmin ? O.benKoltuk : -1;
     O.evre = 'sayim';
     sayimKalan = A.tur.geriSayimSn;
     sonSayimTik = -1;
@@ -76,6 +81,11 @@ MG.tur = (function () {
       O.skorlar = d.skorlar || {};
       finalGoster();
 
+    } else if (d.t === 'yanki') {
+      // Tek ölçüm ağ dalgalanmasıyla zıplıyor; yumuşatılmış ortalama tutulur.
+      var olcum = MG.simdi() - d.z;
+      gecikmeMs = gecikmeMs ? gecikmeMs * 0.7 + olcum * 0.3 : olcum;
+
     } else if (d.t === 'lobiyeDon') {
       O.koltuklar = d.koltuklar;
       if (d.turSayisi) O.turSayisi = d.turSayisi;
@@ -100,6 +110,12 @@ MG.tur = (function () {
 
   function yolla(tus, basili) {
     if (!O.oyunDurum || (O.evre !== 'oyun' && O.evre !== 'sayim')) return;
+    // Girdi önce yerelde işlenir: tahmin bu sayede tuşa anında tepki verir.
+    // Sunucuya gitmesi ve dönmesi beklenirse zaten gizlemek istediğimiz
+    // gecikme geri gelir.
+    if (O.oyunDurum.tahminKoltuk >= 0) {
+      O.oyun.girdi(O.oyunDurum, O.benKoltuk, tus, basili);
+    }
     MG.net.gonder({ t: 'girdi', k: tus, b: basili });
   }
 
@@ -163,6 +179,12 @@ MG.tur = (function () {
     if (!O.oyunDurum) return;
 
     if (O.evre === 'sayim') sayimAdim(dt);
+    // Oyunlar sapmayı hesaplarken gecikmeyi bilmeli: sunucudan gelen durum
+    // bir gidiş-dönüşün yarısı kadar geçmişe ait.
+    O.oyunDurum.gecikmeMs = gecikmeMs;
+    if (O.evre === 'oyun' && O.oyunDurum.tahminKoltuk >= 0) {
+      O.oyun.tahmin(O.oyunDurum, O.benKoltuk, dt);
+    }
     O.oyun.efekt(O.oyunDurum, dt);
     if (++ustBarSayac >= 15) { ustBarSayac = 0; U.ustBarYenile(); }
   }
@@ -182,6 +204,10 @@ MG.tur = (function () {
     }
   }
   setInterval(simAdim, 1000 / 60);
+
+  setInterval(function () {
+    if (MG.net.bagliMi()) MG.net.gonder({ t: 'yanki', z: MG.simdi() });
+  }, A.tahmin.olcumMs);
 
   function cizKare() {
     requestAnimationFrame(cizKare);

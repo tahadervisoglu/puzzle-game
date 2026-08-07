@@ -72,6 +72,15 @@ wss.on('connection', function (baglanti) {
       return;
     }
 
+    // Gidiş-dönüş ölçümü: istemci kendi saatini yollar, aynen geri döner.
+    // İstemci bunu gecikme gizlemede kullanıyor (src/core/tahmin.js) —
+    // sunucunun saatiyle karşılaştırma yapılmadığı için saatlerin uyumlu
+    // olması gerekmiyor.
+    if (m.t === 'yanki') {
+      baglanti.send(JSON.stringify({ t: 'yanki', z: m.z }));
+      return;
+    }
+
     if (!oda || koltuk < 0) return;
 
     if (m.t === 'girdi') oda.girdi(koltuk, m.k, !!m.b);

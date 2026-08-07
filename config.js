@@ -317,6 +317,16 @@ MG.ayar = {
 
   renkler: ['#2ecc40', '#e63946', '#2f6df6', '#ff9f1c', '#9b5de5'],
 
+  // Gecikme gizleme. Otorite sunucuda olduğu için tuşa basmakla hareketi
+  // görmek arası bir gidiş-dönüş kadardı; kendi oyuncunu istemcide de
+  // ilerletince bu kayboluyor. Ayrıntı: src/core/tahmin.js
+  tahmin: {
+    olcumMs: 1000,      // gidiş-dönüş ne sıklıkla ölçülür
+    gecmisMs: 2000,     // tahmin edilen konumlar ne kadar geriye saklanır
+    duzeltmeHizi: 6,    // sapmanın eritilme hızı — büyük değer sert düzeltir
+    sicramaPx: 90       // bundan büyük sapma yumuşatılmaz, doğrudan oturulur
+  },
+
   net: {
     // Otorite sunucuda. Boş bırakılırsa aynı makinedeki sunucuya bağlanır
     // (geliştirme); yayında buradaki adrese.
