@@ -123,20 +123,27 @@ MG.oyunlar.kral = (function () {
     o.oncekiSpace = g.space;
   }
 
-  // Omuz atma: menzildeki herkesi dışarı savurur. Tepeyi tek başına
-  // tutmanın tek yolu bu.
+  // Omuz atma: BAKTIĞIN YÖNDEKİ koniye sert bir darbe. Önce her yöne yayılan
+  // zayıf bir itişti; nereye vurduğun belli olmuyordu ve kimseyi tepeden
+  // atmaya yetmiyordu. Artık nişan alman gerekiyor ama isabet ederse savuruyor.
   function omuzAt(d, koltuk, o) {
     o.bekleme = K.omuzBeklemeSn;
-    d.dalgalar.push({ x: o.x, y: o.y, omur: 0.35, renk: A.renkler[koltuk] });
+    var yonX = Math.cos(o.aci), yonY = Math.sin(o.aci);
+    d.dalgalar.push({
+      x: o.x, y: o.y, aci: o.aci, omur: 0.35, renk: A.renkler[koltuk]
+    });
     for (var k in d.oyuncular) {
       if (+k === koltuk) continue;
       var b = d.oyuncular[k];
       var dx = b.x - o.x, dy = b.y - o.y;
       var uz = Math.sqrt(dx * dx + dy * dy) || 0.01;
       if (uz > K.omuzMenzil) continue;
-      var guc = K.omuzGuc * (1 - uz / K.omuzMenzil * 0.4);
-      b.vx += (dx / uz) * guc;
-      b.vy += (dy / uz) * guc;
+      // Koni dışındaysa dokunmaz: arkanı kollamak gerekiyor
+      if ((dx / uz) * yonX + (dy / uz) * yonY < K.omuzKoni) continue;
+
+      var guc = K.omuzGuc * (1 - uz / K.omuzMenzil * 0.3);
+      b.vx += yonX * guc;              // darbe daima baktığın yöne
+      b.vy += yonY * guc;
     }
     MG.ses.firlat();
   }
@@ -244,7 +251,9 @@ MG.oyunlar.kral = (function () {
       o.bekleme = v[5];
       // Bekleme sıfırdan tavana çıktıysa omuz atmıştır
       if (o.bekleme > oncekiBekleme + 0.5) {
-        d.dalgalar.push({ x: o.x, y: o.y, omur: 0.35, renk: A.renkler[v[0]] });
+        d.dalgalar.push({
+          x: o.x, y: o.y, aci: o.aci, omur: 0.35, renk: A.renkler[v[0]]
+        });
         MG.ses.firlat();
       }
       o.tepede = tepedeMi(d, o);

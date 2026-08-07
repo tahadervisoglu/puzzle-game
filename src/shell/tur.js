@@ -280,6 +280,20 @@ MG.tur = (function () {
   var sonZaman = 0;
 
   function simAdim() {
+    // Bir oyunun içindeki hata bütün oturumu düşürmesin: yakala, konsola
+    // yaz, döngü dönmeye devam etsin. Yoksa simülasyon durur, oyun donar ve
+    // dışarıdan "oda kapandı" gibi görünür.
+    try {
+      simAdimIc();
+    } catch (e) {
+      if (!simAdim.hataBildirildi) {
+        simAdim.hataBildirildi = true;
+        console.error('Oyun döngüsünde hata (' + (O.oyun && O.oyun.id) + '):', e);
+      }
+    }
+  }
+
+  function simAdimIc() {
     var ts = performance.now();
     var dt = Math.min(0.1, (ts - sonZaman) / 1000 || 0);
     sonZaman = ts;

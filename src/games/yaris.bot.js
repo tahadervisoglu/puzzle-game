@@ -6,6 +6,23 @@ MG.yarisBot = (function () {
   var P = MG.yarisPist;
   var G = MG.geo;
 
+  // Önündeki lastik yığınlarından kaçınmak için hedef açıya eklenen sapma.
+  // Bot bunu bilmediğinde bariyere dosdoğru sürüp orada kilitleniyordu.
+  function lastikKacinma(d, a) {
+    var sapma = 0;
+    for (var i = 0; i < d.lastikler.length; i++) {
+      var t = d.lastikler[i];
+      var dx = t.x - a.x, dy = t.y - a.y;
+      var uz = Math.sqrt(dx * dx + dy * dy);
+      if (uz > 120 || uz < 1) continue;
+      var fark = G.aciNormalle(Math.atan2(dy, dx) - a.aci);
+      if (Math.abs(fark) > 0.8) continue;          // önünde değil
+      // Hangi tarafa yakınsa öbür tarafa kaç; yakınlaştıkça sapma büyür
+      sapma += (fark >= 0 ? -1 : 1) * (1 - uz / 120) * 0.9;
+    }
+    return Math.max(-0.9, Math.min(0.9, sapma));
+  }
+
   function guncelle(d, koltuk, dt) {
     var b = d.botDurum[koltuk];
     var a = d.araclar[koltuk];
@@ -18,7 +35,8 @@ MG.yarisBot = (function () {
     var ileriBak = 3 + Math.round((hiz / Y.maxHiz) * 7);
     var h = P.noktalar[(a.sonNokta + ileriBak) % n];
 
-    var fark = G.aciNormalle(Math.atan2(h.y - a.y, h.x - a.x) - a.aci);
+    var hedefAci = Math.atan2(h.y - a.y, h.x - a.x) + lastikKacinma(d, a);
+    var fark = G.aciNormalle(hedefAci - a.aci);
     if (fark > 0.05) g.d = true;
     else if (fark < -0.05) g.a = true;
 

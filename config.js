@@ -61,7 +61,11 @@ MG.ayar = {
     kameraZoom: 1.45,
     lastikSayisi: 18,
     lastikYaricap: 15,
-    lastikYavaslatma: 0.35  // çarpınca hız bu oranla çarpılır
+    lastikYavaslatma: 0.55, // çarpınca hız bu oranla çarpılır
+    lastikItme: 0.85,       // darbenin lastiğe geçen payı
+    lastikSurtunme: 3.2,    // savrulan lastik böyle yavaşlar
+    lastikGeriDonus: 0.55,  // yavaşça eski yerine döner, pist boşalmasın
+    lastikKaydirma: 46      // bariyere yaslanan aracı kenardan sıyıran itiş
   },
 
   yokus: {
@@ -138,8 +142,10 @@ MG.ayar = {
     maxHiz: 235,
     surtunme: 4.5,       // buz değil: kontrol iyi, itiş kakış net
     esneklik: 1.15,
-    omuzGuc: 470,        // Boşluk ile yakındakileri savurma
-    omuzMenzil: 62,
+    // Omuz: her yöne dağılan zayıf itiş yerine baktığın yöne sert bir darbe
+    omuzGuc: 900,
+    omuzMenzil: 82,
+    omuzKoni: 0.35,      // cos eşiği — bu değerin üstü koninin içi sayılır
     omuzBeklemeSn: 1.3,
     puanHizi: 14,        // tepedeki puan akışı — kalabalıkta BÖLÜŞÜLÜR
     tepeKaymaSn: 13,     // tepe bu aralıkla yer değiştirir
@@ -300,8 +306,11 @@ MG.ayar = {
     durumMs: 33,        // host durum yayını (~30 Hz)
     yumusatmaHizi: 22,  // misafirde gelen konuma yaklaşma hızı
     benYumusatma: 30,   // kendi karakterin daha çabuk toparlansın
-    nabizMs: 1200,
-    kopmaMs: 4000       // bu kadar sessizlik = koptu
+    // Nabız sık, kopma eşiği geniş: tarayıcı arka plan sekmesinde
+    // zamanlayıcıları kısınca 4 saniyelik eşik yanlışlıkla "koptu" diyor ve
+    // masumca oyundan atıyordu.
+    nabizMs: 800,
+    kopmaMs: 9000       // bu kadar sessizlik = koptu
   },
 
   agZamanAsimiMs: 15000,

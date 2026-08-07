@@ -89,7 +89,13 @@ MG.oyunlar.boya = (function () {
       if (d.botDurum[k]) MG.boyaBot.guncelle(d, +k, dt);
       oyuncuGuncelle(d, +k, dt);
     }
-    skorlariSay(d);
+    // Skor için 1000 hücreyi her karede taramak gereksiz yük; saniyede on
+    // kez saymak hem şeridi hem tabloyu güncel tutuyor.
+    d.sayimBirikim = (d.sayimBirikim || 0) + dt;
+    if (d.sayimBirikim >= 0.1 || d.kalan <= 0) {
+      d.sayimBirikim = 0;
+      skorlariSay(d);
+    }
   }
 
   function oyuncuGuncelle(d, koltuk, dt) {

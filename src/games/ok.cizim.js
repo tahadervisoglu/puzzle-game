@@ -67,7 +67,9 @@ MG.okCizim = (function () {
       if (x + okBoy > SERIT.x + SERIT.w) break;
       okCiz(c, x, y + h / 2, okBoy * olcek, yon, renk, ilk, donuk, o.parlama);
     }
-    c.restore();
+    // Buradaki fazladan restore() canvas yığınını her şeritte bir kademe
+    // boşaltıyordu: ölçek/öteleme kayıyor ve şeritler iç içe geçmiş
+    // görünüyordu. Karşılığı olan save() yok, olmamalı da.
   }
 
   function okCiz(c, x, y, boy, yon, renk, ilk, donuk, parlama) {

@@ -88,10 +88,11 @@ MG.oyunlar.bomba = (function () {
     if (ix && iy) iy = 0;
     if (ix || iy) hareket(d, o, ix, iy, dt);
 
-    // Bıraktığı bombadan tamamen çıktıysa muafiyet biter
-    if (o.muaf && (I.hucreX(o.x) !== o.muaf.cx || I.hucreY(o.y) !== o.muaf.cy)) {
-      o.muaf = null;
-    }
+    // Muafiyet, GÖVDE bomba hücresini tamamen terk edince biter. Yalnızca
+    // merkeze bakmak yetmiyordu: merkez komşu hücreye geçtiği anda muafiyet
+    // kalkıyor, ama köşeler hâlâ bombanın hücresinde kaldığı için oyuncu
+    // kendi bombasına takılıp kalıyordu.
+    if (o.muaf && hucreyiTerkEtti(o, o.muaf)) o.muaf = null;
 
     if (g.space) bombaBirak(d, koltuk, o);
     bonusTopla(d, o);
@@ -116,6 +117,19 @@ MG.oyunlar.bomba = (function () {
     var fark = hedef - o[eksen];
     if (Math.abs(fark) < 0.5) return;
     o[eksen] += (fark > 0 ? 1 : -1) * Math.min(adim, Math.abs(fark));
+  }
+
+  // Oyuncunun kapladığı karenin hiçbir köşesi o hücrede kalmadı mı?
+  function hucreyiTerkEtti(o, b) {
+    var r = B.oyuncuYaricap;
+    var noktalar = [[o.x - r, o.y - r], [o.x + r, o.y - r],
+                    [o.x - r, o.y + r], [o.x + r, o.y + r]];
+    for (var i = 0; i < 4; i++) {
+      if (I.hucreX(noktalar[i][0]) === b.cx && I.hucreY(noktalar[i][1]) === b.cy) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // Oyuncunun kapladığı kare hangi hücrelere değiyor?

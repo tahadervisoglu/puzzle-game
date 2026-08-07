@@ -70,17 +70,22 @@ MG.kralCizim = (function () {
     c.restore();
   }
 
+  // Darbe artık yönlü: dalga da tam bir halka değil, baktığın yöndeki yay
   function dalgalariCiz(c, d) {
+    var yariAci = Math.acos(K.omuzKoni);
     for (var i = 0; i < d.dalgalar.length; i++) {
       var w = d.dalgalar[i];
       var t = 1 - w.omur / 0.35;
       c.save();
-      c.globalAlpha = 1 - t;
-      c.strokeStyle = w.renk;
-      c.lineWidth = 5 * (1 - t) + 1;
+      c.translate(w.x, w.y);
+      c.rotate(w.aci || 0);
+      c.globalAlpha = (1 - t) * 0.9;
+      c.fillStyle = w.renk;
       c.beginPath();
-      c.arc(w.x, w.y, K.omuzMenzil * t, 0, TAU);
-      c.stroke();
+      c.moveTo(0, 0);
+      c.arc(0, 0, K.omuzMenzil * (0.4 + t * 0.6), -yariAci, yariAci);
+      c.closePath();
+      c.fill();
       c.restore();
     }
   }

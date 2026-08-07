@@ -58,7 +58,11 @@ MG.oyunlar.yaris = (function () {
       var s = P.noktalar[(idx + 1) % n];
       var sag = Math.atan2(s.y - p.y, s.x - p.x) + Math.PI / 2;
       var ofset = (rng() * 2 - 1) * (Y.pistGenislik * 0.33);
-      l.push({ x: p.x + Math.cos(sag) * ofset, y: p.y + Math.sin(sag) * ofset });
+      l.push({
+        x: p.x + Math.cos(sag) * ofset, y: p.y + Math.sin(sag) * ofset,
+        vx: 0, vy: 0,
+        ilkX: p.x + Math.cos(sag) * ofset, ilkY: p.y + Math.sin(sag) * ofset
+      });
     }
     return l;
   }
@@ -71,6 +75,7 @@ MG.oyunlar.yaris = (function () {
       if (d.botDurum[k]) MG.yarisBot.guncelle(d, +k, dt);
       aracGuncelle(d, +k, dt);
     }
+    lastikleriGuncelle(d, dt);
     araclariAyir(d);
   }
 
@@ -125,6 +130,10 @@ MG.oyunlar.yaris = (function () {
     izBirak(d, a);
   }
 
+  // Lastik yığını sabit bir duvar değil: çarpınca itiliyor ve yavaşça
+  // yerine dönüyor. Eskiden sabitti ve aracın yalnızca konumu düzeltiliyordu;
+  // hız hâlâ lastiğe doğru olduğu için araç her karede geri itilip
+  // titriyor, oyuncu orada takılı kalıyordu.
   function lastikCarpmasi(d, a) {
     var gerek = Y.yaricap + Y.lastikYaricap;
     for (var i = 0; i < d.lastikler.length; i++) {
@@ -132,12 +141,48 @@ MG.oyunlar.yaris = (function () {
       var dx = a.x - t.x, dy = a.y - t.y;
       var uz = Math.sqrt(dx * dx + dy * dy) || 0.01;
       if (uz >= gerek) continue;
-      a.x = t.x + dx / uz * gerek;
-      a.y = t.y + dy / uz * gerek;
+
+      var nx = dx / uz, ny = dy / uz;          // lastikten araca doğru
+      a.x = t.x + nx * gerek;
+      a.y = t.y + ny * gerek;
+
+      // Yalnızca lastiğe DOĞRU olan hız bileşeni kesilir; teğet bileşen
+      // kalır, yani araç bariyerin kenarından sıyrılarak devam eder.
+      var iceri = a.vx * nx + a.vy * ny;
+      if (iceri < 0) {
+        a.vx -= iceri * nx;
+        a.vy -= iceri * ny;
+        t.vx -= nx * iceri * Y.lastikItme;     // darbe lastiği savurur
+        t.vy -= ny * iceri * Y.lastikItme;
+      }
+
+      // Kurtulma itmesi: motor lastiğe doğru bastırdığı sürece araç orada
+      // kilitleniyordu (normal bileşeni her karede yeniden siliniyor).
+      // Teğet yönde küçük bir itiş bariyerin etrafından kaydırıyor.
+      var tx = -ny, ty = nx;
+      var teget = a.vx * tx + a.vy * ty;
+      var isaret = teget >= 0 ? 1 : -1;
+      a.vx += tx * isaret * Y.lastikKaydirma;
+      a.vy += ty * isaret * Y.lastikKaydirma;
       a.vx *= Y.lastikYavaslatma;
       a.vy *= Y.lastikYavaslatma;
       a.carpma = 0.3;
       MG.ses.sekme();
+    }
+  }
+
+  function lastikleriGuncelle(d, dt) {
+    for (var i = 0; i < d.lastikler.length; i++) {
+      var t = d.lastikler[i];
+      if (!t.vx && !t.vy) continue;
+      t.x += t.vx * dt;
+      t.y += t.vy * dt;
+      t.vx -= t.vx * Y.lastikSurtunme * dt;
+      t.vy -= t.vy * Y.lastikSurtunme * dt;
+      // Yerinden çok uzaklaşmasın: pist boşalmasın diye yavaşça geri çekilir
+      t.x += (t.ilkX - t.x) * Math.min(1, dt * Y.lastikGeriDonus);
+      t.y += (t.ilkY - t.y) * Math.min(1, dt * Y.lastikGeriDonus);
+      if (Math.abs(t.vx) < 4 && Math.abs(t.vy) < 4) { t.vx = 0; t.vy = 0; }
     }
   }
 
@@ -243,7 +288,15 @@ MG.oyunlar.yaris = (function () {
                Math.round(a.aci * 100) / 100, a.ilerleme,
                Math.round(a.kayma * 10) / 10, a.cimde ? 1 : 0]);
     }
-    return { ar: ar, bi: d.bitirenler, ka: Math.round(d.kalan * 10) / 10 };
+    // Lastikler artık savrulabildiği için konumları da gitmeli. Yalnızca
+    // yerinden oynamış olanlar gönderiliyor; normalde bu liste boş.
+    var la = [];
+    for (var i = 0; i < d.lastikler.length; i++) {
+      var t = d.lastikler[i];
+      if (Math.abs(t.x - t.ilkX) < 1 && Math.abs(t.y - t.ilkY) < 1) continue;
+      la.push([i, Math.round(t.x), Math.round(t.y)]);
+    }
+    return { ar: ar, bi: d.bitirenler, la: la, ka: Math.round(d.kalan * 10) / 10 };
   }
 
   // Misafir: bu oyunun sıçraması en belirgin olanıydı (700 px/sn hızda her
@@ -252,6 +305,19 @@ MG.oyunlar.yaris = (function () {
     d.uzak = true;
     if (s.ka != null) d.kalan = s.ka;
     d.bitirenler = s.bi || [];
+
+    // Önce hepsini yerine al, sonra gelen sapmaları uygula: böylece yerine
+    // dönen lastikler misafirde de eski konumunda takılı kalmaz.
+    for (var j = 0; j < d.lastikler.length; j++) {
+      var t0 = d.lastikler[j];
+      t0.x = t0.ilkX; t0.y = t0.ilkY;
+    }
+    if (s.la) {
+      for (j = 0; j < s.la.length; j++) {
+        var t1 = d.lastikler[s.la[j][0]];
+        if (t1) { t1.x = s.la[j][1]; t1.y = s.la[j][2]; }
+      }
+    }
     for (var i = 0; i < s.ar.length; i++) {
       var v = s.ar[i];
       var a = d.araclar[v[0]];
