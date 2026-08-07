@@ -338,7 +338,7 @@ MG.ayar = {
     // Adres sabit çünkü tünele hesaba kayıtlı bir SSH anahtarıyla bağlanılıyor;
     // anonim bağlanınca her açılışta değişiyordu. Anahtar değişirse buradaki
     // adres de değişir — baslat.ps1 uyuşmazlığı görüp günceller ve yayına alır.
-    sunucu: 'wss://8105fc5ba213c4.lhr.life',
+    sunucu: 'wss://sixth-heaven-albuquerque-wet.trycloudflare.com',
     // Ücretsiz barındırmada sunucu uykuya dalabiliyor, uyanması ~1 dakika
     baglantiZamanAsimiMs: 75000
   }
